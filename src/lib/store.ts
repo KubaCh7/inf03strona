@@ -21,6 +21,8 @@ type State = {
   tests: TestRecord[];
   sheets: Record<string, { status: SheetStatus; score?: number }>;
   lessons: Record<string, string>;
+  queries: Record<string, { ok: boolean; sql: string }>;
+  practice: Record<string, { ok: boolean; files?: Record<string, string> }>;
   cards: Record<string, unknown>; // serializowane karty FSRS
   newCardsDay: { date: string; count: number };
   workspaces: Record<string, Record<string, string>>;
@@ -37,6 +39,8 @@ type State = {
   addTest: (t: TestRecord) => void;
   setSheet: (code: string, patch: Partial<{ status: SheetStatus; score: number }>) => void;
   completeLesson: (id: string, xp: number) => void;
+  saveQuery: (key: string, sql: string, ok?: boolean) => void;
+  savePractice: (id: string, patch: { ok?: boolean; files?: Record<string, string> }) => void;
   setCard: (id: string, card: unknown) => void;
   countNewCard: () => void;
   saveWorkspace: (key: string, files: Record<string, string>) => void;
@@ -50,7 +54,7 @@ type State = {
 
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = (Math.random() * 16) | 0; return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16); }));
 
-export const PERSISTED_KEYS = ['xp', 'streak', 'activity', 'qstats', 'tests', 'sheets', 'lessons', 'cards', 'newCardsDay', 'workspaces', 'settings', 'sprintBest', 'dailyQuestion'] as const;
+export const PERSISTED_KEYS = ['xp', 'streak', 'activity', 'qstats', 'tests', 'sheets', 'lessons', 'queries', 'practice', 'cards', 'newCardsDay', 'workspaces', 'settings', 'sprintBest', 'dailyQuestion'] as const;
 
 export const useStore = create<State>()(
   persist(
@@ -62,6 +66,8 @@ export const useStore = create<State>()(
       tests: [],
       sheets: {},
       lessons: {},
+      queries: {},
+      practice: {},
       cards: {},
       newCardsDay: { date: '', count: 0 },
       workspaces: {},
@@ -110,6 +116,17 @@ export const useStore = create<State>()(
         if (get().lessons[id]) return;
         set((s) => ({ lessons: { ...s.lessons, [id]: new Date().toISOString() } }));
         get().addXp(xp);
+      },
+      saveQuery: (key, sql, ok) => {
+        const prev = get().queries[key];
+        const nowOk = ok ?? prev?.ok ?? false;
+        set((s) => ({ queries: { ...s.queries, [key]: { sql, ok: nowOk || !!prev?.ok } } }));
+        if (ok && !prev?.ok) get().addXp(8);
+      },
+      savePractice: (id, patch) => {
+        const prev = get().practice[id];
+        set((s) => ({ practice: { ...s.practice, [id]: { ...prev, ...patch, ok: !!(patch.ok || prev?.ok) } } }));
+        if (patch.ok && !prev?.ok) get().addXp(10);
       },
       setCard: (id, card) => set((s) => ({ cards: { ...s.cards, [id]: card } })),
       countNewCard: () => set((s) => {

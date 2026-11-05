@@ -10,6 +10,8 @@ const STEPS: Step[] = [
   { title: 'Cześć! To jest Pracownia 03', text: 'Darmowe miejsce do nauki na INF.03: teoria, 152 arkusze, fiszki, warsztat z podglądem i próbny egzamin. Pokażę Ci w minutę, co gdzie jest.' },
   { target: '/', title: 'Dziś', text: 'Twój plan dnia: fiszki do powtórki, pytanie dnia (+5 XP), następna lekcja i sugerowany arkusz. Zaczynaj stąd codziennie.' },
   { target: '/sciezka', title: 'Ścieżka', text: 'Kurs krok po kroku: od pustego HTML przez CSS, SQL i JS do PHP. Każda lekcja ma małe zadanie, które sprawdzamy od razu.' },
+  { target: '/nauka', title: 'Nauka', text: 'Wybierasz temat (HTML, CSS, JavaScript, PHP, SQL) i robisz zadania od najłatwiejszych do najtrudniejszych. Każde sprawdzamy od razu.', mobileHint: 'Na telefonie: w menu „Więcej”.' },
+  { target: '/kwerendy', title: 'Kwerendy', text: 'Ponad 500 prawdziwych zapytań SQL z arkuszy CKE, na bazach z plików do zadań. Piszesz kwerendę, a my porównujemy wynik z rozwiązaniem.', mobileHint: 'Na telefonie: w menu „Więcej”.' },
   { target: '/teoria', title: 'Teoria', text: 'Pytania jak w części pisemnej. „Losuj 1 pytanie”, kiedy masz chwilę, albo pełny test 40 pytań na 60 minut.' },
   { target: '/arkusze', title: 'Arkusze', text: 'Wszystkie 152 zadania praktyczne CKE. Filtrujesz po roku, języku, trudności i tematach. W każdym masz PDF, pliki, hasło i rozwiązanie.' },
   { target: '/fiszki', title: 'Fiszki', text: 'Karty do zapamiętania znaczników, właściwości CSS, funkcji PHP i kwerend. Aplikacja sama pilnuje, kiedy coś powtórzyć.', mobileHint: 'Na telefonie: w menu „Więcej”.' },
@@ -76,15 +78,20 @@ export default function Tour({ onClose }: { onClose: () => void }) {
         <div className="mt-4 flex items-center gap-2">
           <div className="flex flex-1 gap-1">{STEPS.map((_, k) => <span key={k} className={`h-1.5 flex-1 rounded-full ${k <= i ? 'bg-accent' : 'bg-line'}`} />)}</div>
         </div>
-        <div className="mt-4 flex items-center justify-between gap-2">
-          {i === 0 ? <button className="text-sm text-muted underline" onClick={onClose}>Pomiń</button> : <button className="btn btn-ghost px-3 py-1.5 text-sm" onClick={() => setI(i - 1)}><ArrowLeft size={15} />Wstecz</button>}
-          {last ? (
-            <div className="flex gap-2">
+        {last ? (
+          <div className="mt-4 grid gap-2">
+            <button className="btn btn-primary w-full" onClick={() => { onClose(); nav('/sciezka'); }}>Do pierwszej lekcji <ArrowRight size={15} /></button>
+            <div className="grid grid-cols-2 gap-2">
+              <button className="btn btn-ghost px-3 py-1.5 text-sm" onClick={() => setI(i - 1)}><ArrowLeft size={15} />Wstecz</button>
               <button className="btn btn-ghost px-3 py-1.5 text-sm" onClick={onClose}>Zamknij</button>
-              <button className="btn btn-primary px-3 py-1.5 text-sm" onClick={() => { onClose(); nav('/sciezka'); }}>Do pierwszej lekcji</button>
             </div>
-          ) : <button className="btn btn-primary px-3 py-1.5 text-sm" onClick={() => setI(i + 1)}>{i === 0 ? 'Pokaż' : 'Dalej'}<ArrowRight size={15} /></button>}
-        </div>
+          </div>
+        ) : (
+          <div className="mt-4 flex items-center justify-between gap-2">
+            {i === 0 ? <button className="text-sm text-muted underline" onClick={onClose}>Pomiń</button> : <button className="btn btn-ghost px-3 py-1.5 text-sm" onClick={() => setI(i - 1)}><ArrowLeft size={15} />Wstecz</button>}
+            <button className="btn btn-primary px-3 py-1.5 text-sm" onClick={() => setI(i + 1)}>{i === 0 ? 'Pokaż' : 'Dalej'}<ArrowRight size={15} /></button>
+          </div>
+        )}
       </div>
     </div>
   );

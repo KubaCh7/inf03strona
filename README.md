@@ -35,3 +35,7 @@ URL i klucz publishable są w `src/config.ts` (można nadpisać przez `VITE_SUPA
 - SQL działa w SQLite. `CREATE USER` i `GRANT` są sprawdzane tylko tekstowo.
 - PHP nie wykonuje się w przeglądarce, więc kod PHP sprawdzamy statycznie.
 - Sprawdzarka daje wynik orientacyjny na podstawie tagów zadania i samooceny, a nie ocenę CKE.
+
+## Kwerendy z arkuszy
+
+`scripts/extract_queries.py <klon repo Chr1skyy> <katalog>` wyciąga z PDF-ów CKE treść zapytań („Zapytanie 1: …”) i z archiwów zadań zrzuty baz `.sql`. Wynik: `src/data/queries.json` (zadania i trudność, bez rozwiązań) i `public/dumps/*.sql`. Rozwiązania nie są kopiowane: aplikacja pobiera je w przeglądarce z GitHuba tylko do porównania wyników. 18 starszych arkuszy E.14 ma PDF bez warstwy tekstowej i nie ma ich w zakładce Kwerendy.

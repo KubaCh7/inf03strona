@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import {
-  BookOpen, CalendarCheck, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info,
+  BookOpen, CalendarCheck, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info,
 } from 'lucide-react';
 import { levelInfo, liveStreak, useStore, weekMinutes } from '../lib/store';
 import { isDue } from '../lib/fsrs';
@@ -14,6 +14,8 @@ const NAV = [
   { group: 'Nauka', items: [
     { to: '/', label: 'Dziś', icon: CalendarCheck, end: true },
     { to: '/sciezka', label: 'Ścieżka', icon: Map },
+    { to: '/nauka', label: 'Nauka', icon: GraduationCap },
+    { to: '/kwerendy', label: 'Kwerendy', icon: Database },
     { to: '/fiszki', label: 'Fiszki', icon: Layers },
     { to: '/teoria', label: 'Teoria', icon: BookOpen },
     { to: '/arkusze', label: 'Arkusze', icon: FileText },
@@ -154,7 +156,7 @@ export default function Layout() {
   const xp = useStore((s) => s.xp);
   const lv = levelInfo(xp);
   useEffect(() => { setMore(false); window.scrollTo(0, 0); }, [loc.pathname]);
-  const wide = /^\/(warsztat|proba|sprawdzarka|arkusze\/)/.test(loc.pathname);
+  const wide = /^\/(warsztat|proba|sprawdzarka|arkusze\/|kwerendy\/|nauka\/[a-z]+\/)/.test(loc.pathname);
   const tour = useTour();
 
   return (

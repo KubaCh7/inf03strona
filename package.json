@@ -21,6 +21,7 @@
     "@emmetio/codemirror6-plugin": "0.4.2",
     "@supabase/supabase-js": "2.119.0",
     "@uiw/react-codemirror": "4.25.12",
+    "emmet": "2.4.11",
     "lucide-react": "1.69.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
