@@ -10,6 +10,7 @@ import TheoryTest, { scoreTheory, TimerBadge, useCountdown, type TheoryState } f
 import Workshop from '../components/Workshop';
 import SheetChecker from '../components/SheetChecker';
 import { CATEGORY_LABEL } from '../lib/data';
+import WrongAnswers from '../components/WrongAnswers';
 
 const uid = () => crypto.randomUUID?.() ?? String(Date.now());
 
@@ -150,6 +151,7 @@ export default function Exam() {
             <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'done' })}>Podsumowanie <ArrowRight size={16} /></button>
           ))} />
         <TheoryTest state={t} questions={c.questions} onChange={(s) => setActiveExam({ ...exam, theory: s })} onFinish={finishTheory} />
+        {done && <WrongAnswers t={t} byId={byId} />}
       </div>
     );
   }
@@ -189,8 +191,9 @@ export default function Exam() {
           </div>
         )}
       </div>
+      {t && <WrongAnswers t={t} byId={byId} />}
       <div className="mt-5 flex flex-wrap gap-2">
-        {t && <button className="btn btn-ghost" onClick={() => setActiveExam({ ...exam, stage: 'theory' })}>Przejrzyj odpowiedzi</button>}
+        {t && <button className="btn btn-ghost" onClick={() => setActiveExam({ ...exam, stage: 'theory' })}>Przejrzyj wszystkie odpowiedzi</button>}
         <button className="btn btn-gold" onClick={() => setActiveExam(null)}><RotateCcw size={16} />Nowa próba egzaminu</button>
       </div>
     </div>

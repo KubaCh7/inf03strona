@@ -5,6 +5,7 @@ import { useStore } from '../lib/store';
 import { shuffle, shuffleQuestion, type Shuffled } from '../lib/random';
 import { mmss } from '../lib/time';
 import { Loading, PageHeader } from '../components/ui';
+import { QuestionBody, answerLabel } from '../components/QuestionBody';
 
 const DURATION = 5 * 60_000;
 
@@ -78,11 +79,11 @@ export default function Sprint() {
         <p className="display text-3xl font-bold tabular">{score}{combo >= 5 && <span className="ml-2 align-middle text-sm text-accent">×{1 + Math.floor(combo / 5)}</span>}</p>
       </div>
       <div className={`card p-6 transition-colors ${flash === 'ok' ? '!border-success !bg-success-soft' : flash === 'bad' ? '!border-danger !bg-danger-soft' : ''}`}>
-        <h2 className="text-xl font-bold" style={{ fontFamily: 'var(--font-sans)', letterSpacing: 0 }}>{q.text}</h2>
+        <QuestionBody q={q} size="md" />
         <div className="mt-4 grid gap-2">
           {q.answers.map((a, k) => (
             <button key={k} onClick={() => answer(k)} className="flex items-center gap-3 rounded-xl border border-line px-4 py-3 text-left hover:bg-surface-2">
-              <span className="mono grid h-7 w-7 shrink-0 place-items-center rounded-md border border-line text-sm">{'ABCD'[k]}</span><code className="font-[inherit]">{a}</code>
+              <span className="mono grid h-7 w-7 shrink-0 place-items-center rounded-md border border-line text-sm">{'ABCD'[k]}</span><code className="font-[inherit]">{answerLabel(q, a, q.order[k])}</code>
             </button>
           ))}
         </div>

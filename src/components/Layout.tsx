@@ -10,6 +10,7 @@ import { LESSONS } from '../data/lessons';
 import { Logo, Progress } from './ui';
 import Tour, { useTour } from './Tour';
 import ErrorBoundary from './ErrorBoundary';
+import ReturnToExam from './ReturnToExam';
 
 const NAV = [
   { group: 'Nauka', items: [
@@ -210,6 +211,7 @@ export default function Layout() {
         </div>
       </nav>
 
+      <ReturnToExam />
       {tour.open && !more && <Tour onClose={tour.close} />}
       {more && (
         <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">

@@ -94,6 +94,9 @@ const qs = Q.map(([category, text, answers, explanation]) => {
   if (!CATS.includes(category) || answers.length !== 4) throw new Error('Zle pytanie: ' + text);
   return { id: createHash('sha1').update(text).digest('hex').slice(0, 10), category, text, answers, correct: 0, explanation, source: 'original' };
 });
+// Pytania z opublikowanych arkuszy pisemnych CKE (scripts/extract_theory.py)
+const cke = JSON.parse(readFileSync('data/cke_questions.json', 'utf8'));
+for (const q of cke) qs.push({ id: q.id, category: q.category, text: q.text, answers: q.answers, correct: q.correct, explanation: q.explanation, source: 'cke', image: q.image, imageAnswers: q.imageAnswers, ocr: q.ocr, sources: q.sources });
 if (new Set(qs.map((q) => q.id)).size !== qs.length) throw new Error('Zduplikowane pytania');
 const fcs = FC.map(([deck, front, back, example], i) => ({ id: `${deck}-${i}`, deck, front, back, example: example ?? null }));
 writeFileSync('src/data/questions.json', JSON.stringify(qs));
@@ -106,6 +109,6 @@ const jlit = (v) => `${lit(JSON.stringify(v))}::jsonb`;
 const out = [];
 out.push('truncate public.sheets, public.questions, public.flashcards;');
 for (const s of sheets) out.push(`insert into public.sheets (code, qualification, year, session, variant, title, language, difficulty, data) values (${lit(s.code)}, ${lit(s.qualification)}, ${s.year}, ${lit(s.session)}, ${lit(s.variant)}, ${lit(s.title)}, ${lit(s.language)}, ${s.difficulty.score}, ${jlit(s)});`);
-for (const q of qs) out.push(`insert into public.questions (id, category, text, answers, correct, explanation, source) values (${lit(q.id)}, ${lit(q.category)}, ${lit(q.text)}, ${jlit(q.answers)}, ${q.correct}, ${lit(q.explanation)}, ${lit(q.source)});`);
+for (const q of qs) out.push(`insert into public.questions (id, category, text, answers, correct, explanation, source, image, image_answers, ocr, sources) values (${lit(q.id)}, ${lit(q.category)}, ${lit(q.text)}, ${jlit(q.answers)}, ${q.correct}, ${lit(q.explanation)}, ${lit(q.source)}, ${lit(q.image)}, ${q.imageAnswers ? 'true' : 'false'}, ${q.ocr ? 'true' : 'false'}, ${jlit(q.sources ?? [])});`);
 for (const f of fcs) out.push(`insert into public.flashcards (id, deck, front, back, example) values (${lit(f.id)}, ${lit(f.deck)}, ${lit(f.front)}, ${lit(f.back)}, ${lit(f.example)});`);
 writeFileSync('supabase/seed.sql', out.join('\n') + '\n');

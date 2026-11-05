@@ -17,5 +17,5 @@ export type Sheet = {
   sameAs: string[];
 };
 export type Category = 'strony' | 'bazy' | 'aplikacje' | 'podstawy' | 'bhp' | 'angielski' | 'kompetencje';
-export type Question = { id: string; category: Category; text: string; answers: string[]; correct: number; explanation: string | null; source: string };
+export type Question = { id: string; category: Category; text: string; answers: string[]; correct: number; explanation: string | null; source: string; image?: string | null; imageAnswers?: boolean; ocr?: boolean; sources?: string[] };
 export type Flashcard = { id: string; deck: string; front: string; back: string; example: string | null };

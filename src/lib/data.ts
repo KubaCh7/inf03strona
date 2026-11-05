@@ -10,13 +10,13 @@ let resolved: Content | null = null;
 async function fromSupabase(): Promise<Content> {
   const [s, q, f] = await Promise.all([
     supabase.from('sheets').select('data').order('year', { ascending: false }).limit(1000),
-    supabase.from('questions').select('id, category, text, answers, correct, explanation, source').limit(10000),
+    supabase.from('questions').select('id, category, text, answers, correct, explanation, source, image, image_answers, ocr, sources').limit(10000),
     supabase.from('flashcards').select('id, deck, front, back, example').limit(5000),
   ]);
   if (s.error || q.error || f.error || !s.data?.length) throw new Error('supabase');
   return {
     sheets: s.data.map((r) => r.data as Sheet),
-    questions: q.data as Question[],
+    questions: (q.data as (Question & { image_answers?: boolean })[]).map(({ image_answers, ...r }) => ({ ...r, imageAnswers: !!image_answers })),
     flashcards: f.data as Flashcard[],
     source: 'supabase',
   };

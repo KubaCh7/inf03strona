@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { ArrowRight, Layers, Sparkles, FileText, Map, Timer, Zap } from 'lucide-react';
 import { useContent } from '../lib/data';
@@ -42,11 +42,34 @@ export default function Today() {
     }
   }, [c, t, dailyQuestion.date, setDailyQuestion]);
 
+  // Pytanie dnia + kolejne pytania: po dobrej odpowiedzi szybko nastepne, po zlej po chwili (czas na wyjasnienie)
+  const [extraId, setExtraId] = useState<string | null>(null);
+  const [round, setRound] = useState(0);
+  const [nextIn, setNextIn] = useState<{ until: number; total: number } | null>(null);
+  const [, force] = useState(0);
+  const currentId = extraId ?? dailyQuestion.id;
   const dq = useMemo(() => {
-    const q = c?.questions.find((x) => x.id === dailyQuestion.id);
+    const q = c?.questions.find((x) => x.id === currentId);
     return q ? shuffleQuestion(q) : null;
-  }, [c, dailyQuestion.id]);
-  const before = dailyQuestion.id ? qstats[dailyQuestion.id]?.seen ?? 0 : 0;
+  }, [c, currentId, round]); // eslint-disable-line react-hooks/exhaustive-deps
+  const goNext = () => {
+    if (!c) return;
+    const pool = c.questions.filter((x) => x.id !== currentId && !(useStore.getState().qstats[x.id]?.seen));
+    const src = pool.length ? pool : c.questions;
+    setExtraId(src[Math.floor(Math.random() * src.length)].id);
+    setRound((r) => r + 1);
+    setNextIn(null);
+  };
+  useEffect(() => {
+    if (!nextIn) return;
+    const t = setInterval(() => { if (Date.now() >= nextIn.until) goNext(); else force((x) => x + 1); }, 100);
+    return () => clearInterval(t);
+  }, [nextIn]); // eslint-disable-line react-hooks/exhaustive-deps
+  const onAnswered = (ok: boolean) => {
+    if (!extraId && !dailyQuestion.done) { setDailyQuestion({ ...dailyQuestion, done: true }); addXp(5); }
+    const total = ok ? 1600 : 9000;
+    setNextIn({ until: Date.now() + total, total });
+  };
 
   const suggested = useMemo(() => {
     if (!c) return null;
@@ -97,10 +120,16 @@ export default function Today() {
       </div>
 
       <section className="mt-4">
-        <div className="mb-2 flex items-center gap-2"><Sparkles size={16} className="text-accent" /><h2 className="text-lg font-bold">Pytanie dnia</h2>{!dailyQuestion.done && <span className="mono rounded-full bg-accent-soft px-2 text-xs text-accent">+5 XP</span>}</div>
+        <div className="mb-2 flex items-center gap-2"><Sparkles size={16} className="text-accent" /><h2 className="text-lg font-bold">{extraId ? 'Kolejne pytanie' : 'Pytanie dnia'}</h2>{!dailyQuestion.done && <span className="mono rounded-full bg-accent-soft px-2 text-xs text-accent">+5 XP</span>}{round > 0 && <span className="mono text-xs text-muted">seria: {round}</span>}</div>
         {dq && (
-          <div className="card p-5 md:p-6" onClickCapture={() => { if (!dailyQuestion.done) setTimeout(() => { const s = useStore.getState(); if ((s.qstats[dq.id]?.seen ?? 0) > before) { s.setDailyQuestion({ ...s.dailyQuestion, done: true }); addXp(5); } }, 0); }}>
-            <SingleQuestion q={dq} compact key={dq.id} />
+          <div className="card relative overflow-hidden p-5 md:p-6">
+            <SingleQuestion q={dq} compact key={dq.id + round} onAnswered={onAnswered} />
+            {nextIn && (
+              <div className="mt-4 flex items-center gap-3">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><div className="h-full bg-accent" style={{ width: `${Math.min(100, (1 - (nextIn.until - Date.now()) / nextIn.total) * 100)}%` }} /></div>
+                <button className="btn btn-dark px-3 py-1.5 text-sm" onClick={goNext}>Następne teraz</button>
+              </div>
+            )}
           </div>
         )}
       </section>

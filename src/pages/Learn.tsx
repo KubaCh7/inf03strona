@@ -1,7 +1,12 @@
 import { lazy, Suspense, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ArrowLeft, ArrowRight, Check, Lightbulb, Lock, Play, X } from 'lucide-react';
-import { PRACTICE, TOPICS, type PracticeTask, type Topic } from '../data/practice';
+import { ArrowLeft, ArrowRight, Check, Eye, HelpCircle, Lightbulb, Lock, Play, X } from 'lucide-react';
+import { PRACTICE, SECTIONS, TOPICS, type PracticeTask, type Topic } from '../data/practice';
+
+export function orderedTasks(topic: PracticeTask['topic']) {
+  const secs = SECTIONS[topic];
+  return PRACTICE.filter((p) => p.topic === topic).sort((a, b) => secs.indexOf(a.section) - secs.indexOf(b.section) || a.difficulty - b.difficulty);
+}
 import { useQueries, DIFF_LABEL } from '../lib/queries';
 import { useContent } from '../lib/data';
 import { useStore } from '../lib/store';
@@ -12,7 +17,7 @@ import { DifficultyBar, Loading, PageHeader, Progress } from '../components/ui';
 const Editor = lazy(() => import('../components/Editor'));
 const LEVELS = [[1, 2, 'Rozgrzewka'], [3, 4, 'Łatwe'], [5, 6, 'Średnie'], [7, 8, 'Trudne'], [9, 10, 'Egzaminacyjne']] as const;
 
-type Item = { key: string; title: string; difficulty: number; done: boolean; to: string; sub?: string };
+type Item = { key: string; title: string; difficulty: number; done: boolean; to: string; sub?: string; section?: string };
 
 function useLadder(topic: Topic): Item[] | null {
   const q = useQueries();
@@ -27,8 +32,7 @@ function useLadder(topic: Topic): Item[] | null {
       to: `/kwerendy/${encodeURIComponent(s.code)}?n=${t.n}&z=nauka`, sub: `${titles.get(s.code) ?? s.code} · zapytanie ${t.n}`,
     }))).sort((a, b) => a.difficulty - b.difficulty || a.key.localeCompare(b.key));
   }
-  return PRACTICE.filter((p) => p.topic === topic).sort((a, b) => a.difficulty - b.difficulty)
-    .map((p) => ({ key: p.id, title: p.title, difficulty: p.difficulty, done: !!practice[p.id]?.ok, to: `/nauka/${topic}/${p.id}`, sub: p.prompt }));
+  return orderedTasks(topic).map((p) => ({ key: p.id, title: p.title, difficulty: p.difficulty, done: !!practice[p.id]?.ok, to: `/nauka/${topic}/${p.id}`, sub: p.prompt, section: p.section }));
 }
 
 export default function Learn() {
@@ -76,17 +80,21 @@ export function LearnTopic() {
     <div className="max-w-4xl">
       <Link to="/nauka" className="mb-3 inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} />Nauka</Link>
       <PageHeader eyebrow={`${items.length} zadań · ${done} zrobionych`} title={<span style={{ color: info.color }}>{info.name}</span>} right={next && <button className="btn btn-primary" onClick={() => nav(next.to)}>Następne zadanie <ArrowRight size={16} /></button>}>
-        {topic === 'sql' ? 'Prawdziwe kwerendy z arkuszy CKE, posortowane od najprostszego SELECT-a do złączeń z grupowaniem.' : 'Krótkie zadania z automatycznym sprawdzaniem, od rozgrzewki do poziomu egzaminu.'}
+        {topic === 'sql' ? 'Prawdziwe kwerendy z arkuszy CKE, posortowane od najprostszego SELECT-a do złączeń z grupowaniem.' : 'Podpunkty od podstaw do poziomu egzaminu. Każde zadanie ma wyjaśnienie i gotowe rozwiązanie, gdy utkniesz.'}
       </PageHeader>
       <Progress value={done / items.length} className="mb-4" />
+      {topic !== 'sql' && (
+        <div className="mb-4 flex flex-wrap gap-1.5">
+          {SECTIONS[topic as PracticeTask['topic']].map((sec) => { const all = items.filter((i) => i.section === sec); const d = all.filter((i) => i.done).length; return <a key={sec} href={`#${encodeURIComponent(sec)}`} className={`chip !text-xs ${d === all.length ? '!border-success !text-success' : ''}`}>{sec} <span className="mono opacity-60">{d}/{all.length}</span></a>; })}
+        </div>
+      )}
       <label className="mb-4 flex items-center gap-2 text-sm"><input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} className="accent-[var(--accent)]" />Pokaż zrobione</label>
-      {LEVELS.map(([lo, hi, name]) => {
-        const lvl = items.filter((i) => i.difficulty >= lo && i.difficulty <= hi);
+      {(topic === 'sql' ? LEVELS.map(([lo, hi, name]) => ({ name, lvl: items.filter((i) => i.difficulty >= lo && i.difficulty <= hi) })) : SECTIONS[topic as PracticeTask['topic']].map((name) => ({ name, lvl: items.filter((i) => i.section === name) }))).map(({ name, lvl }) => {
         if (!lvl.length) return null;
         const vis = showDone ? lvl : lvl.filter((i) => !i.done);
         const lvlDone = lvl.filter((i) => i.done).length;
         return (
-          <section key={name} className="mb-6">
+          <section key={name} id={encodeURIComponent(name)} className="mb-6 scroll-mt-20">
             <div className="mb-2 flex items-center gap-3"><h2 className="text-xl font-bold">{name}</h2><span className="mono text-xs text-muted">{lvlDone}/{lvl.length}</span><span className="h-px flex-1 bg-line" /></div>
             <div className="grid gap-2">
               {vis.slice(0, topic === 'sql' ? 60 : 99).map((i) => (
@@ -122,10 +130,13 @@ function PracticeRunnerInner() {
   const [active, setActive] = useState(() => Object.keys(task?.starter ?? { x: '' }).find((f) => f !== 'index.html') ?? 'index.html');
   const [results, setResults] = useState<CheckResult[] | null>(null);
   const [hint, setHint] = useState(false);
+  const [explain, setExplain] = useState(false);
+  const [showSol, setShowSol] = useState(false);
   if (!task) return <div className="card p-8">Nie ma takiego zadania. <Link className="underline" to="/nauka">Wróć</Link></div>;
-  const ladder = PRACTICE.filter((p) => p.topic === task.topic).sort((a, b) => a.difficulty - b.difficulty);
+  const ladder = orderedTasks(task.topic);
   const idx = ladder.findIndex((p) => p.id === id);
   const next = ladder.slice(idx + 1).find((p) => !allPractice[p.id]?.ok) ?? ladder[idx + 1];
+  const prev = ladder[idx - 1];
   const update = (v: string) => { const n = { ...files, [active]: v }; setFiles(n); savePractice(task.id, { files: n }); };
   async function check() {
     const r = await runLessonChecks(task!.checks, files);
@@ -141,12 +152,33 @@ function PracticeRunnerInner() {
       <div className="grid gap-5 xl:grid-cols-[minmax(0,380px)_1fr]">
         <aside className="space-y-3">
           <div className="card p-5">
-            <div className="flex items-center gap-2"><span className="mono rounded-md px-2 py-0.5 text-xs font-bold text-white" style={{ background: topicInfo.color }}>{topicInfo.name}</span><span className="text-xs text-muted">zadanie {idx + 1} z {ladder.length}</span>{saved?.ok && <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-success"><Check size={14} />zrobione</span>}</div>
+            <div className="flex items-center gap-2"><span className="mono rounded-md px-2 py-0.5 text-xs font-bold text-white" style={{ background: topicInfo.color }}>{topicInfo.name}</span><span className="text-xs text-muted">{task.section} · {idx + 1}/{ladder.length}</span>{saved?.ok && <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-success"><Check size={14} />zrobione</span>}</div>
             <h1 className="mt-3 text-2xl font-extrabold">{task.title}</h1>
             <p className="mt-2 leading-relaxed">{task.prompt}</p>
             <div className="mt-3"><DifficultyBar score={task.difficulty} size="sm" /><p className="mt-1 text-xs text-muted">{DIFF_LABEL(task.difficulty)}</p></div>
-            {task.hint && (hint ? <p className="mt-3 rounded-lg bg-info-soft p-2 text-sm">{task.hint}</p> : <button className="mt-3 inline-flex items-center gap-1 text-sm text-info" onClick={() => setHint(true)}><Lightbulb size={14} />Podpowiedź</button>)}
+            {task.hint && (hint ? <p className="mt-3 rounded-lg bg-info-soft p-2 text-sm">{task.hint}</p> : <button className="mt-3 mr-3 inline-flex items-center gap-1 text-sm text-info" onClick={() => setHint(true)}><Lightbulb size={14} />Podpowiedź</button>)}
+            {!explain && <button className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-accent" onClick={() => setExplain(true)}><HelpCircle size={14} />Nie wiem, wyjaśnij</button>}
           </div>
+          {explain && (
+            <div className="card pop space-y-3 border-info/40 p-5" style={{ background: 'var(--info-soft)' }}>
+              <p className="eyebrow !text-info">Wyjaśnienie</p>
+              <p className="leading-relaxed">{task.explain}</p>
+              {!showSol ? (
+                <button className="btn btn-ghost w-full" onClick={() => setShowSol(true)}><Eye size={16} />Pokaż rozwiązanie z kodem</button>
+              ) : (
+                <div className="space-y-2">
+                  {Object.entries(task.solution).filter(([f, v]) => v !== task.starter[f] || f !== 'index.html').map(([f, v]) => (
+                    <div key={f}>
+                      <p className="mono mb-1 text-xs text-muted">{f}</p>
+                      <pre className="mono max-h-72 overflow-auto whitespace-pre rounded-lg bg-ink p-3 text-[12.5px] leading-relaxed text-bg">{v}</pre>
+                    </div>
+                  ))}
+                  <button className="btn btn-dark w-full" onClick={() => { setFiles({ ...task.solution }); setResults(null); savePractice(task.id, { files: task.solution }); }}>Wstaw rozwiązanie do edytora</button>
+                  <p className="text-xs text-muted">Najlepiej przepisz je sam albo zmień coś i zobacz efekt w podglądzie. Samo wklejenie niewiele uczy.</p>
+                </div>
+              )}
+            </div>
+          )}
           {results && (
             <ul className="card pop divide-y divide-line p-2">
               {results.map((r) => <li key={r.label} className="flex items-start gap-2 p-2 text-sm">{r.ok ? <Check size={18} className="shrink-0 text-success" /> : <X size={18} className="shrink-0 text-danger" />}<span>{r.label}</span></li>)}
@@ -154,10 +186,12 @@ function PracticeRunnerInner() {
           )}
           {ok && <p className="pop rounded-xl bg-success-soft p-3 font-bold text-success">Zaliczone! +10 XP</p>}
           <div className="flex flex-wrap gap-2">
+            {prev && <button className="btn btn-ghost" onClick={() => nav(`/nauka/${topic}/${prev.id}`)} title={prev.title}><ArrowLeft size={16} />Wróć</button>}
             <button className="btn btn-primary" onClick={check}><Play size={16} />Sprawdź</button>
-            <button className="btn btn-ghost" onClick={() => { setFiles(task.starter); setResults(null); }}>Reset</button>
+            <button className="btn btn-ghost" onClick={() => { if (confirm('Wyczyścić Twój kod w tym zadaniu?')) { setFiles(task.starter); setResults(null); } }}>Reset</button>
             {next && <button className="btn btn-dark" onClick={() => { setResults(null); nav(`/nauka/${topic}/${next.id}`); }}>Następne <ArrowRight size={16} /></button>}
           </div>
+          {results && !ok && !explain && <button className="text-sm text-accent underline" onClick={() => setExplain(true)}>Nie wychodzi? Zobacz wyjaśnienie i rozwiązanie</button>}
           {task.mode === 'php' && <p className="text-xs text-muted"><Lock size={11} className="mr-1 inline" />PHP nie działa w przeglądarce, więc sprawdzamy kod (czy są wymagane konstrukcje). Przepisz go potem w XAMPP.</p>}
         </aside>
         <section className="min-w-0">

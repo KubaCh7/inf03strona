@@ -7,18 +7,19 @@ import { pick, shuffleQuestion, type Shuffled } from '../lib/random';
 import { newTheory, THEORY_COUNT } from '../lib/exam';
 import { Loading, PageHeader } from '../components/ui';
 import type { Category, Question } from '../lib/types';
+import { QuestionBody, answerLabel } from '../components/QuestionBody';
 
 const CATS: Category[] = ['strony', 'bazy', 'aplikacje', 'podstawy', 'bhp', 'angielski', 'kompetencje'];
 const DOT: Record<string, string> = { strony: 'bg-html', bazy: 'bg-sql', aplikacje: 'bg-php', podstawy: 'bg-css', bhp: 'bg-danger', angielski: 'bg-js', kompetencje: 'bg-info' };
 
-export function SingleQuestion({ q, onNext, compact }: { q: Shuffled; onNext?: () => void; compact?: boolean }) {
+export function SingleQuestion({ q, onNext, compact, onAnswered }: { q: Shuffled; onNext?: () => void; compact?: boolean; onAnswered?: (ok: boolean) => void }) {
   const recordAnswer = useStore((s) => s.recordAnswer);
   const [chosen, setChosen] = useState<number | null>(null);
   const done = chosen !== null;
   return (
     <div className={compact ? '' : 'card pop p-5 md:p-7'}>
       <p className="eyebrow mb-2">{CATEGORY_LABEL[q.category]}</p>
-      <h3 className="text-lg font-bold leading-snug md:text-xl" style={{ fontFamily: 'var(--font-sans)', letterSpacing: 0 }}>{q.text}</h3>
+      <QuestionBody q={q} size="md" />
       <div className="mt-4 grid gap-2">
         {q.answers.map((a, k) => {
           const ok = k === q.correct;
@@ -26,10 +27,10 @@ export function SingleQuestion({ q, onNext, compact }: { q: Shuffled; onNext?: (
           if (done && ok) cls = 'border-success bg-success-soft';
           else if (done && k === chosen) cls = 'border-danger bg-danger-soft';
           return (
-            <button key={k} disabled={done} onClick={() => { setChosen(k); recordAnswer(q.id, ok); }}
+            <button key={k} disabled={done} onClick={() => { setChosen(k); recordAnswer(q.id, ok); onAnswered?.(ok); }}
               className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${cls}`}>
               <span className="mono grid h-7 w-7 shrink-0 place-items-center rounded-md border border-line text-sm font-semibold">{'ABCD'[k]}</span>
-              <code className="whitespace-pre-wrap font-[inherit]">{a}</code>
+              <code className="whitespace-pre-wrap font-[inherit]">{answerLabel(q, a, q.order[k])}</code>
               {done && ok && <Check size={18} className="ml-auto text-success" />}
               {done && k === chosen && !ok && <X size={18} className="ml-auto text-danger" />}
             </button>
@@ -39,7 +40,7 @@ export function SingleQuestion({ q, onNext, compact }: { q: Shuffled; onNext?: (
       {done && (
         <div className="pop mt-4 rounded-xl bg-surface-2 p-4 text-sm">
           <p className={`font-bold ${chosen === q.correct ? 'text-success' : 'text-danger'}`}>{chosen === q.correct ? 'Dobrze! +2 XP' : 'Niestety nie.'}</p>
-          {q.explanation && <p className="mt-1">{q.explanation}</p>}
+          {q.explanation ? <p className="mt-1">{q.explanation}</p> : chosen !== q.correct && <p className="mt-1">Poprawna odpowiedź: <b>{'ABCD'[q.correct]}. {answerLabel(q, q.answers[q.correct], q.order[q.correct])}</b></p>}
         </div>
       )}
       {done && onNext && <button className="btn btn-dark mt-4" onClick={onNext}>Następne pytanie <ArrowRight size={16} /></button>}

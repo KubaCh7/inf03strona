@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Flag, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
 import type { Question } from '../lib/types';
 import { CATEGORY_LABEL } from '../lib/data';
+import { QuestionBody, answerLabel } from './QuestionBody';
 import { mmss } from '../lib/time';
 
 export type TheoryState = { questionIds: string[]; order: number[][]; answers: (number | null)[]; startedAt: number; durationMs: number; finishedAt?: number; score?: number };
@@ -64,7 +65,7 @@ export default function TheoryTest({ state, questions, onChange, onFinish }: {
 
   const q = byId.get(state.questionIds[i]);
   if (!q) return null;
-  const answers = state.order[i].map((k) => q.answers[k]);
+  const answers = state.order[i].map((k) => answerLabel(q, q.answers[k], k));
   const chosen = state.answers[i];
   const answered = state.answers.filter((a) => a !== null).length;
 
@@ -86,7 +87,7 @@ export default function TheoryTest({ state, questions, onChange, onFinish }: {
             </button>
           )}
         </div>
-        <h2 className="text-xl font-bold leading-snug md:text-2xl" style={{ fontFamily: 'var(--font-sans)', letterSpacing: 0 }}>{q.text}</h2>
+        <QuestionBody q={q} />
         <div className="mt-5 grid gap-2.5" role="radiogroup">
           {answers.map((a, k) => {
             const isCorrect = state.order[i][k] === q.correct;

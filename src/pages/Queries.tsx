@@ -84,6 +84,12 @@ export function QuerySheet() {
   const idx = ladder.findIndex((x) => x.s.code === code && x.t.n === task.n);
   const nextLadder = ladder.slice(idx + 1).find((x) => !done[`${x.s.code}#${x.t.n}`]?.ok);
   const nextInSheet = sheet.tasks.find((t) => t.n > task.n);
+  const prevInSheet = [...sheet.tasks].reverse().find((t) => t.n < task.n);
+  const prevLadder = idx > 0 ? ladder[idx - 1] : null;
+  const goPrev = () => {
+    if (fromLadder && prevLadder) nav(`/kwerendy/${encodeURIComponent(prevLadder.s.code)}?n=${prevLadder.t.n}&z=nauka`);
+    else if (prevInSheet) setSp({ n: String(prevInSheet.n) });
+  };
   const goNext = () => {
     if (fromLadder && nextLadder) nav(`/kwerendy/${encodeURIComponent(nextLadder.s.code)}?n=${nextLadder.t.n}&z=nauka`);
     else if (nextInSheet) setSp({ n: String(nextInSheet.n) });
@@ -107,9 +113,10 @@ export function QuerySheet() {
         </div>
       </div>
       <QueryRunner sheet={sheet} task={task} />
-      {(nextInSheet || (fromLadder && nextLadder)) && (
-        <div className="mt-4 flex justify-end"><button className="btn btn-dark" onClick={goNext}>{fromLadder ? 'Następne zadanie' : `Zapytanie ${nextInSheet!.n}`}<ArrowRight size={16} /></button></div>
-      )}
+      <div className="mt-4 flex justify-between gap-2">
+        {(fromLadder ? prevLadder : prevInSheet) ? <button className="btn btn-ghost" onClick={goPrev}><ArrowLeft size={16} />Wróć</button> : <span />}
+        {(nextInSheet || (fromLadder && nextLadder)) && <button className="btn btn-dark" onClick={goNext}>{fromLadder ? 'Następne zadanie' : `Zapytanie ${nextInSheet!.n}`}<ArrowRight size={16} /></button>}
+      </div>
     </div>
   );
 }
