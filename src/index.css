@@ -203,22 +203,24 @@ h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: -0.02em
 .cm-editor .cm-completionIcon-constant, .cm-editor .cm-completionIcon-enum { color: #4fc1ff; --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Crect x='4' y='4' width='16' height='16' rx='3'/%3E%3C/svg%3E"); }
 .cm-editor .cm-tooltip-autocomplete .cm-completionInfo { background: #1f2329; color: #c9d1d9; border: 1px solid #2f343c; border-radius: 8px; }
 
-/* ===== Zlota oprawa: Proba egzaminu ===== */
-:root { --gold-1: #F6E27A; --gold-2: #D4A93A; --gold-3: #9C6F14; --gold-ink: #3B2A05; --gold-soft: #FBF3D6; }
-.dark { --gold-soft: #2E2510; --gold-ink: #FFF4CC; }
+/* ===== Zielona oprawa: Proba egzaminu (klasy gold-* zostaly z historii, kolory sa zielone) ===== */
+:root { --gold-1: #8FD9A8; --gold-2: #2F9E5B; --gold-3: #1E6B3C; --gold-ink: #FFFFFF; --gold-soft: #E3F4E8; }
+.dark { --gold-1: #7FD49C; --gold-2: #3DBA6E; --gold-3: #2A8A51; --gold-soft: #15291C; --gold-ink: #0B1F12; }
 .gold-frame { position: relative; border: 1.5px solid transparent; border-radius: var(--radius-card);
   background: linear-gradient(var(--surface), var(--surface)) padding-box,
               linear-gradient(135deg, var(--gold-1), var(--gold-2) 35%, var(--gold-3) 60%, var(--gold-1) 85%, var(--gold-2)) border-box;
-  box-shadow: 0 10px 34px -18px rgba(156, 111, 20, .55); }
+  box-shadow: 0 10px 34px -18px rgba(30, 107, 60, .5); }
 .gold-frame-soft { background: linear-gradient(160deg, var(--gold-soft), var(--surface) 55%) padding-box,
               linear-gradient(135deg, var(--gold-1), var(--gold-2) 35%, var(--gold-3) 60%, var(--gold-1) 85%, var(--gold-2)) border-box; }
-.gold-text { background: linear-gradient(100deg, var(--gold-3), var(--gold-2) 30%, #E9C75A 50%, var(--gold-2) 70%, var(--gold-3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.dark .gold-text { background-image: linear-gradient(100deg, var(--gold-2), var(--gold-1) 45%, #fff3c2 55%, var(--gold-2)); }
-.btn-gold { color: var(--gold-ink); background: linear-gradient(135deg, var(--gold-1), var(--gold-2) 55%, #C9962A); box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 6px 18px -8px rgba(156,111,20,.7); }
-.dark .btn-gold { color: #2A1D02; }
+.gold-text { background: linear-gradient(100deg, var(--gold-3), var(--gold-2) 45%, var(--gold-3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.dark .gold-text { background-image: linear-gradient(100deg, var(--gold-2), var(--gold-1) 50%, var(--gold-2)); }
+.btn-gold { color: #fff; background: linear-gradient(135deg, var(--gold-2), var(--gold-3)); box-shadow: 0 6px 18px -8px rgba(30,107,60,.7); }
+.dark .btn-gold { color: #0B1F12; background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); }
 .btn-gold:hover { filter: brightness(1.06); }
-.gold-chip { background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); color: #2A1D02; }
+.gold-chip { background: var(--gold-soft); color: var(--gold-3); border: 1px solid color-mix(in oklab, var(--gold-2) 35%, transparent); }
+.dark .gold-chip { color: var(--gold-1); }
 .gold-shine { position: relative; overflow: hidden; }
-.gold-shine::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.45) 50%, transparent 65%); transform: translateX(-120%); animation: shine 4.5s ease-in-out infinite; pointer-events: none; }
+.gold-shine::after { display: none; content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.45) 50%, transparent 65%); transform: translateX(-120%); animation: shine 4.5s ease-in-out infinite; pointer-events: none; }
 @keyframes shine { 0%, 60% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
-.nav-gold { background: linear-gradient(135deg, var(--gold-1), var(--gold-2) 60%, #C9962A); color: #2A1D02 !important; font-weight: 700; }
+.nav-gold { background: var(--gold-soft); color: var(--gold-3) !important; font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--gold-2); }
+.dark .nav-gold { color: var(--gold-1) !important; }

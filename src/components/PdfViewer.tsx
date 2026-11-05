@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, Minus, Plus } from 'lucide-react';
 import { Loading } from './ui';
+import ErrorBoundary from './ErrorBoundary';
 
 type PdfDoc = { numPages: number; getPage: (n: number) => Promise<PdfPage>; destroy: () => void };
-type PdfPage = { getViewport: (o: { scale: number }) => { width: number; height: number }; render: (o: { canvasContext: CanvasRenderingContext2D; viewport: unknown; canvas?: HTMLCanvasElement }) => { promise: Promise<void> } };
+type RenderTask = { promise: Promise<void>; cancel: () => void };
+type PdfPage = { getViewport: (o: { scale: number }) => { width: number; height: number }; render: (o: { canvasContext: CanvasRenderingContext2D; viewport: unknown; canvas?: HTMLCanvasElement }) => RenderTask };
 
+// Wersja "legacy" pdf.js: przetlumaczona dla starszych przegladarek (Safari na iPadzie/iPhonie).
 let lib: Promise<typeof import('pdfjs-dist')> | null = null;
 function pdfjs() {
   if (!lib) {
-    lib = Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')]).then(([m, w]) => {
-      m.GlobalWorkerOptions.workerSrc = w.default;
-      return m;
+    lib = import('../lib/polyfills').then(() => import('pdfjs-dist/legacy/build/pdf.mjs')).then((m) => {
+      m.GlobalWorkerOptions.workerPort = new Worker(new URL('../lib/pdf-worker.ts', import.meta.url), { type: 'module' });
+      return m as unknown as typeof import('pdfjs-dist');
     });
+    lib.catch(() => { lib = null; });
   }
   return lib;
 }
@@ -19,6 +23,7 @@ function pdfjs() {
 /** Ostra strona PDF: renderowana w rozdzielczosci ekranu (devicePixelRatio), dopiero gdy jest widoczna. */
 function Page({ doc, n, width, zoom }: { doc: PdfDoc; n: number; width: number; zoom: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const task = useRef<RenderTask | null>(null);
   const [visible, setVisible] = useState(n <= 2);
   const [ratio, setRatio] = useState(1.414);
   useEffect(() => {
@@ -31,7 +36,10 @@ function Page({ doc, n, width, zoom }: { doc: PdfDoc; n: number; width: number; 
   useEffect(() => {
     if (!visible || !width) return;
     let cancelled = false;
-    doc.getPage(n).then((page) => {
+    const t = setTimeout(() => doc.getPage(n).then(async (page) => {
+      if (cancelled || !ref.current) return;
+      // pdf.js nie pozwala rysowac na tym samym canvasie dwa razy naraz
+      if (task.current) { task.current.cancel(); await task.current.promise.catch(() => {}); task.current = null; }
       if (cancelled || !ref.current) return;
       const base = page.getViewport({ scale: 1 });
       setRatio(base.height / base.width);
@@ -43,15 +51,19 @@ function Page({ doc, n, width, zoom }: { doc: PdfDoc; n: number; width: number; 
       c.height = Math.floor(vp.height);
       c.style.width = `${cssW}px`;
       c.style.height = `${(cssW * base.height) / base.width}px`;
-      const ctx = c.getContext('2d')!;
-      page.render({ canvasContext: ctx, viewport: vp, canvas: c });
-    });
-    return () => { cancelled = true; };
+      const ctx = c.getContext('2d');
+      if (!ctx) return;
+      const rt = page.render({ canvasContext: ctx, viewport: vp, canvas: c });
+      task.current = rt;
+      await rt.promise.catch(() => {});
+      if (task.current === rt) task.current = null;
+    }).catch(() => {}), 60);
+    return () => { cancelled = true; clearTimeout(t); task.current?.cancel(); };
   }, [doc, n, width, zoom, visible]);
   return <canvas ref={ref} className="mx-auto block rounded-md bg-white shadow-sm" style={{ width: width * zoom, height: width * zoom * ratio }} aria-label={`Strona ${n}`} />;
 }
 
-export default function PdfViewer({ url, fallback, className = '' }: { url: string; fallback: string; className?: string }) {
+function PdfViewerInner({ url, fallback, className = '' }: { url: string; fallback: string; className?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState<PdfDoc | null>(null);
   const [err, setErr] = useState(false);
@@ -65,7 +77,7 @@ export default function PdfViewer({ url, fallback, className = '' }: { url: stri
     pdfjs()
       .then((m) => m.getDocument({ url }).promise)
       .then((d) => { loaded = d as unknown as PdfDoc; if (on) setDoc(loaded); })
-      .catch(() => on && setErr(true));
+      .catch((e) => { console.warn('PDF:', e); if (on) setErr(true); });
     return () => { on = false; loaded?.destroy(); };
   }, [url]);
   useEffect(() => {
@@ -96,5 +108,17 @@ export default function PdfViewer({ url, fallback, className = '' }: { url: stri
         )}
       </div>
     </div>
+  );
+}
+
+export default function PdfViewer(props: { url: string; fallback: string; className?: string }) {
+  return (
+    <ErrorBoundary resetKey={props.url} fallback={
+      <div className={`card grid place-items-center p-8 text-center ${props.className ?? ''}`}>
+        <div><p className="font-bold">Ta przeglądarka nie pokazała arkusza w stronie.</p><a className="btn btn-dark mt-3" href={props.fallback} target="_blank" rel="noreferrer">Otwórz PDF w nowej karcie <ExternalLink size={15} /></a></div>
+      </div>
+    }>
+      <PdfViewerInner {...props} />
+    </ErrorBoundary>
   );
 }

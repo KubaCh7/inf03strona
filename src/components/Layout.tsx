@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import {
-  BookOpen, CalendarCheck, Crown, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info,
+  BookOpen, CalendarCheck, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info,
 } from 'lucide-react';
 import { levelInfo, liveStreak, useStore, weekMinutes } from '../lib/store';
 import { isDue } from '../lib/fsrs';
@@ -9,6 +9,7 @@ import { useContent } from '../lib/data';
 import { LESSONS } from '../data/lessons';
 import { Logo, Progress } from './ui';
 import Tour, { useTour } from './Tour';
+import ErrorBoundary from './ErrorBoundary';
 
 const NAV = [
   { group: 'Nauka', items: [
@@ -23,7 +24,7 @@ const NAV = [
     { to: '/minigry', label: 'Minigry', icon: Gamepad2 },
   ] },
   { group: 'Egzamin', items: [
-    { to: '/proba', label: 'Próba egzaminu', icon: Crown, gold: true },
+    { to: '/proba', label: 'Próba egzaminu', icon: Timer, gold: true },
     { to: '/warsztat', label: 'Warsztat', icon: Code2 },
     { to: '/sprawdzarka', label: 'Sprawdzarka', icon: ShieldCheck },
   ] },
@@ -192,7 +193,7 @@ export default function Layout() {
 
       <div className="md:pl-60">
         <div className={`mx-auto flex gap-8 px-4 pt-5 md:px-8 md:pt-8 ${wide ? 'max-w-[1600px]' : 'max-w-7xl'}`}>
-          <main className="pb-safe min-w-0 flex-1"><Outlet /></main>
+          <main className="pb-safe min-w-0 flex-1"><ErrorBoundary resetKey={loc.pathname}><Outlet /></ErrorBoundary></main>
           {!wide && <aside className="hidden w-72 shrink-0 xl:block"><div className="sticky top-8"><RightPanel /></div></aside>}
         </div>
       </div>

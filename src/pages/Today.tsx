@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router';
-import { ArrowRight, Crown, Layers, Sparkles, FileText, Map, Zap } from 'lucide-react';
+import { ArrowRight, Layers, Sparkles, FileText, Map, Timer, Zap } from 'lucide-react';
 import { useContent } from '../lib/data';
 import { levelInfo, liveStreak, useStore } from '../lib/store';
 import { isDue } from '../lib/fsrs';
@@ -106,7 +106,7 @@ export default function Today() {
       </section>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <Link to="/proba" className="gold-frame gold-frame-soft card-hover flex items-center gap-4 p-5"><Crown className="text-[var(--gold-3)]" /><div className="flex-1"><p className="font-bold gold-text">Próba egzaminu</p><p className="text-sm text-muted">Teoria 60 min + praktyka 150 min</p></div><ArrowRight size={18} /></Link>
+        <Link to="/proba" className="gold-frame gold-frame-soft card-hover flex items-center gap-4 p-5"><Timer className="text-[var(--gold-2)]" /><div className="flex-1"><p className="font-bold gold-text">Próba egzaminu</p><p className="text-sm text-muted">Teoria 60 min + praktyka 150 min</p></div><ArrowRight size={18} /></Link>
         <Link to="/sprint" className="card card-hover flex items-center gap-4 p-5"><Zap className="text-js" /><div className="flex-1"><p className="font-bold">Sprint 5 minut</p><p className="text-sm text-muted">Ile pytań zdążysz? 3 błędy kończą.</p></div><ArrowRight size={18} /></Link>
       </div>
 

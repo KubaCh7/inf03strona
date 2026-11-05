@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { BookOpen, Crown, MonitorSmartphone, Trophy, ArrowRight, RotateCcw } from 'lucide-react';
+import { BookOpen, MonitorSmartphone, Trophy, ArrowRight, RotateCcw } from 'lucide-react';
 import { useContent } from '../lib/data';
 import { useStore, type ActiveExam } from '../lib/store';
 import { newTheory, PRACTICE_MS, PRACTICE_PASS, THEORY_PASS } from '../lib/exam';
@@ -87,7 +87,7 @@ export default function Exam() {
         <section className="gold-frame gold-frame-soft gold-shine mb-6 overflow-hidden p-6 md:p-8">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="max-w-2xl">
-              <p className="eyebrow flex items-center gap-1.5 !text-[var(--gold-3)]"><Crown size={14} />Egzamin zawodowy INF.03 · symulacja</p>
+              <p className="eyebrow !text-[var(--gold-3)]">Egzamin zawodowy INF.03 · symulacja</p>
               <h1 className="mt-2 text-4xl font-extrabold md:text-6xl"><span className="gold-text">Próba egzaminu</span></h1>
               <p className="mt-3 text-[15px] leading-relaxed text-muted">Warunki jak na prawdziwym egzaminie: pytania losowane z bazy, czas liczony od startu, arkusz praktyczny z prawdziwej sesji CKE. Zegar działa dalej, nawet jak odświeżysz stronę.</p>
             </div>
@@ -166,7 +166,7 @@ export default function Exam() {
   return (
     <div className="max-w-3xl">
       <section className={`mb-5 p-6 text-center md:p-8 ${passed ? 'gold-frame gold-frame-soft gold-shine' : 'card'}`}>
-        {passed ? <Crown size={44} className="mx-auto text-[var(--gold-2)]" /> : <RotateCcw size={36} className="mx-auto text-muted" />}
+        {passed ? <Trophy size={40} className="mx-auto text-[var(--gold-2)]" /> : <RotateCcw size={36} className="mx-auto text-muted" />}
         <p className="eyebrow mt-3">Próba egzaminu zakończona</p>
         <h1 className={`mt-1 text-4xl font-extrabold ${passed ? 'gold-text' : ''}`}>{passed ? 'Zdane!' : 'Jeszcze nie tym razem'}</h1>
         <p className="mt-2 text-sm text-muted">{passed ? 'Tak trzymaj. To wynik treningowy, ale pokazuje, że jesteś gotowy.' : 'Zobacz, gdzie poszło gorzej, i spróbuj ponownie.'}</p>
