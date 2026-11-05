@@ -24,14 +24,14 @@ function Practice({ exam, onDone }: { exam: ActiveExam; onDone: (pct: number) =>
   const timeUp = left === 0;
   return (
     <div>
-      <div className="gold-frame gold-frame-soft sticky top-[60px] z-10 mb-4 flex flex-wrap items-center justify-between gap-3 p-4 md:top-4">
+      <div className="card sticky top-[60px] z-10 mb-4 flex flex-wrap items-center justify-between gap-3 p-4 md:top-4">
         <div className="min-w-0">
-          <p className="eyebrow flex items-center gap-1.5 !text-[var(--gold-3)]"><Crown size={13} />Próba egzaminu · część praktyczna · {sheet.code}</p>
+          <p className="eyebrow">Część praktyczna · {sheet.code}</p>
           <p className="display truncate text-xl font-bold">{sheet.title}</p>
         </div>
         <TimerBadge left={left} total={p.durationMs} />
         <div className="flex gap-1.5">
-          {(['kod', 'ocena'] as const).map((k) => <button key={k} className={`chip ${k === 'ocena' ? '!border-[var(--gold-2)]' : ''}`} aria-pressed={view === k} onClick={() => setView(k)}>{k === 'kod' ? 'Arkusz + warsztat' : 'Oddaję pracę'}</button>)}
+          {(['kod', 'ocena'] as const).map((k) => <button key={k} className="chip" aria-pressed={view === k} onClick={() => setView(k)}>{k === 'kod' ? 'Arkusz + warsztat' : 'Oddaję pracę'}</button>)}
         </div>
       </div>
       {timeUp && view !== 'ocena' && <p className="mb-4 rounded-xl bg-danger-soft p-3 text-sm font-bold text-danger">Czas minął. Przejdź do „Oddaję” i oceń pracę.</p>}
@@ -143,7 +143,7 @@ export default function Exam() {
     const done = !!t.finishedAt;
     return (
       <div>
-        <PageHeader eyebrow={exam.mode === 'full' ? 'Próba egzaminu · etap 1 z 2' : 'Próba egzaminu · część pisemna'} title={<span className="gold-text">{done ? `Wynik: ${t.score}/${t.questionIds.length}` : 'Część pisemna'}</span>}
+        <PageHeader eyebrow={exam.mode === 'full' ? 'Etap 1 z 2' : 'Test teorii'} title={done ? `Wynik: ${t.score}/${t.questionIds.length}` : 'Część pisemna'}
           right={done && (exam.mode === 'full' && !exam.practice ? (
             <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'practice', practice: { sheetCode: randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS } })}>Przejdź do praktyki <ArrowRight size={16} /></button>
           ) : (
