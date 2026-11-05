@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Crosshair, Blocks, Tags, ArrowLeft, Check, X, RotateCcw } from 'lucide-react';
+import { Crosshair, Blocks, Tags, ArrowLeft, Check, X, RotateCcw, Palette, Brain, Terminal, Bug, Box, TableProperties } from 'lucide-react';
+import { BoxGame, BugGame, HexGame, MemoryGame, OutputGame, QueryResultGame } from './games2';
 import { useStore } from '../lib/store';
 import { pick, shuffle } from '../lib/random';
 import { freshDb, run, sameResult } from '../lib/sql';
@@ -156,19 +157,33 @@ function SortGame({ onBack }: { onBack: () => void }) {
 }
 
 export default function Games() {
-  const [g, setG] = useState<null | 'sel' | 'sql' | 'sort'>(null);
-  if (g === 'sel') return <SelectorGame onBack={() => setG(null)} />;
-  if (g === 'sql') return <BlocksGame onBack={() => setG(null)} />;
-  if (g === 'sort') return <SortGame onBack={() => setG(null)} />;
+  type G = null | 'sel' | 'sql' | 'sort' | 'hex' | 'mem' | 'out' | 'bug' | 'box' | 'res';
+  const [g, setG] = useState<G>(null);
+  const back = () => setG(null);
+  if (g === 'sel') return <SelectorGame onBack={back} />;
+  if (g === 'sql') return <BlocksGame onBack={back} />;
+  if (g === 'sort') return <SortGame onBack={back} />;
+  if (g === 'hex') return <HexGame onBack={back} />;
+  if (g === 'mem') return <MemoryGame onBack={back} />;
+  if (g === 'out') return <OutputGame onBack={back} />;
+  if (g === 'bug') return <BugGame onBack={back} />;
+  if (g === 'box') return <BoxGame onBack={back} />;
+  if (g === 'res') return <QueryResultGame onBack={back} />;
   const GAMES = [
     { k: 'sel' as const, icon: Crosshair, t: 'Selektor', d: 'Dostajesz selektor CSS i drzewo HTML. Zaznacz wszystko, co trafia.', c: 'text-css' },
     { k: 'sql' as const, icon: Blocks, t: 'Kwerenda z klocków', d: 'Ułóż zapytanie z rozsypanych słów. Sprawdzamy wynik w prawdziwym SQLite.', c: 'text-sql' },
     { k: 'sort' as const, icon: Tags, t: 'Znacznik, atrybut czy CSS?', d: '60 sekund szybkiego sortowania pojęć. Najczęstsza pułapka w pytaniach.', c: 'text-js' },
+    { k: 'mem' as const, icon: Brain, t: 'Memory: pary pojęć', d: 'Odkrywaj karty i łącz funkcje, znaczniki i polecenia z ich znaczeniem.', c: 'text-info' },
+    { k: 'bug' as const, icon: Bug, t: 'Znajdź błąd', d: 'Kliknij linię z błędem w HTML, CSS, JS, PHP albo SQL. Jak na egzaminie, tylko szybciej.', c: 'text-danger' },
+    { k: 'out' as const, icon: Terminal, t: 'Co wypisze?', d: 'Przewiduj wynik krótkich skryptów JS i PHP. Pułapki z typami i priorytetami.', c: 'text-php' },
+    { k: 'res' as const, icon: TableProperties, t: 'Wynik kwerendy', d: 'Ile wierszy zwróci zapytanie? Policz w głowie, sprawdzamy w SQLite.', c: 'text-sql' },
+    { k: 'box' as const, icon: Box, t: 'Model pudełkowy', d: 'Licz szerokość elementu z width, padding, border i margin. content-box vs border-box.', c: 'text-css' },
+    { k: 'hex' as const, icon: Palette, t: 'Kolor HEX', d: 'Zgadnij kod #RRGGBB koloru. 10 rund.', c: 'text-accent' },
   ];
   return (
     <div>
       <PageHeader eyebrow="Nauka przez zabawę" title="Minigry">Krótkie gry na rzeczy, które najczęściej mylą się na egzaminie.</PageHeader>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {GAMES.map(({ k, icon: I, t, d, c }) => (
           <button key={k} className="card card-hover p-6 text-left" onClick={() => setG(k)}>
             <I size={36} className={c} strokeWidth={1.7} />

@@ -3,7 +3,8 @@ import { ExternalLink, Minus, Plus } from 'lucide-react';
 import { Loading } from './ui';
 import ErrorBoundary from './ErrorBoundary';
 
-type PdfDoc = { numPages: number; getPage: (n: number) => Promise<PdfPage>; destroy: () => void };
+type PdfDoc = { numPages: number; getPage: (n: number) => Promise<PdfPage> };
+type LoadingTask = { promise: Promise<unknown>; destroy?: () => unknown };
 type RenderTask = { promise: Promise<void>; cancel: () => void };
 type PdfPage = { getViewport: (o: { scale: number }) => { width: number; height: number }; render: (o: { canvasContext: CanvasRenderingContext2D; viewport: unknown; canvas?: HTMLCanvasElement }) => RenderTask };
 
@@ -72,13 +73,17 @@ function PdfViewerInner({ url, fallback, className = '' }: { url: string; fallba
 
   useEffect(() => {
     let on = true;
-    let loaded: PdfDoc | null = null;
+    let task: LoadingTask | null = null;
     setDoc(null); setErr(false);
     pdfjs()
-      .then((m) => m.getDocument({ url }).promise)
-      .then((d) => { loaded = d as unknown as PdfDoc; if (on) setDoc(loaded); })
+      .then((m) => { task = m.getDocument({ url }) as unknown as LoadingTask; return task.promise; })
+      .then((d) => { if (on) setDoc(d as PdfDoc); })
       .catch((e) => { console.warn('PDF:', e); if (on) setErr(true); });
-    return () => { on = false; loaded?.destroy(); };
+    return () => {
+      on = false;
+      // zwolnij pamiec dokumentu; nigdy nie rzucaj bledu przy zamykaniu
+      try { const r = (task as LoadingTask | null)?.destroy?.(); if (r instanceof Promise) r.catch(() => {}); } catch { /* ignore */ }
+    };
   }, [url]);
   useEffect(() => {
     const el = box.current;
