@@ -28,6 +28,10 @@ export default function SettingsPage() {
           <span><b>Nowe fiszki dziennie</b><span className="block text-sm text-muted">Ile nowych kart wchodzi do nauki każdego dnia.</span></span>
           <input type="number" min={0} max={100} className="input w-24" value={settings.newCardsPerDay} onChange={(e) => setSettings({ newCardsPerDay: Math.max(0, Number(e.target.value) || 0) })} />
         </label>
+        <div className="flex items-center justify-between gap-4 p-5">
+          <span><b>Samouczek</b><span className="block text-sm text-muted">Oprowadzenie po stronie: co gdzie jest.</span></span>
+          <button className="btn btn-ghost" onClick={() => setSettings({ tourDone: false })}>Pokaż ponownie</button>
+        </div>
         <label className="flex items-center justify-between gap-4 p-5">
           <span><b>Rozmiar czcionki edytora</b><span className="block text-sm text-muted">{settings.editorFont}px</span></span>
           <input type="range" min={11} max={20} value={settings.editorFont} onChange={(e) => setSettings({ editorFont: Number(e.target.value) })} className="accent-[var(--accent)]" />

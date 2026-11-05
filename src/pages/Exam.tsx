@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { BookOpen, MonitorSmartphone, Trophy, ArrowRight, RotateCcw, FileText, ExternalLink } from 'lucide-react';
+import { BookOpen, MonitorSmartphone, Trophy, ArrowRight, RotateCcw } from 'lucide-react';
 import { useContent } from '../lib/data';
 import { useStore, type ActiveExam } from '../lib/store';
 import { newTheory, PRACTICE_MS, PRACTICE_PASS, THEORY_PASS } from '../lib/exam';
@@ -9,17 +9,18 @@ import { Loading, PageHeader } from '../components/ui';
 import TheoryTest, { scoreTheory, TimerBadge, useCountdown, type TheoryState } from '../components/TheoryTest';
 import Workshop from '../components/Workshop';
 import SheetChecker from '../components/SheetChecker';
-import PdfViewer from '../components/PdfViewer';
 import { CATEGORY_LABEL } from '../lib/data';
 
 const uid = () => crypto.randomUUID?.() ?? String(Date.now());
 
 function Practice({ exam, onDone }: { exam: ActiveExam; onDone: (pct: number) => void }) {
-  const c = useContent()!;
+  const c = useContent();
   const p = exam.practice!;
-  const sheet = c.sheets.find((s) => s.code === p.sheetCode)!;
   const left = useCountdown(p.startedAt, p.durationMs, !!p.finishedAt);
-  const [view, setView] = useState<'pdf' | 'kod' | 'ocena'>('pdf');
+  const [view, setView] = useState<'kod' | 'ocena'>('kod');
+  if (!c) return <Loading />;
+  const sheet = c.sheets.find((s) => s.code === p.sheetCode);
+  if (!sheet) return <div className="card p-6">Nie znaleziono arkusza {p.sheetCode}.</div>;
   const timeUp = left === 0;
   return (
     <div>
@@ -30,17 +31,11 @@ function Practice({ exam, onDone }: { exam: ActiveExam; onDone: (pct: number) =>
         </div>
         <TimerBadge left={left} total={p.durationMs} />
         <div className="flex gap-1.5">
-          {(['pdf', 'kod', 'ocena'] as const).map((k) => <button key={k} className="chip" aria-pressed={view === k} onClick={() => setView(k)}>{k === 'pdf' ? 'Arkusz' : k === 'kod' ? 'Warsztat' : 'Oddaję'}</button>)}
+          {(['kod', 'ocena'] as const).map((k) => <button key={k} className="chip" aria-pressed={view === k} onClick={() => setView(k)}>{k === 'kod' ? 'Arkusz + warsztat' : 'Oddaję pracę'}</button>)}
         </div>
       </div>
       {timeUp && view !== 'ocena' && <p className="mb-4 rounded-xl bg-danger-soft p-3 text-sm font-bold text-danger">Czas minął. Przejdź do „Oddaję” i oceń pracę.</p>}
-      {view === 'pdf' && (<>
-        <a className="btn btn-ghost mb-3" href={sheet.files.pdfView} target="_blank" rel="noreferrer"><FileText size={16} />PDF w nowej karcie <ExternalLink size={14} /></a>
-        {sheet.files.archiveUrl && <a className="btn btn-ghost mb-3 ml-2" href={sheet.files.archiveUrl}>Pliki do zadania</a>}
-        {sheet.files.archivePassword && <span className="mono ml-2 text-sm text-muted">hasło: {sheet.files.archivePassword}</span>}
-        <PdfViewer url={sheet.files.pdfRaw} fallback={sheet.files.pdfView} className="h-[75dvh]" />
-      </>)}
-      {view === 'kod' && <Workshop storageKey={`sheet:${sheet.code}`} />}
+      {view === 'kod' && <Workshop storageKey={`sheet:${sheet.code}`} sheet={sheet} />}
       {view === 'ocena' && <SheetChecker sheet={sheet} autoRun onScore={onDone} />}
     </div>
   );

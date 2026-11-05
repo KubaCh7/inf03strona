@@ -70,7 +70,7 @@ export default function Today() {
       <header className="mb-6">
         <p className="eyebrow mb-2">{new Intl.DateTimeFormat('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Warsaw' }).format(new Date())}</p>
         <h1 className="text-3xl font-extrabold md:text-[44px] md:leading-[1.05]">{hello}. <span className="text-muted">Plan na dziś:</span></h1>
-        <p className="mt-2 text-muted">Poziom {lv.level} ({lv.name}) · {st > 0 ? `${st} ${st === 1 ? 'dzień' : 'dni'} serii, nie przerywaj` : 'zdobądź 10 XP, żeby zacząć serię'}.</p>
+        <p className="mt-2 text-muted"><button className="mr-2 rounded-full border border-line bg-surface px-2.5 py-0.5 text-xs text-ink hover:bg-surface-2" onClick={() => useStore.getState().setSettings({ tourDone: false })}>Oprowadź mnie</button>Poziom {lv.level} ({lv.name}) · {st > 0 ? `${st} ${st === 1 ? 'dzień' : 'dni'} serii, nie przerywaj` : 'zdobądź 10 XP, żeby zacząć serię'}.</p>
       </header>
 
       <div className="grid gap-4 md:grid-cols-3">

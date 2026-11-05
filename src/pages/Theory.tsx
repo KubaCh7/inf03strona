@@ -54,6 +54,7 @@ export default function Theory() {
   const [cats, setCats] = useState<Set<Category>>(new Set());
   const [onlyWrong, setOnlyWrong] = useState(false);
   const [current, setCurrent] = useState<Shuffled | null>(null);
+  const [drawN, setDrawN] = useState(0);
   const [query, setQuery] = useState('');
 
   const counts = useMemo(() => {
@@ -74,7 +75,7 @@ export default function Theory() {
   const best = theoryTests.reduce((m, t) => Math.max(m, t.score / t.total), 0);
   const seen = Object.keys(qstats).length;
 
-  const draw = () => { if (pool.length) setCurrent(shuffleQuestion(pick(pool) as Question)); };
+  const draw = () => { if (pool.length) { setCurrent(shuffleQuestion(pick(pool) as Question)); setDrawN((n) => n + 1); } };
   const startTest = () => {
     if (activeExam && !confirm('Masz rozpoczęty inny test lub próbę. Zacząć od nowa?')) return;
     setActiveExam({ id: crypto.randomUUID?.() ?? String(Date.now()), mode: 'theory', stage: 'theory', theory: newTheory(c.questions) });
@@ -129,7 +130,7 @@ export default function Theory() {
         <p className="mt-2 text-xs text-muted">W puli: {pool.length} pytań.</p>
       </section>
 
-      {current && <div className="mt-4"><SingleQuestion key={current.id + Math.random()} q={current} onNext={draw} /></div>}
+      {current && <div className="mt-4"><SingleQuestion key={drawN} q={current} onNext={draw} /></div>}
 
       <section className="card mt-4 p-5">
         <label className="flex items-center gap-2"><Search size={16} className="text-muted" /><input className="input" placeholder="Szukaj w pytaniach (min. 3 znaki), np. colspan, GROUP BY, mysqli…" value={query} onChange={(e) => setQuery(e.target.value)} /></label>

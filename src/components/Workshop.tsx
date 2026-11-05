@@ -1,5 +1,7 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, Trash2, Play, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw } from 'lucide-react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Plus, Trash2, Play, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink } from 'lucide-react';
+import type { Sheet } from '../lib/types';
+import PdfViewer from './PdfViewer';
 import type { Database as Db } from 'sql.js';
 import { useStore } from '../lib/store';
 import { buildSrcDoc } from '../lib/preview';
@@ -17,15 +19,26 @@ export const DEFAULT_FILES: Record<string, string> = {
 
 type Log = { type: string; text: string };
 
-export default function Workshop({ storageKey, initial, compact }: { storageKey: string; initial?: Record<string, string>; compact?: boolean }) {
+function useIsDesktop() {
+  const q = '(min-width: 1024px)';
+  const [m, setM] = useState(() => window.matchMedia(q).matches);
+  useEffect(() => { const mq = window.matchMedia(q); const h = () => setM(mq.matches); mq.addEventListener('change', h); return () => mq.removeEventListener('change', h); }, []);
+  return m;
+}
+
+export default function Workshop({ storageKey, initial, sheet }: { storageKey: string; initial?: Record<string, string>; sheet?: Sheet }) {
   const saved = useStore((s) => s.workspaces[storageKey]);
   const saveWorkspace = useStore((s) => s.saveWorkspace);
   const fontSize = useStore((s) => s.settings.editorFont);
+  const pdfSide = useStore((s) => s.settings.pdfSide ?? 'left');
+  const setSettings = useStore((s) => s.setSettings);
+  const [showPdf, setShowPdf] = useState(true);
   const [files, setFiles] = useState<Record<string, string>>(() => saved ?? initial ?? DEFAULT_FILES);
   const [active, setActive] = useState(() => Object.keys(saved ?? initial ?? DEFAULT_FILES)[0]);
   const [doc, setDoc] = useState('');
   const [logs, setLogs] = useState<Log[]>([]);
-  const [tab, setTab] = useState<'kod' | 'podglad' | 'sql' | 'konsola'>('kod');
+  const [tab, setTab] = useState<'arkusz' | 'kod' | 'podglad' | 'sql' | 'konsola'>(sheet ? 'arkusz' : 'kod');
+  const [bottom, setBottom] = useState<'podglad' | 'sql' | 'konsola'>('podglad');
   const [images, setImages] = useState<Record<string, string>>({});
   const [db, setDb] = useState<Db | null>(null);
   const [dbInfo, setDbInfo] = useState<string>('Brak bazy. Wczytaj plik .sql z archiwum arkusza albo utwórz tabele kwerendą.');
@@ -106,90 +119,149 @@ export default function Workshop({ storageKey, initial, compact }: { storageKey:
   }
 
   const isPhp = active.endsWith('.php');
-  const panelH = compact ? 'h-[60dvh]' : 'h-[calc(100dvh-220px)] min-h-[520px]';
-  const mobileTabs = useMemo(() => [
-    { k: 'kod', label: 'Kod', icon: Code2 }, { k: 'podglad', label: 'Podgląd', icon: Eye }, { k: 'sql', label: 'SQL', icon: Database }, { k: 'konsola', label: `Konsola${logs.length ? ` (${logs.length})` : ''}`, icon: Terminal },
-  ] as const, [logs.length]);
+  const isDesktop = useIsDesktop();
+  const logCount = logs.length ? ` (${logs.length})` : '';
+
+  const editorCard = (
+    <div className="card flex h-full min-h-0 flex-col overflow-hidden">
+      {isPhp && <p className="border-b border-line bg-info-soft px-3 py-1.5 text-xs">PHP nie wykonuje się w przeglądarce. Sprawdzarka czyta kod, a w podglądzie bloki PHP są oznaczone. Uruchomisz go w XAMPP.</p>}
+      <div className="min-h-0 flex-1">
+        <Suspense fallback={<Loading label="Ładuję edytor…" />}>
+          <Editor key={active} file={active} value={files[active] ?? ''} onChange={setFile} fontSize={fontSize} />
+        </Suspense>
+      </div>
+      <p className="border-t border-line px-3 py-1 text-[11px] text-muted">Podpowiedzi jak w VS Code: <kbd>!</kbd> + Tab = szablon HTML, <kbd>ul&gt;li*3</kbd> + Tab, <kbd>Ctrl+Spacja</kbd> = lista podpowiedzi.</p>
+    </div>
+  );
+  const previewCard = (
+    <div className="card flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="flex items-center gap-1.5 border-b border-line px-3 py-2">
+        <span className="h-2.5 w-2.5 rounded-full bg-danger/70" /><span className="h-2.5 w-2.5 rounded-full bg-js/70" /><span className="h-2.5 w-2.5 rounded-full bg-success/70" />
+        <span className="mono ml-2 truncate text-xs text-muted">podgląd · {entry}</span>
+      </div>
+      <iframe title="Podgląd" sandbox="allow-scripts allow-modals" srcDoc={doc} className="min-h-0 w-full flex-1 bg-white" />
+    </div>
+  );
+  const sqlCard = (
+    <div className="card flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
+        <span className="flex items-center gap-1.5 text-sm font-bold"><Database size={15} className="text-sql" />SQL (SQLite w przeglądarce)</span>
+        <button className="btn btn-primary px-3 py-1 text-xs" onClick={execSql}><Play size={13} />Wykonaj</button>
+      </div>
+      <div className="min-h-0 flex-1 overflow-auto p-3 text-sm">
+        <p className="text-xs text-muted">{dbInfo}</p>
+        <textarea id="p03-sql-box" rows={3} className="input mono mt-2 text-xs" placeholder="Wpisz kwerendę albo zostaw puste, żeby wykonać kwerendy.txt" />
+        {sqlOut?.error && <p className="mt-2 rounded-lg bg-danger-soft p-2 text-xs text-danger">Błąd: {sqlOut.error}</p>}
+        {sqlOut?.skipped.map((s, i) => <p key={i} className="mt-2 rounded-lg bg-info-soft p-2 text-xs">Pominięto (SQLite nie ma użytkowników): <code>{s.slice(0, 120)}</code></p>)}
+        {sqlOut && !sqlOut.error && sqlOut.results.length === 0 && <p className="mt-2 text-xs text-success">Wykonano. Brak wyników do pokazania.</p>}
+        {sqlOut?.results.map((r, i) => (
+          <div key={i} className="mt-2 overflow-x-auto rounded-lg border border-line">
+            <table className="mono w-full text-xs">
+              <thead className="bg-surface-2"><tr>{r.columns.map((c) => <th key={c} className="px-2 py-1 text-left">{c}</th>)}</tr></thead>
+              <tbody>{r.values.slice(0, 200).map((row, j) => <tr key={j} className="border-t border-line">{row.map((v, k) => <td key={k} className="px-2 py-1">{v === null ? <i className="text-muted">NULL</i> : String(v)}</td>)}</tr>)}</tbody>
+            </table>
+            <p className="px-2 py-1 text-[11px] text-muted">{r.values.length} wierszy</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  const consoleCard = (
+    <div className="card h-full min-h-0 overflow-auto p-3">
+      <p className="eyebrow mb-1 flex items-center gap-1"><Terminal size={12} />Konsola</p>
+      {logs.length === 0 && <p className="text-xs text-muted">console.log, alert i błędy skryptu pojawią się tutaj.</p>}
+      {logs.map((l, i) => (
+        <p key={i} className={`mono border-b border-line py-0.5 text-xs ${l.type === 'error' ? 'text-danger' : l.type === 'warn' ? 'text-js' : l.type === 'alert' ? 'text-accent' : ''}`}>
+          {l.type === 'alert' ? '⚑ alert: ' : ''}{l.text}
+        </p>
+      ))}
+    </div>
+  );
+  const pdfCard = sheet && (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-bold"><FileText size={15} className="shrink-0 text-accent" /><span className="truncate">{sheet.code}</span></span>
+        {sheet.files.archiveUrl && <a className="btn btn-ghost px-2 py-1 text-xs" href={sheet.files.archiveUrl}>Pliki</a>}
+        {sheet.files.archivePassword && <span className="mono hidden text-xs text-muted xl:inline">hasło: {sheet.files.archivePassword}</span>}
+        <a className="btn btn-ghost px-2 py-1 text-xs" href={sheet.files.pdfView} target="_blank" rel="noreferrer" title="PDF w nowej karcie"><ExternalLink size={13} /></a>
+      </div>
+      <PdfViewer url={sheet.files.pdfRaw} fallback={sheet.files.pdfView} className="min-h-0 flex-1" />
+    </div>
+  );
+
+  const toolbar = (
+    <div className="mb-2 flex flex-wrap items-center gap-1.5">
+      {Object.keys(files).map((f) => (
+        <span key={f} className={`group inline-flex items-center rounded-lg border text-sm ${f === active ? 'border-ink bg-ink text-bg' : 'border-line bg-surface'}`}>
+          <button className="mono px-2.5 py-1.5 text-xs" onClick={() => { setActive(f); setTab('kod'); }}>{f}</button>
+          {f === active && Object.keys(files).length > 1 && <button className="pr-2 opacity-60 hover:opacity-100" aria-label={`Usuń ${f}`} onClick={() => delFile(f)}><Trash2 size={13} /></button>}
+        </span>
+      ))}
+      <button className="btn btn-ghost px-2 py-1 text-xs" onClick={addFile}><Plus size={14} />Plik</button>
+      <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => imgRef.current?.click()}><ImagePlus size={14} />Grafiki / pliki</button>
+      <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => sqlRef.current?.click()}><Upload size={14} />Zrzut .sql</button>
+      <span className="ml-auto flex gap-1.5">
+        {sheet && <button className="btn btn-ghost hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setShowPdf((x) => !x)}>{showPdf ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}{showPdf ? 'Ukryj arkusz' : 'Pokaż arkusz'}</button>}
+        {sheet && showPdf && <button className="btn btn-dark hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setSettings({ pdfSide: pdfSide === 'left' ? 'right' : 'left' })} title="Zamień strony"><ArrowLeftRight size={14} />Zamień strony</button>}
+        <button className="btn btn-ghost px-2 py-1 text-xs" onClick={reset} title="Przywróć pliki startowe"><RotateCcw size={14} /></button>
+      </span>
+      <input ref={imgRef} type="file" multiple hidden onChange={(e) => addImages(e.target.files)} />
+      <input ref={sqlRef} type="file" accept=".sql,.txt" hidden onChange={(e) => e.target.files?.[0] && loadSql(e.target.files[0])} />
+    </div>
+  );
+
+  const mobileTabs = [
+    ...(sheet ? [{ k: 'arkusz', label: 'Arkusz', icon: FileText }] : []),
+    { k: 'kod', label: 'Kod', icon: Code2 }, { k: 'podglad', label: 'Podgląd', icon: Eye }, { k: 'sql', label: 'SQL', icon: Database }, { k: 'konsola', label: `Konsola${logCount}`, icon: Terminal },
+  ] as const;
 
   return (
     <div onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); addImages(e.dataTransfer.files); }}>
-      {/* pasek plikow */}
-      <div className="mb-2 flex flex-wrap items-center gap-1.5">
-        {Object.keys(files).map((f) => (
-          <span key={f} className={`group inline-flex items-center rounded-lg border text-sm ${f === active ? 'border-ink bg-ink text-bg' : 'border-line bg-surface'}`}>
-            <button className="mono px-2.5 py-1.5 text-xs" onClick={() => { setActive(f); setTab('kod'); }}>{f}</button>
-            {f === active && Object.keys(files).length > 1 && <button className="pr-2 opacity-60 hover:opacity-100" aria-label={`Usuń ${f}`} onClick={() => delFile(f)}><Trash2 size={13} /></button>}
-          </span>
-        ))}
-        <button className="btn btn-ghost px-2 py-1 text-xs" onClick={addFile}><Plus size={14} />Plik</button>
-        <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => imgRef.current?.click()}><ImagePlus size={14} />Grafiki / pliki</button>
-        <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => sqlRef.current?.click()}><Upload size={14} />Zrzut .sql</button>
-        <button className="btn btn-ghost ml-auto px-2 py-1 text-xs" onClick={reset} title="Przywróć pliki startowe"><RotateCcw size={14} /></button>
-        <input ref={imgRef} type="file" multiple hidden onChange={(e) => addImages(e.target.files)} />
-        <input ref={sqlRef} type="file" accept=".sql,.txt" hidden onChange={(e) => e.target.files?.[0] && loadSql(e.target.files[0])} />
-      </div>
+      {toolbar}
       {Object.keys(images).length > 0 && <p className="mb-2 text-xs text-muted">Grafiki w podglądzie: {Object.keys(images).join(', ')} (tylko w tej sesji).</p>}
 
-      {/* zakladki mobile */}
-      <div className="mb-2 grid grid-cols-4 gap-1 lg:hidden">
-        {mobileTabs.map(({ k, label, icon: I }) => (
-          <button key={k} className={`chip justify-center ${tab === k ? '!bg-ink !text-bg' : ''}`} onClick={() => setTab(k)}><I size={14} />{label}</button>
-        ))}
-      </div>
+      {/* Mobile: zakladki */}
+      {!isDesktop && <div>
+        <div className={`mb-2 grid gap-1 ${sheet ? 'grid-cols-5' : 'grid-cols-4'}`}>
+          {mobileTabs.map(({ k, label, icon: I }) => (
+            <button key={k} className={`chip justify-center !px-1 !text-[11px] ${tab === k ? '!bg-ink !text-bg' : ''}`} onClick={() => setTab(k as typeof tab)}><I size={13} />{label}</button>
+          ))}
+        </div>
+        <div className="h-[70dvh]">
+          {tab === 'arkusz' && pdfCard}
+          {tab === 'kod' && editorCard}
+          {tab === 'podglad' && previewCard}
+          {tab === 'sql' && sqlCard}
+          {tab === 'konsola' && consoleCard}
+        </div>
+      </div>}
 
-      <div className={`grid gap-3 lg:grid-cols-2 ${panelH}`}>
-        <div className={`card flex min-h-0 flex-col overflow-hidden ${tab === 'kod' ? '' : 'hidden lg:flex'}`}>
-          {isPhp && <p className="border-b border-line bg-info-soft px-3 py-1.5 text-xs">PHP nie wykonuje się w przeglądarce. Sprawdzarka czyta kod, a w podglądzie bloki PHP są oznaczone. Uruchomisz go w XAMPP.</p>}
-          <div className="min-h-0 flex-1">
-            <Suspense fallback={<Loading label="Ładuję edytor…" />}>
-              <Editor key={active} file={active} value={files[active] ?? ''} onChange={setFile} fontSize={fontSize} />
-            </Suspense>
+      {/* Desktop */}
+      {isDesktop && (sheet ? (
+        <div className={`flex h-[calc(100dvh-200px)] min-h-[560px] gap-3 ${pdfSide === 'right' ? 'flex-row-reverse' : ''}`}>
+          {showPdf && <div className="min-w-0 basis-[42%]">{pdfCard}</div>}
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <div className="min-h-0 basis-[55%]">{editorCard}</div>
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="mb-1.5 flex gap-1.5">
+                {(['podglad', 'sql', 'konsola'] as const).map((k) => (
+                  <button key={k} className="chip !py-1 !text-xs" aria-pressed={bottom === k} onClick={() => setBottom(k)}>{k === 'podglad' ? 'Podgląd' : k === 'sql' ? 'SQL' : `Konsola${logCount}`}</button>
+                ))}
+              </div>
+              <div className="min-h-0 flex-1">{bottom === 'podglad' ? previewCard : bottom === 'sql' ? sqlCard : consoleCard}</div>
+            </div>
           </div>
         </div>
-
-        <div className={`flex min-h-0 flex-col gap-3 ${tab === 'kod' ? 'hidden lg:flex' : 'flex'}`}>
-          <div className={`card min-h-0 flex-1 overflow-hidden ${tab === 'podglad' || tab === 'kod' ? '' : 'hidden lg:block'}`}>
-            <div className="flex items-center gap-1.5 border-b border-line px-3 py-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-danger/70" /><span className="h-2.5 w-2.5 rounded-full bg-js/70" /><span className="h-2.5 w-2.5 rounded-full bg-success/70" />
-              <span className="mono ml-2 truncate text-xs text-muted">podgląd · {entry}</span>
-            </div>
-            <iframe title="Podgląd" sandbox="allow-scripts allow-modals" srcDoc={doc} className="h-[calc(100%-37px)] w-full bg-white" />
-          </div>
-
-          <div className={`card flex min-h-0 flex-col overflow-hidden lg:max-h-[45%] ${tab === 'sql' ? 'flex-1' : 'hidden lg:flex'}`}>
-            <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
-              <span className="flex items-center gap-1.5 text-sm font-bold"><Database size={15} className="text-sql" />SQL (SQLite w przeglądarce)</span>
-              <button className="btn btn-primary px-3 py-1 text-xs" onClick={execSql}><Play size={13} />Wykonaj</button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-auto p-3 text-sm">
-              <p className="text-xs text-muted">{dbInfo}</p>
-              <textarea id="p03-sql-box" rows={3} className="input mono mt-2 text-xs" placeholder="Wpisz kwerendę albo zostaw puste, żeby wykonać kwerendy.txt" />
-              {sqlOut?.error && <p className="mt-2 rounded-lg bg-danger-soft p-2 text-xs text-danger">Błąd: {sqlOut.error}</p>}
-              {sqlOut?.skipped.map((s, i) => <p key={i} className="mt-2 rounded-lg bg-info-soft p-2 text-xs">Pominięto (SQLite nie ma użytkowników): <code>{s.slice(0, 120)}</code></p>)}
-              {sqlOut && !sqlOut.error && sqlOut.results.length === 0 && <p className="mt-2 text-xs text-success">Wykonano. Brak wyników do pokazania.</p>}
-              {sqlOut?.results.map((r, i) => (
-                <div key={i} className="mt-2 overflow-x-auto rounded-lg border border-line">
-                  <table className="mono w-full text-xs">
-                    <thead className="bg-surface-2"><tr>{r.columns.map((c) => <th key={c} className="px-2 py-1 text-left">{c}</th>)}</tr></thead>
-                    <tbody>{r.values.slice(0, 200).map((row, j) => <tr key={j} className="border-t border-line">{row.map((v, k) => <td key={k} className="px-2 py-1">{v === null ? <i className="text-muted">NULL</i> : String(v)}</td>)}</tr>)}</tbody>
-                  </table>
-                  <p className="px-2 py-1 text-[11px] text-muted">{r.values.length} wierszy</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={`card max-h-40 overflow-auto p-3 ${tab === 'konsola' ? 'flex-1 !max-h-none' : 'hidden lg:block'}`}>
-            <p className="eyebrow mb-1 flex items-center gap-1"><Terminal size={12} />Konsola</p>
-            {logs.length === 0 && <p className="text-xs text-muted">console.log, alert i błędy skryptu pojawią się tutaj.</p>}
-            {logs.map((l, i) => (
-              <p key={i} className={`mono border-b border-line py-0.5 text-xs ${l.type === 'error' ? 'text-danger' : l.type === 'warn' ? 'text-js' : l.type === 'alert' ? 'text-accent' : ''}`}>
-                {l.type === 'alert' ? '⚑ alert: ' : ''}{l.text}
-              </p>
-            ))}
+      ) : (
+        <div className="grid h-[calc(100dvh-220px)] min-h-[520px] grid-cols-2 gap-3">
+          {editorCard}
+          <div className="flex min-h-0 flex-col gap-3">
+            <div className="min-h-0 flex-1">{previewCard}</div>
+            <div className="min-h-0 basis-[38%]">{sqlCard}</div>
+            <div className="max-h-36 min-h-24">{consoleCard}</div>
           </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }

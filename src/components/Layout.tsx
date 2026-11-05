@@ -8,6 +8,7 @@ import { isDue } from '../lib/fsrs';
 import { useContent } from '../lib/data';
 import { LESSONS } from '../data/lessons';
 import { Logo, Progress } from './ui';
+import Tour, { useTour } from './Tour';
 
 const NAV = [
   { group: 'Nauka', items: [
@@ -74,7 +75,7 @@ function useStudyClock() {
 
 function SideItem({ to, label, icon: Icon, end }: { to: string; label: string; icon: typeof Map; end?: boolean }) {
   return (
-    <NavLink to={to} end={end}
+    <NavLink to={to} end={end} data-tour={to}
       className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 text-[15px] transition-colors ${isActive ? 'bg-ink text-bg font-bold' : 'text-ink hover:bg-surface-2'}`}>
       <Icon size={18} strokeWidth={2} className="shrink-0" />
       <span className="truncate">{label}</span>
@@ -154,6 +155,7 @@ export default function Layout() {
   const lv = levelInfo(xp);
   useEffect(() => { setMore(false); window.scrollTo(0, 0); }, [loc.pathname]);
   const wide = /^\/(warsztat|proba|sprawdzarka|arkusze\/)/.test(loc.pathname);
+  const tour = useTour();
 
   return (
     <div className="min-h-dvh">
@@ -168,7 +170,7 @@ export default function Layout() {
             </div>
           ))}
         </nav>
-        <NavLink to="/postep" className="mt-4 rounded-xl border border-line bg-surface p-3 hover:bg-surface-2">
+        <NavLink to="/postep" data-tour="level" className="mt-4 rounded-xl border border-line bg-surface p-3 hover:bg-surface-2">
           <div className="flex items-center gap-3">
             <span className="display grid h-9 w-9 place-items-center rounded-full bg-accent-soft font-bold text-accent">{lv.level}</span>
             <div className="min-w-0 flex-1">
@@ -183,7 +185,7 @@ export default function Layout() {
       {/* Top bar mobile */}
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-bg/85 px-4 py-3 backdrop-blur md:hidden">
         <NavLink to="/"><Logo /></NavLink>
-        <NavLink to="/postep" className="mono rounded-full border border-line bg-surface px-3 py-1 text-xs">Lv {lv.level} · {xp} XP</NavLink>
+        <NavLink to="/postep" data-tour="level" className="mono rounded-full border border-line bg-surface px-3 py-1 text-xs">Lv {lv.level} · {xp} XP</NavLink>
       </header>
 
       <div className="md:pl-60">
@@ -197,14 +199,15 @@ export default function Layout() {
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="grid grid-cols-5">
           {MOBILE.map(({ to, label, icon: Icon, end }) => (
-            <NavLink key={to} to={to} end={end} className={({ isActive }) => `flex flex-col items-center gap-0.5 py-2.5 text-[11px] ${isActive ? 'text-accent font-bold' : 'text-muted'}`}>
+            <NavLink key={to} to={to} end={end} data-tour={to} className={({ isActive }) => `flex flex-col items-center gap-0.5 py-2.5 text-[11px] ${isActive ? 'text-accent font-bold' : 'text-muted'}`}>
               <Icon size={21} />{label}
             </NavLink>
           ))}
-          <button onClick={() => setMore(true)} className="flex flex-col items-center gap-0.5 py-2.5 text-[11px] text-muted"><MoreHorizontal size={21} />Więcej</button>
+          <button data-tour="more" onClick={() => setMore(true)} className="flex flex-col items-center gap-0.5 py-2.5 text-[11px] text-muted"><MoreHorizontal size={21} />Więcej</button>
         </div>
       </nav>
 
+      {tour.open && !more && <Tour onClose={tour.close} />}
       {more && (
         <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
           <button className="absolute inset-0 bg-black/40" aria-label="Zamknij" onClick={() => setMore(false)} />

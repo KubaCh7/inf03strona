@@ -11,7 +11,7 @@ export type ActiveExam = {
   theory?: { questionIds: string[]; order: number[][]; answers: (number | null)[]; startedAt: number; durationMs: number; finishedAt?: number; score?: number };
   practice?: { sheetCode: string; startedAt: number; durationMs: number; finishedAt?: number; score?: number };
 };
-export type Settings = { theme: 'system' | 'light' | 'dark'; editorFont: number; unlockAll: boolean; dailyGoalMin: number; newCardsPerDay: number };
+export type Settings = { theme: 'system' | 'light' | 'dark'; editorFont: number; unlockAll: boolean; dailyGoalMin: number; newCardsPerDay: number; pdfSide?: 'left' | 'right'; pdfWidth?: number; tourDone?: boolean; flashIntroSeen?: boolean };
 
 type State = {
   xp: number;

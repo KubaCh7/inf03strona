@@ -5,6 +5,7 @@ import type { Flashcard, Question, Sheet } from './types';
 export type Content = { sheets: Sheet[]; questions: Question[]; flashcards: Flashcard[]; source: 'supabase' | 'offline' };
 
 let cache: Promise<Content> | null = null;
+let resolved: Content | null = null;
 
 async function fromSupabase(): Promise<Content> {
   const [s, q, f] = await Promise.all([
@@ -40,17 +41,18 @@ export function loadContent(): Promise<Content> {
   if (!cache) {
     cache = Promise.race([
       fromSupabase(),
-      new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000)),
+      new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 3500)),
     ])
       .catch(() => fromBundle())
-      .then(sortSheets);
+      .then(sortSheets)
+      .then((c) => { resolved = c; return c; });
   }
   return cache;
 }
 
 export function useContent(): Content | null {
-  const [c, setC] = useState<Content | null>(null);
-  useEffect(() => { let on = true; loadContent().then((x) => on && setC(x)); return () => { on = false; }; }, []);
+  const [c, setC] = useState<Content | null>(resolved);
+  useEffect(() => { if (resolved) return; let on = true; loadContent().then((x) => on && setC(x)); return () => { on = false; }; }, []);
   return c;
 }
 
