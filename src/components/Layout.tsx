@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import {
-  BookOpen, CalendarCheck, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info,
+  BookOpen, CalendarCheck, Crown, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info,
 } from 'lucide-react';
 import { levelInfo, liveStreak, useStore, weekMinutes } from '../lib/store';
 import { isDue } from '../lib/fsrs';
@@ -16,14 +16,14 @@ const NAV = [
     { to: '/sciezka', label: 'Ścieżka', icon: Map },
     { to: '/nauka', label: 'Nauka', icon: GraduationCap },
     { to: '/kwerendy', label: 'Kwerendy', icon: Database },
-    { to: '/fiszki', label: 'Fiszki', icon: Layers },
-    { to: '/teoria', label: 'Teoria', icon: BookOpen },
     { to: '/arkusze', label: 'Arkusze', icon: FileText },
+    { to: '/teoria', label: 'Teoria', icon: BookOpen },
+    { to: '/fiszki', label: 'Fiszki', icon: Layers },
     { to: '/sprint', label: 'Sprint', icon: Zap },
     { to: '/minigry', label: 'Minigry', icon: Gamepad2 },
   ] },
   { group: 'Egzamin', items: [
-    { to: '/proba', label: 'Próba generalna', icon: Timer },
+    { to: '/proba', label: 'Próba egzaminu', icon: Crown, gold: true },
     { to: '/warsztat', label: 'Warsztat', icon: Code2 },
     { to: '/sprawdzarka', label: 'Sprawdzarka', icon: ShieldCheck },
   ] },
@@ -75,10 +75,10 @@ function useStudyClock() {
   }, [addMinute]);
 }
 
-function SideItem({ to, label, icon: Icon, end }: { to: string; label: string; icon: typeof Map; end?: boolean }) {
+function SideItem({ to, label, icon: Icon, end, gold }: { to: string; label: string; icon: typeof Map; end?: boolean; gold?: boolean }) {
   return (
     <NavLink to={to} end={end} data-tour={to}
-      className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 text-[15px] transition-colors ${isActive ? 'bg-ink text-bg font-bold' : 'text-ink hover:bg-surface-2'}`}>
+      className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 text-[15px] transition-colors ${gold ? `nav-gold gold-shine ${isActive ? 'ring-2 ring-[var(--gold-3)] ring-offset-1 ring-offset-surface' : ''}` : isActive ? 'bg-ink text-bg font-bold' : 'text-ink hover:bg-surface-2'}`}>
       <Icon size={18} strokeWidth={2} className="shrink-0" />
       <span className="truncate">{label}</span>
     </NavLink>

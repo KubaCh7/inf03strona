@@ -16,7 +16,7 @@ const STEPS: Step[] = [
   { target: '/arkusze', title: 'Arkusze', text: 'Wszystkie 152 zadania praktyczne CKE. Filtrujesz po roku, języku, trudności i tematach. W każdym masz PDF, pliki, hasło i rozwiązanie.' },
   { target: '/fiszki', title: 'Fiszki', text: 'Karty do zapamiętania znaczników, właściwości CSS, funkcji PHP i kwerend. Aplikacja sama pilnuje, kiedy coś powtórzyć.', mobileHint: 'Na telefonie: w menu „Więcej”.' },
   { target: '/warsztat', title: 'Warsztat', text: 'Edytor jak VS Code (Emmet: wpisz ! i Tab) z podglądem na żywo i bazą SQL w przeglądarce. Przy arkuszu PDF jest obok kodu.', mobileHint: 'Na telefonie: w menu „Więcej”.' },
-  { target: '/proba', title: 'Próba generalna', text: 'Symulacja egzaminu na czas: teoria 60 minut i losowy arkusz na 150 minut. Zegar leci nawet po odświeżeniu.', mobileHint: 'Na telefonie: w menu „Więcej”.' },
+  { target: '/proba', title: 'Próba egzaminu', text: 'Złota zakładka: symulacja egzaminu na czas: teoria 60 minut i losowy arkusz na 150 minut. Zegar leci nawet po odświeżeniu.', mobileHint: 'Na telefonie: w menu „Więcej”.' },
   { target: '/sprint', title: 'Sprint i minigry', text: 'Szybkie 5 minut pytań do pierwszych 3 błędów oraz gry na selektory CSS i kwerendy z klocków.', mobileHint: 'Na telefonie: w menu „Więcej”.' },
   { target: 'level', title: 'XP, poziomy i seria', text: 'Za wszystko dostajesz XP. 10 XP dziennie podtrzymuje serię dni. W „Postęp” zapiszesz wyniki w chmurze i przeniesiesz je na telefon.' },
   { title: 'Gotowe!', text: 'Najlepiej zacząć od pierwszej lekcji ścieżki albo od losowego pytania. Samouczek włączysz ponownie w Ustawieniach.' },

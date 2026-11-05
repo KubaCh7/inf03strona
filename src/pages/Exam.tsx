@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { BookOpen, MonitorSmartphone, Trophy, ArrowRight, RotateCcw } from 'lucide-react';
+import { BookOpen, Crown, MonitorSmartphone, Trophy, ArrowRight, RotateCcw } from 'lucide-react';
 import { useContent } from '../lib/data';
 import { useStore, type ActiveExam } from '../lib/store';
 import { newTheory, PRACTICE_MS, PRACTICE_PASS, THEORY_PASS } from '../lib/exam';
@@ -24,14 +24,14 @@ function Practice({ exam, onDone }: { exam: ActiveExam; onDone: (pct: number) =>
   const timeUp = left === 0;
   return (
     <div>
-      <div className="card sticky top-[60px] z-10 mb-4 flex flex-wrap items-center justify-between gap-3 p-4 md:top-4">
+      <div className="gold-frame gold-frame-soft sticky top-[60px] z-10 mb-4 flex flex-wrap items-center justify-between gap-3 p-4 md:top-4">
         <div className="min-w-0">
-          <p className="eyebrow">Część praktyczna · {sheet.code}</p>
+          <p className="eyebrow flex items-center gap-1.5 !text-[var(--gold-3)]"><Crown size={13} />Próba egzaminu · część praktyczna · {sheet.code}</p>
           <p className="display truncate text-xl font-bold">{sheet.title}</p>
         </div>
         <TimerBadge left={left} total={p.durationMs} />
         <div className="flex gap-1.5">
-          {(['kod', 'ocena'] as const).map((k) => <button key={k} className="chip" aria-pressed={view === k} onClick={() => setView(k)}>{k === 'kod' ? 'Arkusz + warsztat' : 'Oddaję pracę'}</button>)}
+          {(['kod', 'ocena'] as const).map((k) => <button key={k} className={`chip ${k === 'ocena' ? '!border-[var(--gold-2)]' : ''}`} aria-pressed={view === k} onClick={() => setView(k)}>{k === 'kod' ? 'Arkusz + warsztat' : 'Oddaję pracę'}</button>)}
         </div>
       </div>
       {timeUp && view !== 'ocena' && <p className="mb-4 rounded-xl bg-danger-soft p-3 text-sm font-bold text-danger">Czas minął. Przejdź do „Oddaję” i oceń pracę.</p>}
@@ -81,28 +81,58 @@ export default function Exam() {
 
   // ---- Landing ----
   if (!exam) {
+    const hist = useStore.getState().tests.filter((x) => x.kind === 'exam' || x.kind === 'theory40').slice(0, 5);
     return (
       <div>
-        <PageHeader eyebrow="Egzamin · symulacja" title="Próba generalna">
-          Wybierz część egzaminu. Od startu liczy się czas, a Ty pracujesz sam. Odświeżenie strony nie zatrzymuje zegara.
-        </PageHeader>
-        <div className="grid gap-4 md:grid-cols-3">
-          <button className="card card-hover p-6 text-left" onClick={() => start('theory')}>
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-accent-soft text-accent"><BookOpen size={22} /></span>
-            <h2 className="mt-4 text-2xl font-bold">Teoria</h2><p className="text-sm text-muted">40 pytań · 60 minut · próg 50%</p>
-          </button>
-          <div className="card card-hover p-6 text-left">
-            <button className="block w-full text-left" onClick={() => start('practice')}>
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-info-soft text-info"><MonitorSmartphone size={22} /></span>
-              <h2 className="mt-4 text-2xl font-bold">Praktyka</h2><p className="text-sm text-muted">Losowy arkusz · 150 minut · próg 75%</p>
-            </button>
-            <label className="mt-3 flex items-center gap-2 text-xs"><input type="checkbox" checked={onlyInf} onChange={(e) => setOnlyInf(e.target.checked)} className="accent-[var(--accent)]" />Tylko arkusze INF.03</label>
+        <section className="gold-frame gold-frame-soft gold-shine mb-6 overflow-hidden p-6 md:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="max-w-2xl">
+              <p className="eyebrow flex items-center gap-1.5 !text-[var(--gold-3)]"><Crown size={14} />Egzamin zawodowy INF.03 · symulacja</p>
+              <h1 className="mt-2 text-4xl font-extrabold md:text-6xl"><span className="gold-text">Próba egzaminu</span></h1>
+              <p className="mt-3 text-[15px] leading-relaxed text-muted">Warunki jak na prawdziwym egzaminie: pytania losowane z bazy, czas liczony od startu, arkusz praktyczny z prawdziwej sesji CKE. Zegar działa dalej, nawet jak odświeżysz stronę.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-center">
+              {[['40', 'pytań'], ['60', 'min teorii'], ['150', 'min praktyki'], ['50/75%', 'progi']].map(([v, l]) => (
+                <div key={l} className="rounded-xl border border-[var(--gold-2)]/40 bg-surface/70 px-4 py-3"><p className="display text-2xl font-extrabold gold-text">{v}</p><p className="text-[11px] text-muted">{l}</p></div>
+              ))}
+            </div>
           </div>
-          <button className="card card-hover p-6 text-left" style={{ background: 'linear-gradient(135deg, var(--accent-soft), var(--surface) 65%)' }} onClick={() => start('full')}>
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-accent text-accent-ink"><Trophy size={22} /></span>
-            <h2 className="mt-4 text-2xl font-bold">Pełny egzamin</h2><p className="text-sm text-muted">Teoria, potem praktyka. Zdajesz przy ≥ 50% i ≥ 75%.</p>
+        </section>
+        <div className="grid gap-4 md:grid-cols-3">
+          <button className="gold-frame card-hover p-6 text-left" onClick={() => start('theory')}>
+            <span className="grid h-12 w-12 place-items-center rounded-xl gold-chip"><BookOpen size={22} /></span>
+            <h2 className="mt-4 text-2xl font-bold">Część pisemna</h2><p className="text-sm text-muted">40 pytań · 60 minut · zdajesz od 20 dobrych</p>
+            <span className="btn btn-gold mt-5 w-full">Start teorii</span>
+          </button>
+          <div className="gold-frame card-hover p-6 text-left">
+            <button className="block w-full text-left" onClick={() => start('practice')}>
+              <span className="grid h-12 w-12 place-items-center rounded-xl gold-chip"><MonitorSmartphone size={22} /></span>
+              <h2 className="mt-4 text-2xl font-bold">Część praktyczna</h2><p className="text-sm text-muted">Losowy arkusz CKE · 150 minut · próg 75%</p>
+              <span className="btn btn-gold mt-5 w-full">Losuj arkusz</span>
+            </button>
+            <label className="mt-3 flex items-center gap-2 text-xs"><input type="checkbox" checked={onlyInf} onChange={(e) => setOnlyInf(e.target.checked)} className="accent-[var(--gold-2)]" />Tylko arkusze INF.03</label>
+          </div>
+          <button className="gold-frame gold-frame-soft gold-shine card-hover p-6 text-left" onClick={() => start('full')}>
+            <span className="grid h-12 w-12 place-items-center rounded-xl gold-chip"><Trophy size={22} /></span>
+            <h2 className="mt-4 text-2xl font-bold gold-text">Pełny egzamin</h2><p className="text-sm text-muted">Teoria, a potem praktyka. Zdajesz przy ≥ 50% i ≥ 75%.</p>
+            <span className="btn btn-gold mt-5 w-full">Zaczynam egzamin</span>
           </button>
         </div>
+        {hist.length > 0 && (
+          <section className="card mt-6 p-5">
+            <p className="eyebrow mb-3">Ostatnie podejścia</p>
+            <ul className="divide-y divide-line text-sm">
+              {hist.map((x) => (
+                <li key={x.id} className="flex items-center gap-3 py-2">
+                  <span className={`h-2 w-2 rounded-full ${x.passed ? 'bg-success' : 'bg-danger'}`} />
+                  <span className="flex-1">{x.kind === 'exam' ? `Pełny egzamin · ${x.sheetCode}` : 'Część pisemna'}</span>
+                  <span className="mono tabular">{x.score}/{x.total}{x.practice !== undefined ? ` · ${x.practice}%` : ''}</span>
+                  <span className="text-xs text-muted">{new Date(x.at).toLocaleDateString('pl-PL')}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
     );
   }
@@ -113,11 +143,11 @@ export default function Exam() {
     const done = !!t.finishedAt;
     return (
       <div>
-        <PageHeader eyebrow={exam.mode === 'full' ? 'Pełny egzamin · etap 1 z 2' : 'Test teorii'} title={done ? `Wynik: ${t.score}/${t.questionIds.length}` : 'Część pisemna'}
+        <PageHeader eyebrow={exam.mode === 'full' ? 'Próba egzaminu · etap 1 z 2' : 'Próba egzaminu · część pisemna'} title={<span className="gold-text">{done ? `Wynik: ${t.score}/${t.questionIds.length}` : 'Część pisemna'}</span>}
           right={done && (exam.mode === 'full' && !exam.practice ? (
-            <button className="btn btn-primary" onClick={() => setActiveExam({ ...exam, stage: 'practice', practice: { sheetCode: randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS } })}>Przejdź do praktyki <ArrowRight size={16} /></button>
+            <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'practice', practice: { sheetCode: randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS } })}>Przejdź do praktyki <ArrowRight size={16} /></button>
           ) : (
-            <button className="btn btn-primary" onClick={() => setActiveExam({ ...exam, stage: 'done' })}>Podsumowanie <ArrowRight size={16} /></button>
+            <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'done' })}>Podsumowanie <ArrowRight size={16} /></button>
           ))} />
         <TheoryTest state={t} questions={c.questions} onChange={(s) => setActiveExam({ ...exam, theory: s })} onFinish={finishTheory} />
       </div>
@@ -135,7 +165,12 @@ export default function Exam() {
   const passed = (tPct === null || tPct >= THEORY_PASS) && (!p || (p.score ?? 0) / 100 >= PRACTICE_PASS);
   return (
     <div className="max-w-3xl">
-      <PageHeader eyebrow="Próba zakończona" title={passed ? 'Zdane (trening) 🎉' : 'Jeszcze nie tym razem'} />
+      <section className={`mb-5 p-6 text-center md:p-8 ${passed ? 'gold-frame gold-frame-soft gold-shine' : 'card'}`}>
+        {passed ? <Crown size={44} className="mx-auto text-[var(--gold-2)]" /> : <RotateCcw size={36} className="mx-auto text-muted" />}
+        <p className="eyebrow mt-3">Próba egzaminu zakończona</p>
+        <h1 className={`mt-1 text-4xl font-extrabold ${passed ? 'gold-text' : ''}`}>{passed ? 'Zdane!' : 'Jeszcze nie tym razem'}</h1>
+        <p className="mt-2 text-sm text-muted">{passed ? 'Tak trzymaj. To wynik treningowy, ale pokazuje, że jesteś gotowy.' : 'Zobacz, gdzie poszło gorzej, i spróbuj ponownie.'}</p>
+      </section>
       <div className="grid gap-4 sm:grid-cols-2">
         {t && (
           <div className="card p-5">
@@ -156,7 +191,7 @@ export default function Exam() {
       </div>
       <div className="mt-5 flex flex-wrap gap-2">
         {t && <button className="btn btn-ghost" onClick={() => setActiveExam({ ...exam, stage: 'theory' })}>Przejrzyj odpowiedzi</button>}
-        <button className="btn btn-primary" onClick={() => setActiveExam(null)}><RotateCcw size={16} />Nowa próba</button>
+        <button className="btn btn-gold" onClick={() => setActiveExam(null)}><RotateCcw size={16} />Nowa próba egzaminu</button>
       </div>
     </div>
   );
