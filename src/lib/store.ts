@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { addDays, today, weekStart } from './time';
+import { DEFAULT_LOOK, type AvatarLook } from '../components/Avatar';
+
+export type Equipped = { look: AvatarLook; editorTheme: string; appStyle: string; frame: string; title: string; effect: string; nick: string };
+const DEFAULT_EQUIPPED: Equipped = { look: DEFAULT_LOOK, editorTheme: 'auto', appStyle: 'terakota', frame: 'none', title: '', effect: 'none', nick: 'Ty' };
 
 export type SheetStatus = 'todo' | 'doing' | 'done';
 export type TestRecord = { id: string; kind: 'theory40' | 'exam' | 'sprint'; at: string; score: number; total: number; passed: boolean; byCat?: Record<string, [number, number]>; sheetCode?: string; practice?: number };
@@ -22,6 +26,11 @@ type State = {
   sheets: Record<string, { status: SheetStatus; score?: number }>;
   lessons: Record<string, string>;
   queries: Record<string, { ok: boolean; sql: string }>;
+  coins: number;
+  coinsEarned: number;
+  owned: string[];
+  equipped: Equipped;
+  skipped: Record<string, string>;
   practice: Record<string, { ok: boolean; files?: Record<string, string> }>;
   cards: Record<string, unknown>; // serializowane karty FSRS
   newCardsDay: { date: string; count: number };
@@ -40,6 +49,9 @@ type State = {
   setSheet: (code: string, patch: Partial<{ status: SheetStatus; score: number }>) => void;
   completeLesson: (id: string, xp: number) => void;
   saveQuery: (key: string, sql: string, ok?: boolean) => void;
+  buy: (id: string, price: number) => boolean;
+  equip: (patch: Partial<Equipped>) => void;
+  setSkipped: (id: string, on: boolean) => void;
   savePractice: (id: string, patch: { ok?: boolean; files?: Record<string, string> }) => void;
   setCard: (id: string, card: unknown) => void;
   countNewCard: () => void;
@@ -54,7 +66,7 @@ type State = {
 
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = (Math.random() * 16) | 0; return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16); }));
 
-export const PERSISTED_KEYS = ['xp', 'streak', 'activity', 'qstats', 'tests', 'sheets', 'lessons', 'queries', 'practice', 'cards', 'newCardsDay', 'workspaces', 'settings', 'sprintBest', 'dailyQuestion'] as const;
+export const PERSISTED_KEYS = ['xp', 'streak', 'activity', 'qstats', 'tests', 'sheets', 'lessons', 'queries', 'practice', 'coins', 'coinsEarned', 'owned', 'equipped', 'skipped', 'cards', 'newCardsDay', 'workspaces', 'settings', 'sprintBest', 'dailyQuestion'] as const;
 
 export const useStore = create<State>()(
   persist(
@@ -68,6 +80,11 @@ export const useStore = create<State>()(
       lessons: {},
       queries: {},
       practice: {},
+      coins: 0,
+      coinsEarned: 0,
+      owned: [],
+      equipped: DEFAULT_EQUIPPED,
+      skipped: {},
       cards: {},
       newCardsDay: { date: '', count: 0 },
       workspaces: {},
@@ -92,7 +109,8 @@ export const useStore = create<State>()(
           else if (streak.last === y2 && freezeWeek !== weekStart(d)) { current = streak.current + 1; freezeWeek = weekStart(d); }
           streak = { current, best: Math.max(streak.best, current), last: d, freezeWeek };
         }
-        return { xp: s.xp + n, activity: act, streak };
+        const c = n > 0 ? Math.ceil(n / 2) : 0; // monety: polowa XP, min. 1
+        return { xp: s.xp + n, activity: act, streak, coins: s.coins + c, coinsEarned: s.coinsEarned + c };
       }),
       addMinute: () => set((s) => {
         const d = today();
@@ -103,7 +121,7 @@ export const useStore = create<State>()(
           const prev = s.qstats[qid] ?? { seen: 0, ok: 0, lastWrong: false };
           return { qstats: { ...s.qstats, [qid]: { seen: prev.seen + 1, ok: prev.ok + (ok ? 1 : 0), lastWrong: !ok } } };
         });
-        if (ok) get().addXp(2);
+        if (ok) { get().addXp(2); if (typeof window !== 'undefined') window.dispatchEvent(new Event('p03:correct')); }
       },
       addTest: (t) => set((s) => ({ tests: [t, ...s.tests].slice(0, 200) })),
       setSheet: (code, patch) => set((s) => {
@@ -117,6 +135,14 @@ export const useStore = create<State>()(
         set((s) => ({ lessons: { ...s.lessons, [id]: new Date().toISOString() } }));
         get().addXp(xp);
       },
+      buy: (id, price) => {
+        const s = get();
+        if (s.owned.includes(id) || s.coins < price) return false;
+        set({ coins: s.coins - price, owned: [...s.owned, id] });
+        return true;
+      },
+      equip: (patch) => set((s) => ({ equipped: { ...s.equipped, ...patch, look: { ...s.equipped.look, ...(patch.look ?? {}) } } })),
+      setSkipped: (id, on) => set((s) => { const n = { ...s.skipped }; if (on) n[id] = new Date().toISOString(); else delete n[id]; return { skipped: n }; }),
       saveQuery: (key, sql, ok) => {
         const prev = get().queries[key];
         const nowOk = ok ?? prev?.ok ?? false;
@@ -141,7 +167,7 @@ export const useStore = create<State>()(
       replaceAll: (data) => set(data),
       setSync: (code, at) => set({ syncCode: code, lastSync: at }),
     }),
-    { name: 'pracownia03', version: 1 },
+    { name: 'pracownia03', version: 1, merge: (persisted, current) => { const p = (persisted ?? {}) as Partial<State>; return { ...current, ...p, equipped: { ...DEFAULT_EQUIPPED, ...(p.equipped ?? {}), look: { ...DEFAULT_LOOK, ...(p.equipped?.look ?? {}) } } } as State; } },
   ),
 );
 

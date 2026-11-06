@@ -1,9 +1,12 @@
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { useStore } from '../lib/store';
+import { Link } from 'react-router';
+import { APP_STYLES, EDITOR_THEMES } from '../lib/themes';
 import { PageHeader } from '../components/ui';
 
 export default function SettingsPage() {
-  const { settings, setSettings } = useStore();
+  const { settings, setSettings, owned, equipped, equip } = useStore();
+  const ownedOrFree = (id: string, price: number) => price === 0 || owned.includes(id);
   return (
     <div className="max-w-2xl">
       <PageHeader eyebrow="Konto bez konta" title="Ustawienia" />
@@ -16,6 +19,23 @@ export default function SettingsPage() {
             ))}
           </div>
         </div>
+        <div className="p-5">
+          <p className="font-bold">Styl strony</p>
+          <p className="text-sm text-muted">Kolor akcentu i tła całej strony. Więcej w <Link to="/sklep" className="underline">sklepie</Link>.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {APP_STYLES.filter((s) => ownedOrFree(`appStyle:${s.id}`, s.price)).map((s) => (
+              <button key={s.id} className="chip" aria-pressed={equipped.appStyle === s.id} onClick={() => equip({ appStyle: s.id })}>
+                <span className="flex h-3 w-6 overflow-hidden rounded-full">{s.swatch.map((c) => <span key={c} className="flex-1" style={{ background: c }} />)}</span>{s.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        <label className="flex items-center justify-between gap-4 p-5">
+          <span><b>Motyw edytora kodu</b><span className="block text-sm text-muted">Motywy z VS Code (Dracula, One Dark Pro i inne) kupisz w <Link to="/sklep" className="underline">sklepie</Link>.</span></span>
+          <select className="input w-56" value={equipped.editorTheme} onChange={(e) => equip({ editorTheme: e.target.value })}>
+            {EDITOR_THEMES.filter((t) => ownedOrFree(`editorTheme:${t.id}`, t.price)).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </label>
         <label className="flex items-center justify-between gap-4 p-5">
           <span><b>Odblokuj całą ścieżkę</b><span className="block text-sm text-muted">Bez czekania na zaliczenie poprzednich lekcji.</span></span>
           <input type="checkbox" className="h-5 w-5 accent-[var(--accent)]" checked={settings.unlockAll} onChange={(e) => setSettings({ unlockAll: e.target.checked })} />

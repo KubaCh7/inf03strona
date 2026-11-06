@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import {
-  BookOpen, CalendarCheck, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info,
+  BookOpen, CalendarCheck, Coins, ShoppingBag, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info,
 } from 'lucide-react';
 import { levelInfo, liveStreak, useStore, weekMinutes } from '../lib/store';
 import { isDue } from '../lib/fsrs';
@@ -11,6 +11,9 @@ import { Logo, Progress } from './ui';
 import Tour, { useTour } from './Tour';
 import ErrorBoundary from './ErrorBoundary';
 import ReturnToExam from './ReturnToExam';
+import Avatar from './Avatar';
+import { applyAppStyle } from '../lib/themes';
+import { celebrate } from '../lib/effects';
 
 const NAV = [
   { group: 'Nauka', items: [
@@ -30,6 +33,7 @@ const NAV = [
     { to: '/sprawdzarka', label: 'Sprawdzarka', icon: ShieldCheck },
   ] },
   { group: 'Ty', items: [
+    { to: '/sklep', label: 'Sklep', icon: ShoppingBag },
     { to: '/postep', label: 'Postęp', icon: ChartLine },
     { to: '/ustawienia', label: 'Ustawienia', icon: Settings },
     { to: '/o-projekcie', label: 'O projekcie', icon: Info },
@@ -45,17 +49,19 @@ const MOBILE = [
 
 function useTheme() {
   const theme = useStore((s) => s.settings.theme);
+  const appStyle = useStore((s) => s.equipped.appStyle);
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {
       const dark = theme === 'dark' || (theme === 'system' && mq.matches);
       document.documentElement.classList.toggle('dark', dark);
+      applyAppStyle(useStore.getState().equipped.appStyle, dark);
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#161513' : '#FAF7F2');
     };
     apply();
     mq.addEventListener('change', apply);
     return () => mq.removeEventListener('change', apply);
-  }, [theme]);
+  }, [theme, appStyle]);
 }
 
 /** Liczy minuty nauki: tylko gdy karta jest widoczna i byl input w ostatnich 60 s. */
@@ -150,12 +156,23 @@ export function RightPanel() {
   );
 }
 
+function useRewardEffect() {
+  useEffect(() => {
+    const h = () => celebrate(useStore.getState().equipped.effect);
+    window.addEventListener('p03:correct', h);
+    return () => window.removeEventListener('p03:correct', h);
+  }, []);
+}
+
 export default function Layout() {
   useTheme();
+  useRewardEffect();
   useStudyClock();
   const loc = useLocation();
   const [more, setMore] = useState(false);
   const xp = useStore((s) => s.xp);
+  const coins = useStore((s) => s.coins);
+  const eq = useStore((s) => s.equipped);
   const lv = levelInfo(xp);
   useEffect(() => { setMore(false); window.scrollTo(0, 0); }, [loc.pathname]);
   const wide = /^\/(warsztat|proba|sprawdzarka|arkusze\/|kwerendy\/|nauka\/[a-z]+\/)/.test(loc.pathname);
@@ -174,22 +191,23 @@ export default function Layout() {
             </div>
           ))}
         </nav>
-        <NavLink to="/postep" data-tour="level" className="mt-4 rounded-xl border border-line bg-surface p-3 hover:bg-surface-2">
+        <NavLink to="/sklep" data-tour="level" className="mt-4 rounded-xl border border-line bg-surface p-3 hover:bg-surface-2">
           <div className="flex items-center gap-3">
-            <span className="display grid h-9 w-9 place-items-center rounded-full bg-accent-soft font-bold text-accent">{lv.level}</span>
+            <Avatar look={eq.look} size={40} ring={eq.frame !== 'none' ? eq.frame : undefined} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold">{lv.name}</p>
+              <p className="truncate text-sm font-bold">{eq.nick || lv.name}</p>
+              <p className="truncate text-[11px] text-muted">{eq.title || `Poziom ${lv.level} · ${lv.name}`}</p>
               <Progress value={lv.pct} className="mt-1 h-1.5" />
             </div>
           </div>
-          <p className="mono mt-1 text-right text-[11px] text-muted">{xp} XP</p>
+          <p className="mono mt-1 flex items-center justify-between text-[11px] text-muted"><span className="inline-flex items-center gap-1 font-bold text-[#B45309] dark:text-[#FACC15]"><Coins size={12} />{coins}</span><span>Lv {lv.level} · {xp} XP</span></p>
         </NavLink>
       </aside>
 
       {/* Top bar mobile */}
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-bg/85 px-4 py-3 backdrop-blur md:hidden">
         <NavLink to="/"><Logo /></NavLink>
-        <NavLink to="/postep" data-tour="level" className="mono rounded-full border border-line bg-surface px-3 py-1 text-xs">Lv {lv.level} · {xp} XP</NavLink>
+        <NavLink to="/sklep" data-tour="level" className="mono flex items-center gap-2 rounded-full border border-line bg-surface py-0.5 pl-0.5 pr-3 text-xs"><Avatar look={eq.look} size={26} /><span className="inline-flex items-center gap-1 font-bold text-[#B45309] dark:text-[#FACC15]"><Coins size={12} />{coins}</span><span>Lv {lv.level}</span></NavLink>
       </header>
 
       <div className="md:pl-60">

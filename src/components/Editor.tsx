@@ -7,6 +7,8 @@ import { php, phpLanguage } from '@codemirror/lang-php';
 import { acceptCompletion, autocompletion, completionStatus, hasNextSnippetField, nextSnippetField, prevSnippetField } from '@codemirror/autocomplete';
 import { indentLess, indentMore } from '@codemirror/commands';
 import { emmetSource } from '../lib/emmet';
+import { editorTheme } from '../lib/themes';
+import { useStore } from '../lib/store';
 import type { Extension } from '@codemirror/state';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { JS_COMPLETIONS, listSource, PHP_COMPLETIONS, SQL_COMPLETIONS } from '../lib/completions';
@@ -56,6 +58,8 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema }:
   const changeRef = useRef(onChange);
   changeRef.current = onChange;
   const stableChange = useCallback((v: string) => changeRef.current(v), []);
+  const themeId = useStore((s) => s.equipped.editorTheme);
+  const custom = useMemo(() => editorTheme(themeId), [themeId]);
   const extensions = useMemo(() => [
     ...langFor(file, schema),
     autocompletion({ activateOnTyping: true, icons: true, defaultKeymap: true, closeOnBlur: true, maxRenderedOptions: 80, selectOnOpen: true, aboveCursor: false }),
@@ -64,7 +68,7 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema }:
   ], [file, schema]);
   return (
     <div className="h-full min-h-0 overflow-hidden" style={{ ['--editor-font' as string]: `${fontSize}px` }}>
-      <CodeMirror value={value} height="100%" theme={dark ? 'dark' : 'light'} extensions={extensions} onChange={stableChange}
+      <CodeMirror value={value} height="100%" theme={custom ?? (dark ? 'dark' : 'light')} extensions={extensions} onChange={stableChange}
         indentWithTab={false}
         basicSetup={BASIC_SETUP} className="h-full" />
     </div>

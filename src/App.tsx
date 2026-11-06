@@ -29,6 +29,7 @@ const router = createBrowserRouter([
       { path: 'proba', element: L(() => import('./pages/Exam')) },
       { path: 'sprint', element: L(() => import('./pages/Sprint')) },
       { path: 'minigry', element: L(() => import('./pages/Games')) },
+      { path: 'sklep', element: L(() => import('./pages/Shop')) },
       { path: 'postep', element: L(() => import('./pages/ProgressPage')) },
       { path: 'ustawienia', element: L(() => import('./pages/SettingsPage')) },
       { path: 'o-projekcie', element: L(() => import('./pages/About')) },
