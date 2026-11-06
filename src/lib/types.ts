@@ -1,5 +1,7 @@
 export type Qualification = 'INF.03' | 'EE.09' | 'E.14';
+export type SheetAssets = { dir: string; files: string[]; sql: string | null };
 export type Sheet = {
+  assets?: SheetAssets;
   code: string;
   qualification: Qualification;
   year: number;

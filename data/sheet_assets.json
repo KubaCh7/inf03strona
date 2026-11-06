@@ -1,0 +1,1484 @@
+{
+ "INF.03-01-26.06-SG": {
+  "dir": "/sheets/89bda0f361",
+  "files": [
+   "Seljalandsfoss.jpg",
+   "Skogafoss.jpg",
+   "Strokkur.jpg",
+   "dettifoss.jpg",
+   "godafoss.jpg",
+   "hekla.jpg",
+   "husavik.jpg",
+   "kirkjuffel.jpg",
+   "maskonur.jpg"
+  ],
+  "sql": "baza1.sql"
+ },
+ "INF.03-02-26.06-SG": {
+  "dir": "/sheets/2e97c0b887",
+  "files": [
+   "kamienczyk.jpg",
+   "siklawa.jpg",
+   "siklawica.jpg",
+   "wilczki.jpg"
+  ],
+  "sql": "baza2.sql"
+ },
+ "INF.03-03-26.06-SG": {
+  "dir": "/sheets/1cd7ddc995",
+  "files": [
+   "fotele.png",
+   "opisFotel.txt"
+  ],
+  "sql": "sklep.sql"
+ },
+ "INF.03-04-26.06-SG": {
+  "dir": "/sheets/6256b4c6d4",
+  "files": [
+   "1.jpg",
+   "2.jpg",
+   "3.jpg",
+   "osoba.png"
+  ],
+  "sql": "wyprawy.sql"
+ },
+ "INF.03-05-26.06-SG": {
+  "dir": "/sheets/43c958e086",
+  "files": [
+   "s1.png",
+   "s2.png",
+   "s3.png",
+   "f1.png",
+   "f2.png",
+   "f3.png",
+   "k1.png",
+   "k3.png",
+   "k4.png",
+   "k5.png",
+   "k6.png"
+  ],
+  "sql": "antyki.sql"
+ },
+ "INF.03-06-26.06-SG": {
+  "dir": "/sheets/ab2e58d4fe",
+  "files": [
+   "dane.json",
+   "lekarz.png",
+   "pacjent.png",
+   "recepta.png"
+  ],
+  "sql": "recepty.sql"
+ },
+ "INF.03-07-26.06-SG": {
+  "dir": "/sheets/e31d586a73",
+  "files": [
+   "nic.png",
+   "o.png",
+   "x.png"
+  ],
+  "sql": "grytowarzyskie.sql"
+ },
+ "INF.03-08-26.06-SG": {
+  "dir": "/sheets/43ecdbed83",
+  "files": [
+   "gra1.jpg",
+   "gra2.jpg",
+   "gra3.jpg",
+   "gra4.jpg",
+   "gra5.jpg",
+   "gra6.jpg",
+   "gra7.jpg",
+   "gra8.jpg",
+   "gra9.jpg",
+   "teksty_marketingowe.txt",
+   "źródła.txt"
+  ],
+  "sql": "bazagier.sql"
+ },
+ "INF.03-09-26.06-SG": {
+  "dir": "/sheets/123970b8e4",
+  "files": [
+   "kompot.webp",
+   "lasagne.webp",
+   "logo.png",
+   "marchewka.webp",
+   "nalesniki.webp",
+   "rosol.webp",
+   "tarta.webp"
+  ],
+  "sql": "restauracja.sql"
+ },
+ "INF.03-10-26.06-SG": {
+  "dir": "/sheets/f08cffff25",
+  "files": [],
+  "sql": "laboratorium.sql"
+ },
+ "INF.03-11-26.06-SG": {
+  "dir": "/sheets/02518173aa",
+  "files": [
+   "brzoza.jpg",
+   "buk.jpg",
+   "dab.jpg",
+   "do_strony.txt",
+   "iglaste.png",
+   "jarzebina.jpg",
+   "kasztanowiec.jpg",
+   "klon.jpg",
+   "lipa.jpg",
+   "magnolia.jpg",
+   "naglowek.png",
+   "owocowe.png",
+   "wierzba.jpg"
+  ],
+  "sql": "atlasdrzew.sql"
+ },
+ "INF.03-12-26.06-SG": {
+  "dir": "/sheets/310d6ec42d",
+  "files": [
+   "1.jpg",
+   "2.jpg",
+   "3.jpg",
+   "4.jpg",
+   "5.jpg"
+  ],
+  "sql": "rowery.sql"
+ },
+ "INF.03-01-26.01-SG": {
+  "dir": "/sheets/e00b4e5fa5",
+  "files": [
+   "a1.jpg",
+   "a2.jpg",
+   "a3.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-02-26.01-SG": {
+  "dir": "/sheets/ac6b31e6c3",
+  "files": [
+   "ananas.png",
+   "banan.png",
+   "cytryna.png",
+   "gruszka.png",
+   "jabłko.png",
+   "jagody.png",
+   "maliny.png",
+   "mango.png",
+   "market.png",
+   "owoc.png",
+   "pomarancza.png",
+   "winogrona.png"
+  ],
+  "sql": "baza-nowa.sql"
+ },
+ "INF.03-03-26.01-SG": {
+  "dir": "/sheets/920af0f104",
+  "files": [
+   "1d.bmp",
+   "1m.bmp",
+   "2d.bmp",
+   "2m.bmp",
+   "klatki.jpg"
+  ],
+  "sql": null
+ },
+ "INF.03-04-26.01-SG": {
+  "dir": "/sheets/173d0951d5",
+  "files": [
+   "ma.jpg",
+   "ra.jpg",
+   "tu.jpg"
+  ],
+  "sql": "egzamin.sql"
+ },
+ "INF.03-05-26.01-SG": {
+  "dir": "/sheets/71d1dd280f",
+  "files": [],
+  "sql": "zgloszenia.sql"
+ },
+ "INF.03-06-26.01-SG": {
+  "dir": "/sheets/3e8ba1c451",
+  "files": [],
+  "sql": "choroby.sql"
+ },
+ "INF.03-07-26.01-SG": {
+  "dir": "/sheets/074a51945d",
+  "files": [
+   "pogoda.png"
+  ],
+  "sql": "pogoda.sql"
+ },
+ "INF.03-08-26.01-SG": {
+  "dir": "/sheets/2e00531e80",
+  "files": [
+   "babiagora.jpg",
+   "gora.jpg",
+   "gora2.jpg",
+   "lackowa.jpg",
+   "logo.png",
+   "mogielica.jpg",
+   "rysy.jpg",
+   "sleza.jpg",
+   "sniezka.jpg",
+   "szczeliniec.jpg",
+   "tarnica.jpg",
+   "turbacz.jpg",
+   "wysoka.jpg",
+   "Lato Bold Demo.png",
+   "Lato Regular Demo.png",
+   "OFL.txt",
+   "przyklad.css"
+  ],
+  "sql": "korona.sql"
+ },
+ "INF.03-09-26.01-SG": {
+  "dir": "/sheets/7075a5fedd",
+  "files": [
+   "1.jpg",
+   "10.jpg",
+   "2.jpg",
+   "3.jpg",
+   "4.jpg",
+   "5.jpg",
+   "6.jpg",
+   "7.jpg",
+   "8.jpg",
+   "9.jpg",
+   "kolory.png",
+   "ksztalt.png",
+   "manicure.jpg"
+  ],
+  "sql": "paznokcie.sql"
+ },
+ "INF.03-10-26.01-SG": {
+  "dir": "/sheets/65527b4eae",
+  "files": [
+   "churros.jpg",
+   "eklerki.jpg",
+   "hamburger.jpg",
+   "jagniecina.jpg",
+   "kociolek.jpg",
+   "lista.txt",
+   "losos.jpg",
+   "nugetsy.jpg",
+   "pankejki.jpg",
+   "salatka.jpg",
+   "separator.png",
+   "sernik.jpg"
+  ],
+  "sql": "przepisy.sql"
+ },
+ "INF.03-11-26.01-SG": {
+  "dir": "/sheets/f73676dcdc",
+  "files": [
+   "awatar_1.jpg",
+   "awatar_10.jpg",
+   "awatar_2.jpg",
+   "awatar_3.jpg",
+   "awatar_4.jpg",
+   "awatar_5.jpg",
+   "awatar_6.jpg",
+   "awatar_7.jpg",
+   "awatar_8.jpg",
+   "awatar_9.jpg",
+   "awatar_nieznany.png"
+  ],
+  "sql": "kino.sql"
+ },
+ "INF.03-12-26.01-SG": {
+  "dir": "/sheets/dd45117f7a",
+  "files": [
+   "angel.png",
+   "celtic.png",
+   "delfin.png",
+   "koliber.png",
+   "kwiat.png",
+   "kwiaty.png",
+   "logo.png",
+   "rozeta.png",
+   "smok.png",
+   "tygrys.png",
+   "waz.png",
+   "OFL.txt",
+   "demo.html",
+   "stylesheet.css"
+  ],
+  "sql": "studiotatuazu.sql"
+ },
+ "INF.03-01-25.06-SG": {
+  "dir": "/sheets/a714197407",
+  "files": [
+   "Czarodziejka.jpg",
+   "Mag.jpg",
+   "NieznanyLad.jpg",
+   "Persja.jpg",
+   "WyprawaNaKsiezyc.jpg",
+   "kalipso.jpg",
+   "katedra.jpg",
+   "krokodyl.jpg",
+   "rekord.txt",
+   "zamczysko.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-02-25.06-SG": {
+  "dir": "/sheets/893cc33726",
+  "files": [
+   "obraz.jpg",
+   "zadania.txt"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-03-25.06-SG": {
+  "dir": "/sheets/3053909c49",
+  "files": [
+   "ksiazka1.png",
+   "ksiazka2.png",
+   "ksiazka3.png",
+   "ksiazki.png",
+   "teksty.txt"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-04-25.06-SG": {
+  "dir": "/sheets/f8853702bb",
+  "files": [
+   "auto1.jpg",
+   "napisy.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-05-25.06-SG": {
+  "dir": "/sheets/043a325cca",
+  "files": [
+   "1.jpg",
+   "10.jpg",
+   "2.jpg",
+   "3.jpg",
+   "4.jpg",
+   "5.jpg",
+   "6.jpg",
+   "7.jpg",
+   "8.jpg",
+   "9.jpg"
+  ],
+  "sql": "fotografia.sql"
+ },
+ "INF.03-06-25.06-SG": {
+  "dir": "/sheets/378b6486c1",
+  "files": [
+   "obraz.jpg"
+  ],
+  "sql": "biblio.sql"
+ },
+ "INF.03-07-25.06-SG": {
+  "dir": "/sheets/a22d7dc570",
+  "files": [
+   "01.jpg",
+   "02.jpg",
+   "03.jpg",
+   "04.jpg",
+   "05.jpg",
+   "06.jpg",
+   "07.jpg",
+   "08.jpg",
+   "09.jpg",
+   "10.jpg",
+   "11.jpg",
+   "12.jpg",
+   "13.jpg",
+   "14.jpg",
+   "15.jpg",
+   "16.jpg",
+   "17.jpg",
+   "18.jpg",
+   "19.jpg",
+   "20.jpg",
+   "21.jpg"
+  ],
+  "sql": "wyprawy.sql"
+ },
+ "INF.03-08-25.06-SG": {
+  "dir": "/sheets/bb4a10c6a2",
+  "files": [
+   "opis.txt",
+   "smok2.JPG",
+   "smok3.JPG"
+  ],
+  "sql": "bazasmoki.sql"
+ },
+ "INF.03-09-25.06-SG": {
+  "dir": "/sheets/8b2e0f9dbf",
+  "files": [
+   "tapeta_lewa.png"
+  ],
+  "sql": "remonty.sql"
+ },
+ "INF.03-10-25.06-SG": {
+  "dir": "/sheets/890bd27609",
+  "files": [
+   "1.jpg",
+   "2.jpg",
+   "3.jpg",
+   "4.jpg",
+   "5.jpg",
+   "6.jpg",
+   "7.jpg",
+   "8.jpg"
+  ],
+  "sql": "szkolimy.sql"
+ },
+ "INF.03-11-25.06-SG": {
+  "dir": "/sheets/05c06f0933",
+  "files": [
+   "lato.png",
+   "opona.jpg",
+   "uniwer.png",
+   "zima.png"
+  ],
+  "sql": "opona.sql"
+ },
+ "INF.03-12-25.06-SG": {
+  "dir": "/sheets/698e3cce3a",
+  "files": [
+   "obraz1.jpg",
+   "obraz2.png",
+   "obraz3.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-01-25.01-SG": {
+  "dir": "/sheets/85903bb624",
+  "files": [
+   "klawiatura.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-02-25.01-SG": {
+  "dir": "/sheets/83e8f8ee2a",
+  "files": [
+   "deska.png",
+   "laminowane.png",
+   "winylowe.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-03-25.01-SG": {
+  "dir": "/sheets/38d2f51bf5",
+  "files": [
+   "kalendarz01.png",
+   "kalendarz02.png",
+   "kalendarz03.png",
+   "kalendarz04.png",
+   "kalendarz05.png",
+   "kalendarz06.png",
+   "kalendarz07.png",
+   "kalendarz08.png",
+   "kalendarz09.png",
+   "kalendarz10.png",
+   "kalendarz11.png",
+   "kalendarz12.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-04-25.01-SG": {
+  "dir": "/sheets/a7a7f57da2",
+  "files": [
+   "but1.png",
+   "but2.png",
+   "but3.png",
+   "but4.png"
+  ],
+  "sql": "obuwie.sql"
+ },
+ "INF.03-05-25.01-SG": {
+  "dir": "/sheets/02734059da",
+  "files": [
+   "kod.jpg"
+  ],
+  "sql": "firma.sql"
+ },
+ "INF.03-06-25.01-SG": {
+  "dir": "/sheets/806fdd13e0",
+  "files": [
+   "0.png",
+   "1.png",
+   "2a.png",
+   "3.png",
+   "4.png",
+   "5.png",
+   "6.png",
+   "7.png",
+   "8.png",
+   "9.png",
+   "A.png",
+   "B.png",
+   "C.png",
+   "D.png",
+   "E.png",
+   "F.png",
+   "systemy.txt"
+  ],
+  "sql": "szachy.sql"
+ },
+ "INF.03-07-25.01-SG": {
+  "dir": "/sheets/56eb874f4d",
+  "files": [
+   "mapa_polski.jpg"
+  ],
+  "sql": "wykaz.sql"
+ },
+ "INF.03-08-25.01-SG": {
+  "dir": "/sheets/bf3b7e5de5",
+  "files": [
+   "fav.jpg",
+   "nazwa.png"
+  ],
+  "sql": "mieszalnia.sql"
+ },
+ "INF.03-09-25.01-SG": {
+  "dir": "/sheets/7f449b3907",
+  "files": [
+   "logo.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-10-25.01-SG": {
+  "dir": "/sheets/d59e638339",
+  "files": [
+   "board.jpg",
+   "chess.jpg",
+   "legenda.txt"
+  ],
+  "sql": "szachy.sql"
+ },
+ "INF.03-11-25.01-SG": {
+  "dir": "/sheets/fb12270bc0",
+  "files": [
+   "puchar.bmp"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-12-25.01-SG": {
+  "dir": "/sheets/0e305a0252",
+  "files": [
+   "rogal.jpg",
+   "teksty.txt",
+   "wypieki.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-01-24.06-SG": {
+  "dir": "/sheets/859f9fc05d",
+  "files": [
+   "droga1.jpg",
+   "droga2.jpg",
+   "droga3.jpg",
+   "droga4.jpg",
+   "droga5.jpg",
+   "motor.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-02-24.06-SG": {
+  "dir": "/sheets/f4c9260ba3",
+  "files": [
+   "Jolka.jpg",
+   "Krzysiek.jpg",
+   "tekstyDoChatu.txt"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-03-24.06-SG": {
+  "dir": "/sheets/d85c444baf",
+  "files": [
+   "obraz1.png",
+   "obraz2.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-04-24.06-SG": {
+  "dir": "/sheets/1b69dfa4c1",
+  "files": [
+   "car.jpg",
+   "cat.jpg",
+   "jesien.jpg",
+   "jeziorko.jpg",
+   "kiev.jpg",
+   "motyl.jpg",
+   "owce.jpg",
+   "prague.jpg",
+   "taxi.jpg",
+   "tulipany.jpg",
+   "woodpecker.jpg",
+   "wroclaw.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-05-24.06-SG": {
+  "dir": "/sheets/f6b0972e2f",
+  "files": [
+   "AudiA3.jpg",
+   "AudiA8.jpg",
+   "OpelAstra.jpg",
+   "OpelCorsa.jpg",
+   "OpelVectra.jpg",
+   "ToyotaCorolla.jpg",
+   "ToyotaRav.jpg",
+   "ToyotaYaris.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-06-24.06-SG": {
+  "dir": "/sheets/b51ddd1b73",
+  "files": [
+   "tulipany.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-07-24.06-SG": {
+  "dir": "/sheets/fe9740c24b",
+  "files": [
+   "obraz1.png",
+   "obraz2.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-08-24.06-SG": {
+  "dir": "/sheets/970d5e9a1d",
+  "files": [
+   "obraz.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-09-24.06-SG": {
+  "dir": "/sheets/2aed89cea5",
+  "files": [
+   "1.jpg",
+   "2.jpg",
+   "3.jpg",
+   "4.jpg",
+   "5.jpg",
+   "6.jpg",
+   "7.jpg"
+  ],
+  "sql": "wycieczki.sql"
+ },
+ "INF.03-10-24.06-SG": {
+  "dir": "/sheets/d58483c303",
+  "files": [
+   "logo.png",
+   "osoba1.jpg",
+   "osoba2.jpg",
+   "osoba3.jpg",
+   "tekstyNaStrone.txt"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-11-24.06-SG": {
+  "dir": "/sheets/583e7cd272",
+  "files": [
+   "american.jpg",
+   "crested.jpg",
+   "peruwianka.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-12-24.06-SG": {
+  "dir": "/sheets/925a39c30e",
+  "files": [
+   "owoce.jpg",
+   "pomarancza.jpg",
+   "pszczola.jpg",
+   "zolw.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-01-24.01-SG": {
+  "dir": "/sheets/406663563b",
+  "files": [
+   "grafika.jpg"
+  ],
+  "sql": null
+ },
+ "INF.03-02-24.01-SG": {
+  "dir": "/sheets/a403f8b9a9",
+  "files": [
+   "mysz.jpg"
+  ],
+  "sql": null
+ },
+ "INF.03-04-24.01-SG": {
+  "dir": "/sheets/496768b0fe",
+  "files": [
+   "logo1.png",
+   "logo2.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-05-24.01-SG": {
+  "dir": "/sheets/e8512a4007",
+  "files": [
+   "obraz1.jpg",
+   "obraz2.jpg"
+  ],
+  "sql": "egzamin.sql"
+ },
+ "INF.03-06-24.01-SG": {
+  "dir": "/sheets/b552b5e290",
+  "files": [
+   "1.jpg",
+   "2.jpg",
+   "3.jpg",
+   "4.jpg",
+   "5.jpg",
+   "6.jpg",
+   "7.jpg",
+   "8.jpg",
+   "9.jpg"
+  ],
+  "sql": "egzamin.sql"
+ },
+ "INF.03-08-24.01-SG": {
+  "dir": "/sheets/20ad6b9597",
+  "files": [
+   "obraz1.jpg",
+   "obraz2.jpg"
+  ],
+  "sql": "egzamin2.sql"
+ },
+ "INF.03-01-23.06-SG": {
+  "dir": "/sheets/ec761a52ce",
+  "files": [
+   "promocja.png"
+  ],
+  "sql": "sklep.sql"
+ },
+ "INF.03-02-23.06-SG": {
+  "dir": "/sheets/630ce12d92",
+  "files": [
+   "zakupy.png"
+  ],
+  "sql": "sklep.sql"
+ },
+ "INF.03-04-23.06-SG": {
+  "dir": "/sheets/fd1e44ddb4",
+  "files": [
+   "biblioteka.png"
+  ],
+  "sql": "biblioteka.sql"
+ },
+ "INF.03-07-23.06-SG": {
+  "dir": "/sheets/6bb8942489",
+  "files": [
+   "biblioteka.png"
+  ],
+  "sql": "biblioteka.sql"
+ },
+ "EE.09-01-23.01-SG": {
+  "dir": "/sheets/b3d57c9af6",
+  "files": [
+   "2.jpg",
+   "cv.txt"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-02-23.01-SG": {
+  "dir": "/sheets/10687bfc68",
+  "files": [
+   "1.jpg",
+   "2.jpg",
+   "3.jpg",
+   "4.jpg",
+   "5.jpg",
+   "zdjecie.jpg"
+  ],
+  "sql": "szczyty.sql"
+ },
+ "EE.09-03-23.01-SG": {
+  "dir": "/sheets/b6963d8cdb",
+  "files": [
+   "obraz.jpg",
+   "tresci na stronie.txt"
+  ],
+  "sql": "gazeta.sql"
+ },
+ "EE.09-04-23.01-SG": {
+  "dir": "/sheets/295b912d9c",
+  "files": [
+   "1.jpg",
+   "2.jpg",
+   "3.jpg",
+   "4.jpg",
+   "5.jpg",
+   "6.jpg",
+   "7.jpg",
+   "8.jpg",
+   "9.jpg",
+   "obraz.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-01-23.01-SG": {
+  "dir": "/sheets/931202248d",
+  "files": [
+   "obraz.png"
+  ],
+  "sql": "malarz.sql"
+ },
+ "INF.03-02-23.01-SG": {
+  "dir": "/sheets/898628c37e",
+  "files": [],
+  "sql": "wynajem.sql"
+ },
+ "INF.03-03-23.01-SG": {
+  "dir": "/sheets/51a8111795",
+  "files": [
+   "gerbera.png",
+   "gozdzik.png",
+   "roza.png"
+  ],
+  "sql": "kwiaciarnia.sql"
+ },
+ "INF.03-04-23.01-SG": {
+  "dir": "/sheets/96f5f1d452",
+  "files": [
+   "1.jpg",
+   "2.jpg",
+   "3.jpg",
+   "4.jpg",
+   "5.jpg",
+   "6.jpg",
+   "7.jpg",
+   "8.jpg",
+   "9.jpg"
+  ],
+  "sql": "egzamin3.sql"
+ },
+ "INF.03-05-23.01-SG": {
+  "dir": "/sheets/cea9a6e10d",
+  "files": [
+   "logo1.png",
+   "logo2.png"
+  ],
+  "sql": "baza5.sql"
+ },
+ "EE.09-01-22.06-SG": {
+  "dir": "/sheets/1c01df2fb9",
+  "files": [
+   "Avatar.jpg",
+   "video.mp4"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-02-22.06-SG": {
+  "dir": "/sheets/bfff49f1ad",
+  "files": [
+   "kolory.jpg"
+  ],
+  "sql": "sklep.sql"
+ },
+ "EE.09-03-22.06-SG": {
+  "dir": "/sheets/b44187ed8b",
+  "files": [
+   "anna.jpg",
+   "ewa.jpg",
+   "janek.jpg",
+   "john.jpg",
+   "judy.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-04-22.06-SG": {
+  "dir": "/sheets/57076dfdfa",
+  "files": [
+   "obraz.jpg",
+   "tabela.txt"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-01-22.06-SG": {
+  "dir": "/sheets/426143fb54",
+  "files": [
+   "ryba1.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-02-22.06-SG": {
+  "dir": "/sheets/3ea9b3332d",
+  "files": [
+   "home.png",
+   "samochod.jpg",
+   "znak.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "INF.03-03-22.06-SG": {
+  "dir": "/sheets/58ca94f242",
+  "files": [
+   "zawody.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-01-22.01-SG": {
+  "dir": "/sheets/a62bcca9ad",
+  "files": [
+   "wedka.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-02-22.01-SG": {
+  "dir": "/sheets/b05c64d88f",
+  "files": [
+   "logo.png",
+   "obraz.jpg"
+  ],
+  "sql": "baza2.sql"
+ },
+ "EE.09-03-22.01-SG": {
+  "dir": "/sheets/066a42a235",
+  "files": [
+   "obraz.jpg"
+  ],
+  "sql": "baza3.sql"
+ },
+ "EE.09-04-22.01-SG": {
+  "dir": "/sheets/61ef1fe029",
+  "files": [
+   "obraz.jpg"
+  ],
+  "sql": "uzytkownicy.sql"
+ },
+ "EE.09-05-22.01-SG": {
+  "dir": "/sheets/5a63799e23",
+  "files": [
+   "icon-on.png",
+   "o1.jpg",
+   "o2.jpg",
+   "o3.jpg",
+   "o4.jpg",
+   "o5.jpg",
+   "o6.jpg",
+   "o7.jpg",
+   "o8.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-06-22.01-SG": {
+  "dir": "/sheets/eb085a764f",
+  "files": [
+   "Lorem Ipsum.txt",
+   "gibraltar.jpg"
+  ],
+  "sql": "auta.sql"
+ },
+ "EE.09-07-22.01-SG": {
+  "dir": "/sheets/d451c467f3",
+  "files": [
+   "icon-off.png",
+   "icon-on.png",
+   "lanzarotte.jpg",
+   "pekin.jpg",
+   "serengeti.jpg",
+   "tajlandia.jpg",
+   "wenecja.jpg"
+  ],
+  "sql": "podroze.sql"
+ },
+ "INF.03-01-22.01-SG": {
+  "dir": "/sheets/0e5ceba8bc",
+  "files": [
+   "menu.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-01-21.06-SG": {
+  "dir": "/sheets/5b6d93f6d4",
+  "files": [
+   "osoba1.jpg",
+   "osoba2.jpg",
+   "osoba3.jpg",
+   "osoba4.jpg",
+   "osoba5.jpg",
+   "osoba6.jpg",
+   "osoba7.jpg",
+   "osoba8.jpg"
+  ],
+  "sql": "dane.sql"
+ },
+ "EE.09-02-21.06-SG": {
+  "dir": "/sheets/50e17085a7",
+  "files": [
+   "arbuz.jpg",
+   "gruszka.jpg",
+   "koper.jpg",
+   "marchew.jpg",
+   "morela.jpg",
+   "owoce.jpg",
+   "papaja.jpg",
+   "papryka.jpg",
+   "ziemniak.jpg"
+  ],
+  "sql": "dane.sql"
+ },
+ "EE.09-03-21.06-SG": {
+  "dir": "/sheets/7ec00ee7bd",
+  "files": [
+   "alien.jpg",
+   "et.jpg",
+   "fantasy.jpg",
+   "hobbit.jpg",
+   "koralowa_wyspa.jpg",
+   "krokodyl.jpg",
+   "star-wars.jpg",
+   "steampunk.jpg"
+  ],
+  "sql": "dane.sql"
+ },
+ "EE.09-04-21.06-SG": {
+  "dir": "/sheets/ac50160282",
+  "files": [
+   "osoba1.jpg",
+   "osoba2.jpg",
+   "osoba3.jpg",
+   "osoba4.jpg",
+   "osoba5.jpg",
+   "osoba6.jpg",
+   "osoba7.jpg",
+   "osoba8.jpg"
+  ],
+  "sql": "dane.sql"
+ },
+ "INF.03-01-21.06-SG": {
+  "dir": "/sheets/d01e5298d0",
+  "files": [
+   "menu.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-01-21.01-SG": {
+  "dir": "/sheets/1e529b991b",
+  "files": [
+   "obraz1.jpg",
+   "zad1.png"
+  ],
+  "sql": "egzamin.sql"
+ },
+ "EE.09-02-21.01-SG": {
+  "dir": "/sheets/be1bfe09f2",
+  "files": [
+   "obraz1.jpg",
+   "zad2.png"
+  ],
+  "sql": "egzamin.sql"
+ },
+ "EE.09-03-21.01-SG": {
+  "dir": "/sheets/6e70f2c570",
+  "files": [
+   "rys1.png",
+   "wzor.png"
+  ],
+  "sql": "egzamin.sql"
+ },
+ "EE.09-04-21.01-SG": {
+  "dir": "/sheets/f0d8777b17",
+  "files": [
+   "rys1.png",
+   "wzor.png"
+  ],
+  "sql": "egzamin.sql"
+ },
+ "EE.09-05-21.01-SG": {
+  "dir": "/sheets/e7141be60f",
+  "files": [
+   "zad5.png"
+  ],
+  "sql": "egzamin.sql"
+ },
+ "EE.09-06-21.01-SG": {
+  "dir": "/sheets/da0b4b1bc7",
+  "files": [
+   "zad6.png"
+  ],
+  "sql": "egzamin.sql"
+ },
+ "E.14-01-20.06-SG": {
+  "dir": "/sheets/caf721269b",
+  "files": [
+   "malowanie.txt",
+   "obraz.png"
+  ],
+  "sql": null
+ },
+ "E.14-02-20.06-SG": {
+  "dir": "/sheets/7e3eb1b112",
+  "files": [],
+  "sql": "rezerwacje.sql"
+ },
+ "E.14-03-20.06-SG": {
+  "dir": "/sheets/bfef52d2da",
+  "files": [
+   "gerbera.png",
+   "gozdzik.png",
+   "kwiaty_zrodlo.txt",
+   "roza.png"
+  ],
+  "sql": null
+ },
+ "E.14-04-20.06-SG": {
+  "dir": "/sheets/9d3a4a0f30",
+  "files": [],
+  "sql": null
+ },
+ "EE.09-01-20.06-SG": {
+  "dir": "/sheets/ce19770155",
+  "files": [
+   "logo1.png",
+   "logo2.png"
+  ],
+  "sql": "baza5.sql"
+ },
+ "EE.09-02-20.06-SG": {
+  "dir": "/sheets/1623e33984",
+  "files": [
+   "1.jpg",
+   "2.jpg",
+   "3.jpg",
+   "4.jpg",
+   "5.jpg",
+   "6.jpg",
+   "7.jpg",
+   "8.jpg",
+   "9.jpg"
+  ],
+  "sql": "egzamin3.sql"
+ },
+ "EE.09-03-20.06-SG": {
+  "dir": "/sheets/b8a88b7c29",
+  "files": [
+   "logo1.png",
+   "logo2.png"
+  ],
+  "sql": "baza5.sql"
+ },
+ "EE.09-04-20.06-SG": {
+  "dir": "/sheets/fdfcc76d57",
+  "files": [
+   "obraz1.jpg",
+   "obraz2.jpg"
+  ],
+  "sql": "egzamin.sql"
+ },
+ "EE.09-05-20.06-SG": {
+  "dir": "/sheets/069877b831",
+  "files": [
+   "obraz1.jpg",
+   "obraz2.jpg"
+  ],
+  "sql": "egzamin2.sql"
+ },
+ "EE.09-06-20.06-SG": {
+  "dir": "/sheets/3e85b9e419",
+  "files": [
+   "1.jpg",
+   "2.jpg",
+   "3.jpg",
+   "4.jpg",
+   "5.jpg",
+   "6.jpg",
+   "7.jpg",
+   "8.jpg",
+   "9.jpg"
+  ],
+  "sql": "egzamin3.sql"
+ },
+ "E.14-01-20.01-SG": {
+  "dir": "/sheets/8fbbdabcc1",
+  "files": [
+   "scalak.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "E.14-02-20.01-SG": {
+  "dir": "/sheets/ec3642137d",
+  "files": [
+   "cukierki1.jpg",
+   "cukierki2.png",
+   "cukierki3.jpg"
+  ],
+  "sql": null
+ },
+ "E.14-03-20.01-SG": {
+  "dir": "/sheets/d0f67690a6",
+  "files": [
+   "cukierki1.jpg",
+   "cukierki2.png",
+   "cukierki3.jpg"
+  ],
+  "sql": null
+ },
+ "E.14-04-20.01-SG": {
+  "dir": "/sheets/a6a780eab7",
+  "files": [
+   "puszczyk.jpg",
+   "sroka.jpg",
+   "wrona.jpg"
+  ],
+  "sql": "baza2.sql"
+ },
+ "EE.09-01-20.01-SG": {
+  "dir": "/sheets/109b08fc53",
+  "files": [
+   "ryba2.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-02-20.01-SG": {
+  "dir": "/sheets/32d8df86ab",
+  "files": [
+   "home.png",
+   "samochod.png",
+   "znak.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-03-20.01-SG": {
+  "dir": "/sheets/224f961c9c",
+  "files": [
+   "logo.png",
+   "obraz.jpg"
+  ],
+  "sql": "baza2.sql"
+ },
+ "E.14-01-19.06": {
+  "dir": "/sheets/502a4fd25e",
+  "files": [
+   "promocja.png"
+  ],
+  "sql": "sklep.sql"
+ },
+ "E.14-02-19.06": {
+  "dir": "/sheets/6671ce316e",
+  "files": [
+   "zakupy.png"
+  ],
+  "sql": "sklep.sql"
+ },
+ "E.14-03-19.06": {
+  "dir": "/sheets/1110b8b218",
+  "files": [
+   "biblioteka.png"
+  ],
+  "sql": "biblioteka.sql"
+ },
+ "E.14-04-19.06": {
+  "dir": "/sheets/fc30c240d1",
+  "files": [
+   "biblioteka.png"
+  ],
+  "sql": "biblioteka.sql"
+ },
+ "E.14-05-19.06": {
+  "dir": "/sheets/ce877ebe20",
+  "files": [
+   "grafika.jpg"
+  ],
+  "sql": null
+ },
+ "E.14-06-19.06": {
+  "dir": "/sheets/0bd8482cb5",
+  "files": [
+   "mysz.jpg"
+  ],
+  "sql": null
+ },
+ "EE.09-01-19.06": {
+  "dir": "/sheets/7cd3cf5336",
+  "files": [
+   "ryba1.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-02-19.06": {
+  "dir": "/sheets/4f87e541bb",
+  "files": [
+   "home.png",
+   "samochod.png",
+   "znak.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-03-19.06": {
+  "dir": "/sheets/2960c614de",
+  "files": [
+   "zawody.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "EE.09-04-19.06": {
+  "dir": "/sheets/8ca316c512",
+  "files": [
+   "logo.jpg",
+   "obraz2.jpg"
+  ],
+  "sql": "baza1.sql"
+ },
+ "EE.09-05-19.06": {
+  "dir": "/sheets/5dc5a979dc",
+  "files": [
+   "obraz1.png",
+   "obraz2.jpg"
+  ],
+  "sql": "baza1.sql"
+ },
+ "EE.09-06-19.06": {
+  "dir": "/sheets/e99b75280b",
+  "files": [
+   "obraz.jpg"
+  ],
+  "sql": "baza3.sql"
+ },
+ "E.14-01-19.01": {
+  "dir": "/sheets/74e51a6c04",
+  "files": [
+   "kadr.jpg"
+  ],
+  "sql": "dane.sql"
+ },
+ "E.14-02-19.01": {
+  "dir": "/sheets/183de96f76",
+  "files": [
+   "tekst.jpg"
+  ],
+  "sql": null
+ },
+ "E.14-03-19.01": {
+  "dir": "/sheets/a1e1bcef71",
+  "files": [
+   "gwiezdneWojny.jpg",
+   "klaps.png"
+  ],
+  "sql": "dane.sql"
+ },
+ "E.14-04-19.01": {
+  "dir": "/sheets/cb056e05d3",
+  "files": [
+   "ksztalty.png",
+   "logo.png"
+  ],
+  "sql": null
+ },
+ "E.14-05-19.01": {
+  "dir": "/sheets/02e134242e",
+  "files": [
+   "boczniak.jpg",
+   "borowik.jpg",
+   "kania.jpg",
+   "kurka.jpg",
+   "pieczarka.jpg",
+   "podgrzybek.jpg",
+   "szatan.jpg",
+   "trufla.jpg"
+  ],
+  "sql": "dane2.sql"
+ },
+ "E.14-06-19.01": {
+  "dir": "/sheets/39fe041b62",
+  "files": [
+   "grecja.jpg",
+   "hiszpania.jpg",
+   "polska.jpg",
+   "wlochy.jpg"
+  ],
+  "sql": null
+ },
+ "E.14-07-19.01": {
+  "dir": "/sheets/8a1e81ea59",
+  "files": [
+   "zad1.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "E.14-08-19.01": {
+  "dir": "/sheets/9fa85310a9",
+  "files": [
+   "zad2.png"
+  ],
+  "sql": "baza.sql"
+ },
+ "E.14-09-19.01": {
+  "dir": "/sheets/80b5440ced",
+  "files": [
+   "zwierzeta.jpg"
+  ],
+  "sql": "baza2.sql"
+ },
+ "E.14-10-19.01": {
+  "dir": "/sheets/d26b2488fa",
+  "files": [
+   "drapieznik.jpg"
+  ],
+  "sql": "baza2.sql"
+ },
+ "E.14-11-19.01": {
+  "dir": "/sheets/675d8de1dd",
+  "files": [
+   "kot1.jpg",
+   "pies1.jpg",
+   "pies2.jpg",
+   "pies3.jpg"
+  ],
+  "sql": null
+ },
+ "E.14-12-19.01": {
+  "dir": "/sheets/9264137489",
+  "files": [
+   "kot1.jpg",
+   "pies1.jpg",
+   "pies2.jpg",
+   "pies3.jpg"
+  ],
+  "sql": null
+ },
+ "E.14-01-18.06": {
+  "dir": "/sheets/e4dfcedbca",
+  "files": [
+   "menu.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "E.14-02-18.06": {
+  "dir": "/sheets/89d480f176",
+  "files": [
+   "menu.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "E.14-03-18.06": {
+  "dir": "/sheets/3c5a036d43",
+  "files": [
+   "menu.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "E.14-04-18.06": {
+  "dir": "/sheets/50bde386e4",
+  "files": [
+   "menu.jpg"
+  ],
+  "sql": "baza.sql"
+ },
+ "E.14-05-18.06": {
+  "dir": "/sheets/b1f30e9311",
+  "files": [
+   "obraczki.png"
+  ],
+  "sql": null
+ },
+ "E.14-06-18.06": {
+  "dir": "/sheets/c9a61d34d2",
+  "files": [
+   "pizza.png"
+  ],
+  "sql": null
+ }
+}

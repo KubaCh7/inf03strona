@@ -182,11 +182,15 @@ export default function Layout() {
   useEffect(() => { setMore(false); window.scrollTo(0, 0); }, [loc.pathname]);
   const wide = /^\/(warsztat|proba|sprawdzarka|arkusze\/|kwerendy\/|nauka\/[a-z]+\/)/.test(loc.pathname);
   const tour = useTour();
+  const hideNav = useStore((s) => !!s.settings.hideNav);
+  const setSettings = useStore((s) => s.setSettings);
+  // tryb skupienia (warsztat/egzamin): bez bocznego menu, cala szerokosc dla edytora
+  const focus = hideNav && wide;
 
   return (
     <div className="min-h-dvh">
       {/* Sidebar desktop */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-surface/85 px-3 py-5 backdrop-blur md:flex">
+      <aside className={`fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-surface/85 px-3 py-5 backdrop-blur ${focus ? '' : 'md:flex'}`}>
         <NavLink to="/" className="mb-6 px-2"><Logo /></NavLink>
         <nav className="flex-1 space-y-5 overflow-y-auto">
           {NAV.map((g) => (
@@ -215,8 +219,9 @@ export default function Layout() {
         <NavLink to="/sklep" data-tour="level" className="mono flex items-center gap-2 rounded-full border border-line bg-surface py-0.5 pl-0.5 pr-3 text-xs"><Avatar look={eq.look} size={26} /><span className="inline-flex items-center gap-1 font-bold text-[#B45309] dark:text-[#FACC15]"><Coins size={12} />{coins}</span><span>Lv {lv.level}</span></NavLink>
       </header>
 
-      <div className="md:pl-60">
-        <div className={`mx-auto flex gap-8 px-4 pt-5 md:px-8 md:pt-8 ${wide ? 'max-w-[1600px]' : 'max-w-7xl'}`}>
+      {focus && <button className="fixed bottom-4 left-4 z-40 hidden items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-bold shadow-lg md:inline-flex" onClick={() => setSettings({ hideNav: false })} title="Pokaż boczne menu"><MoreHorizontal size={14} />Menu</button>}
+      <div className={focus ? '' : 'md:pl-60'}>
+        <div className={`mx-auto flex gap-8 px-4 pt-5 ${focus ? 'max-w-none md:px-4 md:pt-3' : `md:px-8 md:pt-8 ${wide ? 'max-w-[1600px]' : 'max-w-7xl'}`}`}>
           <main className="pb-safe min-w-0 flex-1"><ErrorBoundary resetKey={loc.pathname}><Outlet /></ErrorBoundary></main>
           {!wide && <aside className="hidden w-72 shrink-0 xl:block"><div className="sticky top-8"><RightPanel /></div></aside>}
         </div>

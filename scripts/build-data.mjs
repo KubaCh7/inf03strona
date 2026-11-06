@@ -81,6 +81,11 @@ const count = (q) => sheets.filter((s) => s.qualification === q).length;
 if (sheets.length !== 152 || codes.size !== 152) throw new Error(`Oczekiwano 152 unikalnych arkuszy, jest ${sheets.length}/${codes.size}`);
 if (count('INF.03') !== 80 || count('EE.09') !== 40 || count('E.14') !== 32) throw new Error('Zly podzial kwalifikacji');
 
+// Pliki z archiwow (grafiki, zrzut bazy) rozpakowane do public/sheets (scripts/extract_assets.py)
+try {
+  const assets = JSON.parse(readFileSync('data/sheet_assets.json', 'utf8'));
+  for (const s of sheets) if (assets[s.code]) s.assets = assets[s.code];
+} catch { /* brak pliku: arkusze bez wypakowanych plikow */ }
 writeFileSync('src/data/sheets.json', JSON.stringify(sheets));
 const hist = {}; for (const s of sheets) hist[s.difficulty.score] = (hist[s.difficulty.score] || 0) + 1;
 console.log(`sheets.json: ${sheets.length} arkuszy, trudnosc:`, hist);

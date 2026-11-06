@@ -1679,7 +1679,8 @@
   "show": "answers"
  },
  "cfcea520b9cf5": {
-  "show": "none"
+  "show": "figure",
+  "image": "/q/cfcea520b9cf5-f.webp"
  },
  "c5298329b1ca6": {
   "answers": [
@@ -1808,7 +1809,8 @@
   "show": "none"
  },
  "ca0860fda1e6c": {
-  "drop": true
+  "image": "/q/ca0860fda1e6c-f.webp",
+  "show": "figure"
  },
  "cccde27d96901": {
   "text": "Którą wartość zwróci funkcja zapisana w języku C++, jeżeli jej parametrami są a = 4 oraz b = 3?",
@@ -1940,10 +1942,16 @@
   "show": "none"
  },
  "ccef9981909fe": {
-  "drop": true
+  "image": "/q/ccef9981909fe-f.webp",
+  "show": "figure",
+  "text": "Na tabeli Pracownicy, której wiersze zostały pokazane na obrazie, wykonano przedstawioną kwerendę SELECT. Które dane zostaną wybrane?",
+  "code": "SELECT imie FROM pracownicy WHERE nazwisko = 'Kowal' OR stanowisko > 2;"
  },
  "c58d91ae835dd": {
-  "drop": true
+  "image": "/q/c58d91ae835dd-f.webp",
+  "show": "figure",
+  "text": "Na tabeli dania, której wiersze zostały pokazane na obrazie, wykonano przedstawioną kwerendę SELECT. Ile wierszy wybierze kwerenda?",
+  "code": "SELECT * FROM dania WHERE typ < 3 AND cena < 30 LIMIT 5;"
  },
  "c431d18b86746": {
   "text": "Wskaż przycisk sformatowany przedstawionym stylem CSS.",
@@ -1960,7 +1968,8 @@
   "show": "none"
  },
  "c3e2699bd8a6d": {
-  "drop": true
+  "image": "/q/c3e2699bd8a6d-f.webp",
+  "show": "figure"
  },
  "c799989e37c1c": {
   "text": "Aby zaprojektować kształt logo dla strony WWW sposobem przedstawionym na obrazie, należy zastosować funkcję",
@@ -2084,5 +2093,47 @@
  },
  "cf503464fd0e6": {
   "text": "Jakiego rodzaju mechanizm kontroli bezpieczeństwa wykonywania aplikacji zawiera środowisko uruchomieniowe platformy .NET Framework?"
+ },
+ "c68987c980023": {
+  "image": "/q/c68987c980023-f.webp",
+  "show": "figure"
+ },
+ "cc1eda734650b": {
+  "image": "/q/cc1eda734650b-f.webp",
+  "show": "figure"
+ },
+ "cb4e5bbe06663": {
+  "image": "/q/cb4e5bbe06663-f.webp",
+  "show": "figure",
+  "text": "Dana jest tabela pracownicy, do której wpisano rekordy przedstawione obok. Po uruchomieniu podanej w ramce kwerendy SQL zostanie wyświetlona wartość",
+  "code": "SELECT MAX(pensja) FROM pracownicy WHERE pensja < 3000;"
+ },
+ "ce868a5e8fed7": {
+  "image": "/q/ce868a5e8fed7-f.webp",
+  "show": "figure",
+  "text": "Które dane zostaną wybrane w wyniku działania kwerendy na przedstawionych rekordach?",
+  "code": "SELECT id FROM samochody WHERE rocznik LIKE \"2%4\";"
+ },
+ "cf291a732e320": {
+  "image": "/q/cf291a732e320-f.webp",
+  "show": "figure"
+ },
+ "c2e8b9f7812f1": {
+  "image": "/q/c2e8b9f7812f1-f.webp",
+  "show": "figure"
+ },
+ "c49a547830eba": {
+  "image": "/q/c49a547830eba-f.webp",
+  "show": "figure"
+ },
+ "c47f5eb09cfe1": {
+  "image": "/q/c47f5eb09cfe1-f.webp",
+  "show": "figure",
+  "text": "Efektem wykonania kwerendy dla przedstawionej tabeli rezerwacje jest",
+  "code": "SELECT sezon, SUM(liczba_dn) FROM rezerwacje\n  GROUP BY sezon;"
+ },
+ "cfd906b5b32e0": {
+  "image": "/q/cfd906b5b32e0-f.webp",
+  "show": "figure"
  }
 }
