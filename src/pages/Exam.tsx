@@ -45,11 +45,11 @@ function Practice({ exam, onDone }: { exam: ActiveExam; onDone: (pct: number) =>
 export default function Exam() {
   const c = useContent();
   const { activeExam: exam, setActiveExam, addTest, addXp, setSheet } = useStore();
-  const [onlyInf, setOnlyInf] = useState(true);
   const byId = useMemo(() => new Map((c?.questions ?? []).map((q) => [q.id, q])), [c]);
   if (!c) return <Loading />;
 
-  const randomSheet = () => pick(c.sheets.filter((s) => !onlyInf || s.qualification === 'INF.03'));
+  // na razie egzamin tylko z arkuszy INF.03
+  const randomSheet = () => pick(c.sheets.filter((s) => s.qualification === 'INF.03'));
   const start = (mode: ActiveExam['mode']) => {
     if (exam && exam.stage !== 'done' && !confirm('Porzucić rozpoczętą próbę?')) return;
     if (mode === 'practice') setActiveExam({ id: uid(), mode, stage: 'practice', practice: { sheetCode: randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS } });
@@ -108,10 +108,9 @@ export default function Exam() {
           <div className="gold-frame card-hover p-6 text-left">
             <button className="block w-full text-left" onClick={() => start('practice')}>
               <span className="grid h-12 w-12 place-items-center rounded-xl gold-chip"><MonitorSmartphone size={22} /></span>
-              <h2 className="mt-4 text-2xl font-bold">Część praktyczna</h2><p className="text-sm text-muted">Losowy arkusz CKE · 150 minut · próg 75%</p>
+              <h2 className="mt-4 text-2xl font-bold">Część praktyczna</h2><p className="text-sm text-muted">Losowy arkusz INF.03 · 150 minut · próg 75%</p>
               <span className="btn btn-gold mt-5 w-full">Losuj arkusz</span>
             </button>
-            <label className="mt-3 flex items-center gap-2 text-xs"><input type="checkbox" checked={onlyInf} onChange={(e) => setOnlyInf(e.target.checked)} className="accent-[var(--gold-2)]" />Tylko arkusze INF.03</label>
           </div>
           <button className="gold-frame gold-frame-soft gold-shine card-hover p-6 text-left" onClick={() => start('full')}>
             <span className="grid h-12 w-12 place-items-center rounded-xl gold-chip"><Trophy size={22} /></span>

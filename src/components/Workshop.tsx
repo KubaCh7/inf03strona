@@ -1,14 +1,13 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Check, X, Expand, Shrink, AArrowDown, AArrowUp } from 'lucide-react';
+import { Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Expand, Shrink, AArrowDown, AArrowUp } from 'lucide-react';
 import type { Sheet } from '../lib/types';
 import PdfViewer, { preloadPdf } from './PdfViewer';
 import type { Database as Db } from 'sql.js';
 import { useStore } from '../lib/store';
 import { buildSrcDoc } from '../lib/preview';
-import { freshDb, run, withMissingTables, type QueryResult } from '../lib/sql';
+import { freshDb, getSql, run, withMissingTables, type QueryResult } from '../lib/sql';
 import { Loading } from './ui';
 import Split from './Split';
-import { checkQuery, getDump, getSolutions, loadQueries, useQueries, type CheckOutcome, type SheetQueries } from '../lib/queries';
 import PhpMyAdmin from './PhpMyAdmin';
 
 const Editor = lazy(() => import('./Editor'));
@@ -65,7 +64,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   const [db, setDb] = useState<Db | null>(null);
   const [dbInfo, setDbInfo] = useState<string>('Brak bazy. Wczytaj plik .sql albo utwórz tabele kwerendą.');
   const [dbName, setDbName] = useState('baza');
-  const [sqlOut, setSqlOut] = useState<{ results: QueryResult[]; skipped: string[]; error?: string; query?: string } | null>(null);
+  const [sqlOut, setSqlOut] = useState<{ results: QueryResult[]; skipped: string[]; error?: string } | null>(null);
   const sqlRef = useRef<HTMLInputElement>(null);
   useEffect(() => { if (sheet) preloadPdf(); }, [sheet]);
   const imgRef = useRef<HTMLInputElement>(null);
@@ -111,21 +110,27 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
     return () => clearTimeout(t);
   }, [files, images, entry, empty, base]);
 
-  // Baza z archiwum arkusza wczytuje sie sama
+  // Baza z archiwum arkusza wczytuje sie sama od razu; kwerendy czekaja na nia (dbReady)
+  const dbReady = useRef<Promise<Db | null> | null>(null);
   useEffect(() => {
     const a = sheet?.assets;
-    if (!a?.sql || db) return;
+    if (!a?.sql) return;
     let on = true;
-    fetch(`${a.dir}/${a.sql}`).then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
-      .then((text) => freshDb(withMissingTables(text)).then((d) => {
-        if (!on) return;
-        const t = d.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")[0];
-        setDb(d); setDbName(a.sql!.replace(/\.sql$/i, ''));
-        setDbInfo(`Baza ${a.sql} wczytana z archiwum arkusza. Tabele: ${t ? t.values.map((v) => v[0]).join(', ') : 'brak'}.`);
-      }))
-      .catch((e) => on && setDbInfo('Nie udało się wczytać bazy z archiwum: ' + (e as Error).message));
+    void getSql();
+    const p = fetch(`${a.dir}/${a.sql}`).then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+      .then((text) => freshDb(withMissingTables(text)))
+      .then((d) => {
+        if (on) {
+          const t = d.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")[0];
+          setDb(d); setDbName(a.sql!.replace(/\.sql$/i, '')); setDbVer((v) => v + 1);
+          setDbInfo(`Baza ${a.sql!.replace(/\.sql$/i, '')} wczytana. Tabele: ${t ? t.values.map((v) => v[0]).filter((x) => x !== 'sqlite_sequence').join(', ') : 'brak'}.`);
+        }
+        return d;
+      })
+      .catch((e) => { if (on) setDbInfo('Nie udało się wczytać bazy arkusza: ' + (e as Error).message); return null; });
+    dbReady.current = p;
     return () => { on = false; };
-  }, [sheet, db]);
+  }, [sheet]);
 
   useEffect(() => {
     const h = (e: MessageEvent) => {
@@ -170,49 +175,21 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   }
   const loadSql = async (file: File) => { await importSql(await file.text(), file.name); setBottom('pma'); setTab('pma'); };
   /** Wykonuje kwerende z pliku (Ctrl+Enter w kwerendy.txt) i pokazuje wynik w panelu SQL. */
-  const allQ = useQueries();
-  const sheetQ = sheet ? allQ?.find((x) => x.code === sheet.code) : undefined;
-  const [check, setCheck] = useState<(CheckOutcome & { n: number; text: string }) | null | 'busy'>(null);
-  /** Ktore zadanie z arkusza to jest: znacznik „Zapytanie N” w komentarzu przed kwerenda albo kolejnosc w pliku. */
-  function taskFor(stmt: string, sq: SheetQueries | undefined) {
-    if (!sq?.tasks.length) return undefined;
-    const file = files[active] ?? '';
-    const at = file.indexOf(stmt.trim());
-    const before = at >= 0 ? file.slice(0, at) : '';
-    const mark = [...before.matchAll(/zapytanie\s*(\d+)/gi)].pop();
-    if (mark) return sq.tasks.find((t) => t.n === Number(mark[1]));
-    const idx = before.split(';').filter((x) => x.replace(/--[^\n]*|#[^\n]*/g, '').trim()).length;
-    return [...sq.tasks].sort((a, b) => a.n - b.n)[idx];
-  }
-  async function verify(stmt: string, all: boolean) {
-    setCheck(null);
-    if (all || !sheet) return;
-    // lista kwerend arkusza moze sie jeszcze ladowac: poczekaj na nia
-    const sq = sheetQ ?? (await loadQueries()).find((x) => x.code === sheet.code);
-    const task = taskFor(stmt, sq);
-    if (!task || !sq) return;
-    setCheck('busy');
+  async function execSql(text: string) {
     try {
-      const dump = sq.dump ? await getDump(sq.dump) : sheet?.assets?.sql ? await fetch(`${sheet.assets.dir}/${sheet.assets.sql}`).then((r) => r.text()) : '';
-      const sol = (await getSolutions(sq.solutionPath))[task.n];
-      const r = await checkQuery(dump, task, stmt, sol);
-      setCheck({ ...r, n: task.n, text: task.text });
-    } catch { setCheck(null); }
-  }
-  async function execSql(text: string, all = false) {
-    void verify(text, all);
-    try {
-      const d = db ?? (await freshDb());
-      if (!db) setDb(d);
+      // baza arkusza moze sie jeszcze wczytywac: poczekaj zamiast tworzyc pusta
+      const loaded = db ?? (dbReady.current ? await dbReady.current : null);
+      const d = loaded ?? (await freshDb());
+      if (d !== db) setDb(d);
       const r = run(d, text);
-      setSqlOut({ ...r, query: text.trim() });
+      setSqlOut(r);
       setDbVer((v) => v + 1);
       const t = d.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")[0];
       if (t && !sheet?.assets?.sql) setDbInfo(`Tabele: ${t.values.map((v) => v[0]).join(', ')}.`);
     } catch (e) {
-      setSqlOut({ results: [], skipped: [], error: (e as Error).message, query: text.trim() });
+      setSqlOut({ results: [], skipped: [], error: (e as Error).message });
     }
-    setBottom('sql'); setTab((x) => (x === 'kod' && !isDesktopNow() ? 'sql' : x));
+    setBottom('sql'); setEdMax(false); setTab((x) => (x === 'kod' && !isDesktopNow() ? 'sql' : x));
   }
   function addImages(list: FileList | null) {
     if (!list) return;
@@ -230,18 +207,10 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   const isDesktop = useIsDesktop();
   const logCount = logs.length ? ` (${logs.length})` : '';
 
-  const checkBox = check === 'busy' ? <p className="mb-2 text-xs text-muted">Sprawdzam z rozwiązaniem…</p> : check && (
-    <div className={`mb-2 rounded-lg p-2 text-xs ${check.ok ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
-      <p className="flex items-start gap-1.5 font-bold">{check.ok ? <Check size={14} className="mt-px shrink-0" /> : <X size={14} className="mt-px shrink-0" />}Zapytanie {check.n}: {check.message}</p>
-      <p className="mt-0.5 line-clamp-2 text-ink/70">{check.text}</p>
-    </div>
-  );
   const sqlResults = (
     <>
-      {!sqlOut && <p className="text-xs text-muted">Napisz kwerendę w pliku <b>kwerendy.txt</b> (albo .sql) i wciśnij <kbd>Ctrl+Enter</kbd> lub „▶ Uruchom” w edytorze. Wynik pojawi się tutaj, nic nie trzeba przepisywać.{sheetQ?.tasks.length ? ` Kwerendy z arkusza (${sheetQ.tasks.length}) sprawdzą się same z rozwiązaniem: pisz je po kolei albo dodaj komentarz „-- Zapytanie 2”.` : ''}</p>}
-      {checkBox}
-      {sqlOut?.query && <pre className="mono mb-2 max-h-24 overflow-auto rounded-lg bg-surface-2 p-2 text-[11px]">{sqlOut.query}</pre>}
-      {sqlOut?.error && <p className="mt-2 rounded-lg bg-danger-soft p-2 text-xs text-danger">Błąd: {sqlOut.error}</p>}
+      {!sqlOut && <p className="text-xs text-muted">Napisz kwerendę w pliku <b>kwerendy.txt</b> (albo .sql) i wciśnij <kbd>Ctrl+Enter</kbd> lub „▶ Uruchom” w edytorze. Wynik pojawi się tutaj, nic nie trzeba przepisywać.</p>}
+      {sqlOut?.error && <p className="mt-2 rounded-lg bg-danger-soft p-2 text-xs text-danger">#1064 - {sqlOut.error}</p>}
       {sqlOut?.skipped.map((x, i) => <p key={i} className="mt-2 rounded-lg bg-info-soft p-2 text-xs">Pominięto (SQLite nie ma użytkowników): <code>{x.slice(0, 120)}</code></p>)}
       {sqlOut && !sqlOut.error && sqlOut.results.length === 0 && <p className="mt-2 text-xs text-success">Wykonano. Zmienionych wierszy: {db?.getRowsModified() ?? 0}.</p>}
       {sqlOut?.results.map((r, i) => (
@@ -268,7 +237,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
       <div className="min-h-0 flex-1">
         {active && files[active] !== undefined ? (
           <Suspense fallback={<Loading label="Ładuję edytor…" />}>
-            <Editor key={active} file={active} value={files[active] ?? ''} onChange={setFile} fontSize={fontSize} onRun={isSql ? (q, all) => void execSql(q, all) : undefined} />
+            <Editor key={active} file={active} value={files[active] ?? ''} onChange={setFile} fontSize={fontSize} onRun={isSql ? (q) => void execSql(q) : undefined} />
           </Suspense>
         ) : (
           <div className="grid h-full place-items-center p-6 text-center">
@@ -284,13 +253,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
           </div>
         )}
       </div>
-      {isSql && (sqlOut || check) && (
-        <div className="max-h-[45%] min-h-0 shrink-0 overflow-auto border-t-2 border-sql/50 bg-surface p-2 text-sm">
-          <div className="mb-1 flex items-center justify-between"><span className="eyebrow flex items-center gap-1"><Database size={12} />Wynik</span><button className="rounded p-0.5 text-muted hover:bg-surface-2" title="Zamknij wynik" onClick={() => { setSqlOut(null); setCheck(null); }}><X size={13} /></button></div>
-          {sqlResults}
-        </div>
-      )}
-      <p className="border-t border-line px-3 py-1 text-[11px] text-muted">{isSql ? <><kbd>Ctrl+Enter</kbd> = wykonaj kwerendę pod kursorem, <kbd>Ctrl+Shift+Enter</kbd> = wszystkie. Wynik pokazuje się pod kodem.</> : <>Podpowiedzi jak w VS Code: <kbd>!</kbd> + Tab = szablon HTML, <kbd>ul&gt;li*3</kbd> + Tab, <kbd>Ctrl+Spacja</kbd> = lista podpowiedzi.</>}</p>
+      <p className="border-t border-line px-3 py-1 text-[11px] text-muted">{isSql ? <><kbd>Ctrl+Enter</kbd> = wykonaj kwerendę pod kursorem, <kbd>Ctrl+Shift+Enter</kbd> = wszystkie. Wynik w zakładce SQL (Wynik kwerendy).</> : <>Podpowiedzi jak w VS Code: <kbd>!</kbd> + Tab = szablon HTML, <kbd>ul&gt;li*3</kbd> + Tab, <kbd>Ctrl+Spacja</kbd> = lista podpowiedzi.</>}</p>
     </div>
   );
   const editorSlot = edMax ? <div className="card grid h-full place-items-center text-sm text-muted">Edytor jest powiększony.</div> : editorCard;
@@ -351,8 +314,8 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
     <div className="flex h-full min-h-0 flex-col">
       <div className="mb-2 flex items-center gap-2">
         <span className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-bold"><FileText size={15} className="shrink-0 text-accent" /><span className="truncate">{sheet.code}</span></span>
-        {sheet.files.archiveUrl && <a className="btn btn-ghost px-2 py-1 text-xs" href={sheet.files.archiveUrl}>Pliki</a>}
-        {sheet.files.archivePassword && <span className="mono hidden text-xs text-muted xl:inline">hasło: {sheet.files.archivePassword}</span>}
+        {sheet.files.archiveUrl && !sheet.assets && <a className="btn btn-ghost px-2 py-1 text-xs" href={sheet.files.archiveUrl}>Pliki</a>}
+        {sheet.files.archivePassword && !sheet.assets && <span className="mono hidden text-xs text-muted xl:inline">hasło: {sheet.files.archivePassword}</span>}
         <a className="btn btn-ghost px-2 py-1 text-xs" href={sheet.files.pdfView} target="_blank" rel="noreferrer" title="PDF w nowej karcie"><ExternalLink size={13} /></a>
       </div>
       <PdfViewer url={sheet.files.pdfRaw} fallback={sheet.files.pdfView} className="min-h-0 flex-1" />
@@ -369,7 +332,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
       ))}
       <button className="btn btn-ghost px-2 py-1 text-xs" onClick={addFile}><Plus size={14} />Plik</button>
       <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => imgRef.current?.click()}><ImagePlus size={14} />Grafiki / pliki</button>
-      <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => sqlRef.current?.click()}><Upload size={14} />Zrzut .sql</button>
+      {!sheet?.assets?.sql && <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => sqlRef.current?.click()}><Upload size={14} />Zrzut .sql</button>}
       <span className="ml-auto flex gap-1.5">
         <button className="btn btn-ghost hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setSettings({ hideNav: !hideNav })} title="Ukryj/pokaż boczne menu strony">{hideNav ? <Minimize2 size={14} /> : <Maximize2 size={14} />}{hideNav ? 'Pokaż menu' : 'Pełny ekran'}</button>
         {sheet && <button className="btn btn-ghost hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setShowPdf((x) => !x)}>{showPdf ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}{showPdf ? 'Ukryj arkusz' : 'Pokaż arkusz'}</button>}
