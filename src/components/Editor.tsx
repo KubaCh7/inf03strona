@@ -4,9 +4,9 @@ import { css, cssLanguage } from '@codemirror/lang-css';
 import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
 import { sql, MySQL } from '@codemirror/lang-sql';
 import { php, phpLanguage } from '@codemirror/lang-php';
-import { acceptCompletion, autocompletion, completionStatus, hasNextSnippetField, nextSnippetField, prevSnippetField } from '@codemirror/autocomplete';
+import { acceptCompletion, autocompletion, closeCompletion, completionStatus, hasNextSnippetField, nextSnippetField, prevSnippetField } from '@codemirror/autocomplete';
 import { indentLess, indentMore } from '@codemirror/commands';
-import { vim } from '@replit/codemirror-vim';
+import { vim, Vim } from '@replit/codemirror-vim';
 import { emmetSource } from '../lib/emmet';
 import { editorTheme } from '../lib/themes';
 import { useStore } from '../lib/store';
@@ -45,6 +45,25 @@ const tabKeys = [
   Prec.lowest(keymap.of([{ key: 'Tab', run: indentMore, shift: indentLess }])),
 ];
 
+// Vim: Shift+strzalki zaznaczaja jak w gVimie (keymodel=startsel): z normal/insert wchodza w visual
+let vimMapped = false;
+function setupVimKeys() {
+  if (vimMapped) return;
+  vimMapped = true;
+  const dirs: [string, string][] = [['Left', 'h'], ['Right', 'l'], ['Up', 'k'], ['Down', 'j']];
+  for (const [k, m] of dirs) {
+    Vim.map(`<S-${k}>`, `v${m}`, 'normal');
+    Vim.map(`<S-${k}>`, m, 'visual');
+  }
+}
+// Esc przy otwartej liscie podpowiedzi: zamknij liste I wyjdz z trybu insert (inaczej Vim zostaje w INSERT)
+const vimEscape = Prec.highest(EditorView.domEventHandlers({
+  keydown(e, view) {
+    if (e.key === 'Escape' && completionStatus(view.state) !== null) closeCompletion(view);
+    return false;
+  },
+}));
+
 // Staly obiekt: nowy obiekt przy kazdym renderze przebudowywal edytor i gubil pola snippetow
 const BASIC_SETUP = { foldGutter: false, highlightActiveLine: true, autocompletion: false, closeBrackets: true, bracketMatching: true } as const;
 
@@ -62,10 +81,11 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema }:
   const themeId = useStore((s) => s.equipped.editorTheme);
   const custom = useMemo(() => editorTheme(themeId), [themeId]);
   const vimOn = useStore((s) => !!s.settings.vim);
+  if (vimOn) setupVimKeys();
   const setSettings = useStore((s) => s.setSettings);
   const extensions = useMemo(() => [
     // vim musi byc pierwszy, zeby jego skroty mialy pierwszenstwo
-    ...(vimOn ? [vim({ status: true })] : []),
+    ...(vimOn ? [vim({ status: true }), vimEscape] : []),
     ...langFor(file, schema),
     autocompletion({ activateOnTyping: true, icons: true, defaultKeymap: true, closeOnBlur: true, maxRenderedOptions: 80, selectOnOpen: true, aboveCursor: false }),
     ...tabKeys,
