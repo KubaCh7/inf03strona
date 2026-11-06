@@ -77,22 +77,26 @@ export default function Exam() {
     const theory = { ...t, finishedAt: Date.now(), score: ok };
     addTest({ id: uid(), kind: 'theory40', at: new Date().toISOString(), score: ok, total, passed, byCat });
     t.questionIds.forEach((id, i) => { const a = t.answers[i]; useStore.getState().recordAnswer(id, a !== null && t.order[i][a] === byId.get(id)!.correct); });
-    if (passed) addXp(30);
-    if (exam!.mode === 'full') setActiveExam({ ...exam!, theory, stage: 'theory' });
-    else setActiveExam({ ...exam!, theory, stage: 'done' });
+    const gained = passed ? 30 : 0;
+    if (gained) addXp(gained);
+    const xp = (exam!.xp ?? 0) + gained;
+    if (exam!.mode === 'full') setActiveExam({ ...exam!, theory, stage: 'theory', xp });
+    else setActiveExam({ ...exam!, theory, stage: 'done', xp });
   };
   const finishPractice = (pct: number) => {
     const p = exam!.practice!;
     setSheet(p.sheetCode, { status: 'done', score: pct });
-    if (pct >= 75) addXp(50);
+    // XP za zdany arkusz praktyczny INF.03: 100 za zdanie (75%+), +1 za kazdy punkt procentowy ponad prog, +25 za 100%
+    let gained = pct >= 75 ? 100 + (pct - 75) + (pct >= 100 ? 25 : 0) : 0;
     const practice = { ...p, finishedAt: Date.now(), score: pct };
     if (exam!.mode === 'full') {
       const t = exam!.theory!;
       const passed = (t.score ?? 0) / t.questionIds.length >= THEORY_PASS && pct / 100 >= PRACTICE_PASS;
       addTest({ id: uid(), kind: 'exam', at: new Date().toISOString(), score: t.score ?? 0, total: t.questionIds.length, passed, sheetCode: p.sheetCode, practice: pct });
-      if (passed) addXp(100);
+      if (passed) gained += 100;
     }
-    setActiveExam({ ...exam!, practice, stage: 'done' });
+    if (gained) addXp(gained);
+    setActiveExam({ ...exam!, practice, stage: 'done', xp: (exam!.xp ?? 0) + gained });
   };
 
   // ---- Landing ----
@@ -185,6 +189,7 @@ export default function Exam() {
         {passed ? <Trophy size={40} className="mx-auto text-[var(--gold-2)]" /> : <RotateCcw size={36} className="mx-auto text-muted" />}
         <p className="eyebrow mt-3">Próba egzaminu zakończona</p>
         <h1 className={`mt-1 text-4xl font-extrabold ${passed ? 'gold-text' : ''}`}>{passed ? 'Zdane!' : 'Jeszcze nie tym razem'}</h1>
+        {(exam.xp ?? 0) > 0 && <p className="mono mt-3 inline-block rounded-full bg-success-soft px-3 py-1 text-sm font-bold text-success">+{exam.xp} XP</p>}
         <p className="mt-2 text-sm text-muted">{passed ? 'Tak trzymaj. To wynik treningowy, ale pokazuje, że jesteś gotowy.' : 'Zobacz, gdzie poszło gorzej, i spróbuj ponownie.'}</p>
       </section>
       <div className="grid gap-4 sm:grid-cols-2">

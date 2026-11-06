@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import {
-  BookOpen, CalendarCheck, Coins, ShoppingBag, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info, UserRound,
+  BookOpen, CalendarCheck, Coins, ShoppingBag, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info, UserRound, Trophy,
 } from 'lucide-react';
 import { levelInfo, liveStreak, useStore, weekMinutes } from '../lib/store';
 import { isDue } from '../lib/fsrs';
@@ -35,6 +35,7 @@ const NAV = [
   ] },
   { group: 'Ty', items: [
     { to: '/sklep', label: 'Sklep', icon: ShoppingBag },
+    { to: '/ranking', label: 'Ranking', icon: Trophy },
     { to: '/postep', label: 'Postęp', icon: ChartLine },
     { to: '/ustawienia', label: 'Ustawienia', icon: Settings },
     { to: '/o-projekcie', label: 'O projekcie', icon: Info },

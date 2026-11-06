@@ -32,6 +32,7 @@ const router = createBrowserRouter([
       { path: 'sklep', element: L(() => import('./pages/Shop')) },
       { path: 'postep', element: L(() => import('./pages/ProgressPage')) },
       { path: 'ustawienia', element: L(() => import('./pages/SettingsPage')) },
+      { path: 'ranking', element: L(() => import('./pages/Ranking')) },
       { path: 'konto', element: L(() => import('./pages/AccountPage')) },
       { path: 'o-projekcie', element: L(() => import('./pages/About')) },
       { path: '*', element: <div className="card p-8">Nie ma takiej strony.</div> },

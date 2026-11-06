@@ -16,6 +16,8 @@ export type ActiveExam = {
   practice?: { sheetCode: string; startedAt: number; durationMs: number; finishedAt?: number; score?: number };
   /** arkusz do czesci praktycznej po teorii (restart „od zera” tego samego arkusza) */
   nextSheet?: string;
+  /** XP zdobyte w tej probie (pokazywane w podsumowaniu) */
+  xp?: number;
 };
 export type Settings = { theme: 'system' | 'light' | 'dark'; editorFont: number; unlockAll: boolean; dailyGoalMin: number; newCardsPerDay: number; pdfSide?: 'left' | 'right'; pdfWidth?: number; tourDone?: boolean; flashIntroSeen?: boolean; vim?: boolean; vimrc?: string; hideNav?: boolean };
 

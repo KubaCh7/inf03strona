@@ -8,15 +8,16 @@ let cache: Promise<Content> | null = null;
 let resolved: Content | null = null;
 
 async function fromSupabase(): Promise<Content> {
-  // pytania zawsze z paczki aplikacji: tam sa recznie poprawione tresci (kod, tekst zamiast skanow)
+  // arkusze i pytania zawsze z paczki aplikacji: tylko tam sa pliki z archiwow (assets: grafiki + baza .sql)
+  // i recznie poprawione tresci pytan. Rekordy w Supabase ich nie maja (bez assets baza egzaminu sie nie laduje).
   const [s, q, f] = await Promise.all([
-    supabase.from('sheets').select('data').order('year', { ascending: false }).limit(1000),
+    import('../data/sheets.json'),
     import('../data/questions.json'),
     supabase.from('flashcards').select('id, deck, front, back, example').limit(5000),
   ]);
-  if (s.error || f.error || !s.data?.length) throw new Error('supabase');
+  if (f.error) throw new Error('supabase');
   return {
-    sheets: s.data.map((r) => r.data as Sheet),
+    sheets: s.default as Sheet[],
     questions: q.default as Question[],
     flashcards: f.data as Flashcard[],
     source: 'supabase',
