@@ -149,7 +149,7 @@ export default function Theory() {
       </section>
 
       <p className="mt-6 text-xs text-muted">
-        Prawdziwa baza pytań CKE jest niejawna. Pytania w Pracowni są napisane od zera w zakresie INF.03 (HTML, CSS, JS, SQL, PHP, grafika, BHP). <Link to="/o-projekcie" className="underline">Więcej o źródłach</Link>.
+        Pytania pochodzą z opublikowanych arkuszy pisemnych CKE (E.14, EE.09) oraz z własnej bazy z wyjaśnieniami. Pełna baza CKE jest niejawna. <Link to="/o-projekcie" className="underline">Więcej o źródłach</Link>.
       </p>
     </div>
   );
