@@ -14,7 +14,7 @@ import WrongAnswers from '../components/WrongAnswers';
 
 const uid = () => crypto.randomUUID?.() ?? String(Date.now());
 
-function Practice({ exam, onDone }: { exam: ActiveExam; onDone: (pct: number) => void }) {
+function Practice({ exam, onDone, onRestart }: { exam: ActiveExam; onDone: (pct: number) => void; onRestart: () => void }) {
   const c = useContent();
   const p = exam.practice!;
   const left = useCountdown(p.startedAt, p.durationMs, !!p.finishedAt);
@@ -23,6 +23,7 @@ function Practice({ exam, onDone }: { exam: ActiveExam; onDone: (pct: number) =>
   const sheet = c.sheets.find((s) => s.code === p.sheetCode);
   if (!sheet) return <div className="card p-6">Nie znaleziono arkusza {p.sheetCode}.</div>;
   const timeUp = left === 0;
+  const wsKey = `exam:${exam.id}:${sheet.code}`;
   return (
     <div>
       <div className="card sticky top-[60px] z-10 mb-4 flex flex-wrap items-center justify-between gap-3 p-4 md:top-4">
@@ -33,11 +34,13 @@ function Practice({ exam, onDone }: { exam: ActiveExam; onDone: (pct: number) =>
         <TimerBadge left={left} total={p.durationMs} />
         <div className="flex gap-1.5">
           {(['kod', 'ocena'] as const).map((k) => <button key={k} className="chip" aria-pressed={view === k} onClick={() => setView(k)}>{k === 'kod' ? 'Arkusz + warsztat' : 'Oddaję pracę'}</button>)}
+          <button className="chip" title="Wyczyść pliki, bazę i zegar" onClick={() => { if (confirm('Wyczyścić wszystko i zacząć ten arkusz od nowa?')) onRestart(); }}><RotateCcw size={13} />Od zera</button>
         </div>
       </div>
       {timeUp && view !== 'ocena' && <p className="mb-4 rounded-xl bg-danger-soft p-3 text-sm font-bold text-danger">Czas minął. Przejdź do „Oddaję” i oceń pracę.</p>}
-      {view === 'kod' && <Workshop key={sheet ? `sheet:${sheet.code}` : 'free'} storageKey={`sheet:${sheet.code}`} sheet={sheet} />}
-      {view === 'ocena' && <SheetChecker sheet={sheet} autoRun onScore={onDone} />}
+      {/* kazda proba ma wlasny, pusty projekt (nie miesza sie ze zwyklym warsztatem arkusza) */}
+      {view === 'kod' && <Workshop key={wsKey} storageKey={wsKey} sheet={sheet} />}
+      {view === 'ocena' && <SheetChecker sheet={sheet} storageKey={wsKey} autoRun onScore={onDone} />}
     </div>
   );
 }
@@ -52,8 +55,20 @@ export default function Exam() {
   const randomSheet = () => pick(c.sheets.filter((s) => s.qualification === 'INF.03'));
   const start = (mode: ActiveExam['mode']) => {
     if (exam && exam.stage !== 'done' && !confirm('Porzucić rozpoczętą próbę?')) return;
+    useStore.getState().dropWorkspaces('exam:');
     if (mode === 'practice') setActiveExam({ id: uid(), mode, stage: 'practice', practice: { sheetCode: randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS } });
     else setActiveExam({ id: uid(), mode, stage: 'theory', theory: newTheory(c.questions) });
+  };
+
+  /** Ten sam arkusz od zera: nowa proba (nowe id = pusty projekt, baza od nowa), pelny czas. */
+  const restartSame = () => {
+    if (!exam) return;
+    const id = uid();
+    useStore.getState().dropWorkspaces('exam:');
+    const practice = exam.practice ? { sheetCode: exam.practice.sheetCode, startedAt: Date.now(), durationMs: PRACTICE_MS } : undefined;
+    if (exam.mode === 'full') setActiveExam({ id, mode: 'full', stage: 'theory', theory: newTheory(c.questions), nextSheet: exam.practice?.sheetCode });
+    else if (exam.mode === 'practice') setActiveExam({ id, mode: 'practice', stage: 'practice', practice });
+    else setActiveExam({ id, mode: 'theory', stage: 'theory', theory: newTheory(c.questions) });
   };
 
   const finishTheory = (t: TheoryState) => {
@@ -145,7 +160,7 @@ export default function Exam() {
       <div>
         <PageHeader eyebrow={exam.mode === 'full' ? 'Etap 1 z 2' : 'Test teorii'} title={done ? `Wynik: ${t.score}/${t.questionIds.length}` : 'Część pisemna'}
           right={done && (exam.mode === 'full' && !exam.practice ? (
-            <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'practice', practice: { sheetCode: randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS } })}>Przejdź do praktyki <ArrowRight size={16} /></button>
+            <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'practice', practice: { sheetCode: exam.nextSheet ?? randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS } })}>Przejdź do praktyki <ArrowRight size={16} /></button>
           ) : (
             <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'done' })}>Podsumowanie <ArrowRight size={16} /></button>
           ))} />
@@ -156,7 +171,7 @@ export default function Exam() {
   }
 
   // ---- Praktyka ----
-  if (exam.stage === 'practice' && exam.practice) return <Practice exam={exam} onDone={finishPractice} />;
+  if (exam.stage === 'practice' && exam.practice) return <Practice key={exam.id} exam={exam} onDone={finishPractice} onRestart={restartSame} />;
 
   // ---- Podsumowanie ----
   const t = exam.theory;
@@ -193,7 +208,8 @@ export default function Exam() {
       {t && <WrongAnswers t={t} byId={byId} />}
       <div className="mt-5 flex flex-wrap gap-2">
         {t && <button className="btn btn-ghost" onClick={() => setActiveExam({ ...exam, stage: 'theory' })}>Przejrzyj wszystkie odpowiedzi</button>}
-        <button className="btn btn-gold" onClick={() => setActiveExam(null)}><RotateCcw size={16} />Nowa próba egzaminu</button>
+        <button className="btn btn-gold" onClick={restartSame}><RotateCcw size={16} />{p ? 'Ten sam arkusz od zera' : 'Jeszcze raz od zera'}</button>
+        <button className="btn btn-ghost" onClick={() => { useStore.getState().dropWorkspaces('exam:'); setActiveExam(null); }}>Nowa próba (losowy arkusz)</button>
       </div>
     </div>
   );

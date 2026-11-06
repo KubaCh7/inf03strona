@@ -14,6 +14,8 @@ export type ActiveExam = {
   mode: 'full' | 'theory' | 'practice';
   theory?: { questionIds: string[]; order: number[][]; answers: (number | null)[]; startedAt: number; durationMs: number; finishedAt?: number; score?: number };
   practice?: { sheetCode: string; startedAt: number; durationMs: number; finishedAt?: number; score?: number };
+  /** arkusz do czesci praktycznej po teorii (restart „od zera” tego samego arkusza) */
+  nextSheet?: string;
 };
 export type Settings = { theme: 'system' | 'light' | 'dark'; editorFont: number; unlockAll: boolean; dailyGoalMin: number; newCardsPerDay: number; pdfSide?: 'left' | 'right'; pdfWidth?: number; tourDone?: boolean; flashIntroSeen?: boolean; vim?: boolean; vimrc?: string; hideNav?: boolean };
 
@@ -58,6 +60,7 @@ type State = {
   setCard: (id: string, card: unknown) => void;
   countNewCard: () => void;
   saveWorkspace: (key: string, files: Record<string, string>) => void;
+  dropWorkspaces: (prefix: string, keep?: string) => void;
   setSettings: (p: Partial<Settings>) => void;
   setSprintBest: (n: number) => void;
   setDailyQuestion: (d: State['dailyQuestion']) => void;
@@ -166,6 +169,7 @@ export const useStore = create<State>()(
         return { newCardsDay: { date: d, count: (s.newCardsDay.date === d ? s.newCardsDay.count : 0) + 1 } };
       }),
       saveWorkspace: (key, files) => set((s) => ({ workspaces: { ...s.workspaces, [key]: files } })),
+      dropWorkspaces: (prefix, keep) => set((s) => ({ workspaces: Object.fromEntries(Object.entries(s.workspaces).filter(([k]) => !k.startsWith(prefix) || k === keep)) })),
       setSettings: (p) => set((s) => ({ settings: { ...s.settings, ...p } })),
       setSprintBest: (n) => set((s) => ({ sprintBest: Math.max(s.sprintBest, n) })),
       setDailyQuestion: (dq) => set({ dailyQuestion: dq }),

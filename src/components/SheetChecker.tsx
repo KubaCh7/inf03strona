@@ -11,8 +11,8 @@ export function scoreOf(auto: CheckResult[], manual: CheckResult[]) {
   return { got, total, pct: total ? Math.round((got / total) * 100) : 0 };
 }
 
-export default function SheetChecker({ sheet, onScore, autoRun }: { sheet: Sheet; onScore?: (pct: number) => void; autoRun?: boolean }) {
-  const ws = useStore((s) => s.workspaces[`sheet:${sheet.code}`]);
+export default function SheetChecker({ sheet, onScore, autoRun, storageKey }: { sheet: Sheet; onScore?: (pct: number) => void; autoRun?: boolean; storageKey?: string }) {
+  const ws = useStore((s) => s.workspaces[storageKey ?? `sheet:${sheet.code}`]);
   const [files, setFiles] = useState<Record<string, string> | null>(ws ?? null);
   const [auto, setAuto] = useState<CheckResult[] | null>(null);
   const [manual, setManual] = useState<CheckResult[]>([]);
