@@ -1,21 +1,32 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon } from 'lucide-react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Check, X, Expand, Shrink, AArrowDown, AArrowUp } from 'lucide-react';
 import type { Sheet } from '../lib/types';
 import PdfViewer, { preloadPdf } from './PdfViewer';
 import type { Database as Db } from 'sql.js';
 import { useStore } from '../lib/store';
 import { buildSrcDoc } from '../lib/preview';
-import { freshDb, run, type QueryResult } from '../lib/sql';
+import { freshDb, run, withMissingTables, type QueryResult } from '../lib/sql';
 import { Loading } from './ui';
 import Split from './Split';
+import { checkQuery, getDump, getSolutions, loadQueries, useQueries, type CheckOutcome, type SheetQueries } from '../lib/queries';
 import PhpMyAdmin from './PhpMyAdmin';
 
 const Editor = lazy(() => import('./Editor'));
 
 // Dawne pliki startowe: zapisany warsztat identyczny z nimi traktujemy jak pusty
 const LEGACY_DEFAULT_INDEX = '<!DOCTYPE html>\n<html lang="pl">\n<head>\n  <meta charset="UTF-8">\n  <title>Moja strona</title>\n  <link rel="stylesheet" href="styl.css">\n</head>\n<body>\n  <header>\n    <h1>Witaj w warsztacie</h1>\n  </header>\n  <main>\n    <p>Zacznij pisać kod. Podgląd odświeża się sam.</p>\n  </main>\n  <script src="skrypt.js"></script>\n</body>\n</html>\n';
+const LEGACY: Record<string, string> = {
+  'index.html': LEGACY_DEFAULT_INDEX,
+  'styl.css': 'body {\n  font-family: Arial, sans-serif;\n  margin: 0;\n}\nheader {\n  background-color: #C2410C;\n  color: white;\n  padding: 10px;\n}\n',
+  'skrypt.js': '// Twój skrypt\nconsole.log("Skrypt działa");\n',
+  'kwerendy.txt': '-- Kwerendy SQL. Zaznacz (albo zostaw całość) i kliknij „Wykonaj”.\n',
+};
+/** Pusty start; zapisany warsztat zostaje, chyba ze to nietkniety dawny szablon (wszystkie pliki bez zmian). */
 function startFiles(saved: Record<string, string> | undefined, initial: Record<string, string> | undefined): Record<string, string> {
-  if (saved && !(saved['index.html'] === LEGACY_DEFAULT_INDEX && Object.keys(saved).length <= 4)) return saved;
+  if (saved && Object.keys(saved).length) {
+    const untouched = Object.entries(saved).every(([k, v]) => LEGACY[k] !== undefined && v === LEGACY[k]);
+    if (!untouched) return saved;
+  }
   return initial ?? {};
 }
 const QUICK = ['index.html', 'styl.css', 'skrypt.js', 'kwerendy.txt'];
@@ -48,6 +59,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   const [tab, setTab] = useState<'arkusz' | 'kod' | 'podglad' | 'sql' | 'pma' | 'konsola'>(sheet ? 'arkusz' : 'kod');
   const [bottom, setBottom] = useState<'podglad' | 'sql' | 'pma' | 'konsola'>('podglad');
   const [newName, setNewName] = useState('');
+  const [edMax, setEdMax] = useState(false);
   const [dbVer, setDbVer] = useState(0);
   const [images, setImages] = useState<Record<string, string>>({});
   const [db, setDb] = useState<Db | null>(null);
@@ -58,8 +70,30 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   useEffect(() => { if (sheet) preloadPdf(); }, [sheet]);
   const imgRef = useRef<HTMLInputElement>(null);
 
-  // Zapis (debounce)
-  useEffect(() => { const t = setTimeout(() => saveWorkspace(storageKey, files), 400); return () => clearTimeout(t); }, [files, storageKey, saveWorkspace]);
+  // Zapis: po krotkiej przerwie w pisaniu oraz natychmiast przy odswiezeniu/zamknieciu karty/wyjsciu z warsztatu
+  const latest = useRef({ files, storageKey, dirty: false });
+  latest.current = { files, storageKey, dirty: latest.current.dirty };
+  const flush = useCallback(() => {
+    const l = latest.current;
+    if (!l.dirty) return;
+    l.dirty = false;
+    saveWorkspace(l.storageKey, l.files);
+  }, [saveWorkspace]);
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) { first.current = false; return; }
+    latest.current.dirty = true;
+    const t = setTimeout(flush, 250);
+    return () => clearTimeout(t);
+  }, [files, flush]);
+  useEffect(() => {
+    const onHide = () => flush();
+    const onVis = () => { if (document.visibilityState === 'hidden') flush(); };
+    window.addEventListener('pagehide', onHide);
+    window.addEventListener('beforeunload', onHide);
+    document.addEventListener('visibilitychange', onVis);
+    return () => { flush(); window.removeEventListener('pagehide', onHide); window.removeEventListener('beforeunload', onHide); document.removeEventListener('visibilitychange', onVis); };
+  }, [flush]);
 
   // Podglad (debounce 300 ms): pokazuje aktywny plik HTML/PHP albo strone, na ktora przeszedl link
   const htmlFiles = Object.keys(files).filter((f) => /\.(html?|php)$/i.test(f));
@@ -83,7 +117,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
     if (!a?.sql || db) return;
     let on = true;
     fetch(`${a.dir}/${a.sql}`).then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
-      .then((text) => freshDb(text).then((d) => {
+      .then((text) => freshDb(withMissingTables(text)).then((d) => {
         if (!on) return;
         const t = d.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")[0];
         setDb(d); setDbName(a.sql!.replace(/\.sql$/i, ''));
@@ -136,7 +170,37 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   }
   const loadSql = async (file: File) => { await importSql(await file.text(), file.name); setBottom('pma'); setTab('pma'); };
   /** Wykonuje kwerende z pliku (Ctrl+Enter w kwerendy.txt) i pokazuje wynik w panelu SQL. */
-  async function execSql(text: string) {
+  const allQ = useQueries();
+  const sheetQ = sheet ? allQ?.find((x) => x.code === sheet.code) : undefined;
+  const [check, setCheck] = useState<(CheckOutcome & { n: number; text: string }) | null | 'busy'>(null);
+  /** Ktore zadanie z arkusza to jest: znacznik „Zapytanie N” w komentarzu przed kwerenda albo kolejnosc w pliku. */
+  function taskFor(stmt: string, sq: SheetQueries | undefined) {
+    if (!sq?.tasks.length) return undefined;
+    const file = files[active] ?? '';
+    const at = file.indexOf(stmt.trim());
+    const before = at >= 0 ? file.slice(0, at) : '';
+    const mark = [...before.matchAll(/zapytanie\s*(\d+)/gi)].pop();
+    if (mark) return sq.tasks.find((t) => t.n === Number(mark[1]));
+    const idx = before.split(';').filter((x) => x.replace(/--[^\n]*|#[^\n]*/g, '').trim()).length;
+    return [...sq.tasks].sort((a, b) => a.n - b.n)[idx];
+  }
+  async function verify(stmt: string, all: boolean) {
+    setCheck(null);
+    if (all || !sheet) return;
+    // lista kwerend arkusza moze sie jeszcze ladowac: poczekaj na nia
+    const sq = sheetQ ?? (await loadQueries()).find((x) => x.code === sheet.code);
+    const task = taskFor(stmt, sq);
+    if (!task || !sq) return;
+    setCheck('busy');
+    try {
+      const dump = sq.dump ? await getDump(sq.dump) : sheet?.assets?.sql ? await fetch(`${sheet.assets.dir}/${sheet.assets.sql}`).then((r) => r.text()) : '';
+      const sol = (await getSolutions(sq.solutionPath))[task.n];
+      const r = await checkQuery(dump, task, stmt, sol);
+      setCheck({ ...r, n: task.n, text: task.text });
+    } catch { setCheck(null); }
+  }
+  async function execSql(text: string, all = false) {
+    void verify(text, all);
     try {
       const d = db ?? (await freshDb());
       if (!db) setDb(d);
@@ -166,13 +230,45 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   const isDesktop = useIsDesktop();
   const logCount = logs.length ? ` (${logs.length})` : '';
 
+  const checkBox = check === 'busy' ? <p className="mb-2 text-xs text-muted">Sprawdzam z rozwiązaniem…</p> : check && (
+    <div className={`mb-2 rounded-lg p-2 text-xs ${check.ok ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
+      <p className="flex items-start gap-1.5 font-bold">{check.ok ? <Check size={14} className="mt-px shrink-0" /> : <X size={14} className="mt-px shrink-0" />}Zapytanie {check.n}: {check.message}</p>
+      <p className="mt-0.5 line-clamp-2 text-ink/70">{check.text}</p>
+    </div>
+  );
+  const sqlResults = (
+    <>
+      {!sqlOut && <p className="text-xs text-muted">Napisz kwerendę w pliku <b>kwerendy.txt</b> (albo .sql) i wciśnij <kbd>Ctrl+Enter</kbd> lub „▶ Uruchom” w edytorze. Wynik pojawi się tutaj, nic nie trzeba przepisywać.{sheetQ?.tasks.length ? ` Kwerendy z arkusza (${sheetQ.tasks.length}) sprawdzą się same z rozwiązaniem: pisz je po kolei albo dodaj komentarz „-- Zapytanie 2”.` : ''}</p>}
+      {checkBox}
+      {sqlOut?.query && <pre className="mono mb-2 max-h-24 overflow-auto rounded-lg bg-surface-2 p-2 text-[11px]">{sqlOut.query}</pre>}
+      {sqlOut?.error && <p className="mt-2 rounded-lg bg-danger-soft p-2 text-xs text-danger">Błąd: {sqlOut.error}</p>}
+      {sqlOut?.skipped.map((x, i) => <p key={i} className="mt-2 rounded-lg bg-info-soft p-2 text-xs">Pominięto (SQLite nie ma użytkowników): <code>{x.slice(0, 120)}</code></p>)}
+      {sqlOut && !sqlOut.error && sqlOut.results.length === 0 && <p className="mt-2 text-xs text-success">Wykonano. Zmienionych wierszy: {db?.getRowsModified() ?? 0}.</p>}
+      {sqlOut?.results.map((r, i) => (
+        <div key={i} className="mt-2 overflow-x-auto rounded-lg border border-line">
+          <table className="mono w-full text-xs">
+            <thead className="bg-surface-2"><tr>{r.columns.map((c, k) => <th key={k} className="px-2 py-1 text-left">{c}</th>)}</tr></thead>
+            <tbody>{r.values.slice(0, 500).map((row, j) => <tr key={j} className="border-t border-line">{row.map((v, k) => <td key={k} className="px-2 py-1">{v === null ? <i className="text-muted">NULL</i> : String(v)}</td>)}</tr>)}</tbody>
+          </table>
+          <p className="px-2 py-1 text-[11px] text-muted">{r.values.length} wierszy</p>
+        </div>
+      ))}
+    </>
+  );
   const editorCard = (
     <div className="card flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="flex items-center gap-1 border-b border-line bg-surface px-2 py-1">
+        <span className="mono min-w-0 flex-1 truncate text-xs text-muted">{active || 'brak pliku'}</span>
+        <button className="rounded p-1 hover:bg-surface-2" title="Mniejsza czcionka" onClick={() => setSettings({ editorFont: Math.max(10, fontSize - 1) })}><AArrowDown size={15} /></button>
+        <span className="mono w-7 text-center text-[11px] tabular text-muted">{fontSize}</span>
+        <button className="rounded p-1 hover:bg-surface-2" title="Większa czcionka" onClick={() => setSettings({ editorFont: Math.min(28, fontSize + 1) })}><AArrowUp size={15} /></button>
+        <button className="ml-1 inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs font-bold hover:bg-surface-2" title={edMax ? 'Zmniejsz edytor' : 'Powiększ edytor na cały ekran'} onClick={() => setEdMax((x) => !x)}>{edMax ? <Shrink size={14} /> : <Expand size={14} />}{edMax ? 'Zmniejsz' : 'Powiększ'}</button>
+      </div>
       {isPhp && <p className="border-b border-line bg-info-soft px-3 py-1.5 text-xs">PHP nie wykonuje się w przeglądarce. Sprawdzarka czyta kod, a w podglądzie bloki PHP są oznaczone. Uruchomisz go w XAMPP.</p>}
       <div className="min-h-0 flex-1">
         {active && files[active] !== undefined ? (
           <Suspense fallback={<Loading label="Ładuję edytor…" />}>
-            <Editor key={active} file={active} value={files[active] ?? ''} onChange={setFile} fontSize={fontSize} onRun={isSql ? (q) => void execSql(q) : undefined} />
+            <Editor key={active} file={active} value={files[active] ?? ''} onChange={setFile} fontSize={fontSize} onRun={isSql ? (q, all) => void execSql(q, all) : undefined} />
           </Suspense>
         ) : (
           <div className="grid h-full place-items-center p-6 text-center">
@@ -188,9 +284,16 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
           </div>
         )}
       </div>
-      <p className="border-t border-line px-3 py-1 text-[11px] text-muted">{isSql ? <><kbd>Ctrl+Enter</kbd> = wykonaj kwerendę pod kursorem, <kbd>Ctrl+Shift+Enter</kbd> = wszystkie. Wynik na dole w zakładce SQL.</> : <>Podpowiedzi jak w VS Code: <kbd>!</kbd> + Tab = szablon HTML, <kbd>ul&gt;li*3</kbd> + Tab, <kbd>Ctrl+Spacja</kbd> = lista podpowiedzi.</>}</p>
+      {isSql && (sqlOut || check) && (
+        <div className="max-h-[45%] min-h-0 shrink-0 overflow-auto border-t-2 border-sql/50 bg-surface p-2 text-sm">
+          <div className="mb-1 flex items-center justify-between"><span className="eyebrow flex items-center gap-1"><Database size={12} />Wynik</span><button className="rounded p-0.5 text-muted hover:bg-surface-2" title="Zamknij wynik" onClick={() => { setSqlOut(null); setCheck(null); }}><X size={13} /></button></div>
+          {sqlResults}
+        </div>
+      )}
+      <p className="border-t border-line px-3 py-1 text-[11px] text-muted">{isSql ? <><kbd>Ctrl+Enter</kbd> = wykonaj kwerendę pod kursorem, <kbd>Ctrl+Shift+Enter</kbd> = wszystkie. Wynik pokazuje się pod kodem.</> : <>Podpowiedzi jak w VS Code: <kbd>!</kbd> + Tab = szablon HTML, <kbd>ul&gt;li*3</kbd> + Tab, <kbd>Ctrl+Spacja</kbd> = lista podpowiedzi.</>}</p>
     </div>
   );
+  const editorSlot = edMax ? <div className="card grid h-full place-items-center text-sm text-muted">Edytor jest powiększony.</div> : editorCard;
   const previewCard = (
     <div className="card flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex items-center gap-1.5 border-b border-line px-3 py-2">
@@ -210,20 +313,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
         <span className="truncate text-[11px] text-muted">{dbInfo}</span>
       </div>
       <div className="min-h-0 flex-1 overflow-auto p-3 text-sm">
-        {!sqlOut && <p className="text-xs text-muted">Napisz kwerendę w pliku <b>kwerendy.txt</b> (albo .sql) i wciśnij <kbd>Ctrl+Enter</kbd> lub „▶ Uruchom” w edytorze. Wynik pojawi się tutaj, nic nie trzeba przepisywać.</p>}
-        {sqlOut?.query && <pre className="mono mb-2 max-h-24 overflow-auto rounded-lg bg-surface-2 p-2 text-[11px]">{sqlOut.query}</pre>}
-        {sqlOut?.error && <p className="mt-2 rounded-lg bg-danger-soft p-2 text-xs text-danger">Błąd: {sqlOut.error}</p>}
-        {sqlOut?.skipped.map((s, i) => <p key={i} className="mt-2 rounded-lg bg-info-soft p-2 text-xs">Pominięto (SQLite nie ma użytkowników): <code>{s.slice(0, 120)}</code></p>)}
-        {sqlOut && !sqlOut.error && sqlOut.results.length === 0 && <p className="mt-2 text-xs text-success">Wykonano. Zmienionych wierszy: {db?.getRowsModified() ?? 0}.</p>}
-        {sqlOut?.results.map((r, i) => (
-          <div key={i} className="mt-2 overflow-x-auto rounded-lg border border-line">
-            <table className="mono w-full text-xs">
-              <thead className="bg-surface-2"><tr>{r.columns.map((c, k) => <th key={k} className="px-2 py-1 text-left">{c}</th>)}</tr></thead>
-              <tbody>{r.values.slice(0, 500).map((row, j) => <tr key={j} className="border-t border-line">{row.map((v, k) => <td key={k} className="px-2 py-1">{v === null ? <i className="text-muted">NULL</i> : String(v)}</td>)}</tr>)}</tbody>
-            </table>
-            <p className="px-2 py-1 text-[11px] text-muted">{r.values.length} wierszy</p>
-          </div>
-        ))}
+        {sqlResults}
       </div>
     </div>
   );
@@ -298,6 +388,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
 
   return (
     <div onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); addImages(e.dataTransfer.files); }}>
+      {edMax && <div className="fixed inset-0 z-[60] flex flex-col bg-bg p-3">{editorCard}</div>}
       {toolbar}
       {assetsCard}
       {Object.keys(images).length > 0 && <p className="mb-2 text-xs text-muted">Grafiki w podglądzie: {Object.keys(images).join(', ')} (tylko w tej sesji).</p>}
@@ -311,7 +402,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
         </div>
         <div className="h-[70dvh]">
           {tab === 'arkusz' && pdfCard}
-          {tab === 'kod' && editorCard}
+          {tab === 'kod' && editorSlot}
           {tab === 'podglad' && previewCard}
           {tab === 'sql' && sqlCard}
           {tab === 'pma' && pmaCard}
@@ -331,7 +422,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
             <div className="min-h-0 flex-1">{bottom === 'podglad' ? previewCard : bottom === 'sql' ? sqlCard : bottom === 'pma' ? pmaCard : consoleCard}</div>
           </div>
         );
-        const work = <Split id="ws-editor" dir="col" initial={0.55} a={editorCard} b={bottomTabs} />;
+        const work = <Split id="ws-editor" dir="col" initial={0.55} a={editorSlot} b={bottomTabs} />;
         return (
           <div className={hideNav ? 'h-[calc(100dvh-120px)] min-h-[520px]' : 'h-[calc(100dvh-200px)] min-h-[560px]'}>
             {sheet && showPdf ? <Split id="ws-pdf" dir="row" initial={0.42} reverse={pdfSide === 'right'} a={pdfCard} b={work} /> : work}

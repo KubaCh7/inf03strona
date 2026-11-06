@@ -102,6 +102,22 @@ export function mysqlToSqlite(sql: string): string {
   return s;
 }
 
+/**
+ * Zrzut z archiwum bywa samymi INSERT-ami (tabele uczen tworzy w zadaniu). Dla takich tabel dopisuje
+ * CREATE TABLE z kolumnami z INSERT-a, zeby baza od razu dzialala.
+ */
+export function withMissingTables(dump: string): string {
+  const created = new Set([...dump.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?(\w+)/gi)].map((m) => m[1].toLowerCase()));
+  const add: string[] = [];
+  for (const m of dump.matchAll(/INSERT\s+INTO\s+[`"]?(\w+)[`"]?\s*\(([^)]*)\)/gi)) {
+    const t = m[1].toLowerCase();
+    if (created.has(t)) continue;
+    created.add(t);
+    add.push(`CREATE TABLE \`${m[1]}\` (${m[2].split(',').map((c) => `${c.trim()} TEXT`).join(', ')});`);
+  }
+  return add.length ? add.join('\n') + '\n' + dump : dump;
+}
+
 export type QueryResult = { columns: string[]; values: unknown[][] };
 
 export async function freshDb(seed?: string): Promise<Database> {

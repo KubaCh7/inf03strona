@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Database } from 'sql.js';
 import { supabase } from './supabase';
-import { getSql, mysqlToSqlite, run, sameResult, type QueryResult } from './sql';
+import { getSql, mysqlToSqlite, withMissingTables, run, sameResult, type QueryResult } from './sql';
 
 export type QueryTask = { n: number; text: string; difficulty: number; kind: 'select' | 'modify' | 'user' | 'grant'; hasSolution: boolean };
 export type SheetQueries = { code: string; db: string | null; dump: string | null; dumpName: string | null; solutionPath: string; tasks: QueryTask[] };
@@ -53,7 +53,7 @@ export function getSolutions(path: string) {
 export async function freshFromDump(dump: string): Promise<Database> {
   const S = await getSql();
   const db = new S.Database();
-  db.exec(mysqlToSqlite(dump));
+  db.exec(mysqlToSqlite(withMissingTables(dump)));
   return db;
 }
 

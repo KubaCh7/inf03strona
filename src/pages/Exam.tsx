@@ -36,7 +36,7 @@ function Practice({ exam, onDone }: { exam: ActiveExam; onDone: (pct: number) =>
         </div>
       </div>
       {timeUp && view !== 'ocena' && <p className="mb-4 rounded-xl bg-danger-soft p-3 text-sm font-bold text-danger">Czas minął. Przejdź do „Oddaję” i oceń pracę.</p>}
-      {view === 'kod' && <Workshop storageKey={`sheet:${sheet.code}`} sheet={sheet} />}
+      {view === 'kod' && <Workshop key={sheet ? `sheet:${sheet.code}` : 'free'} storageKey={`sheet:${sheet.code}`} sheet={sheet} />}
       {view === 'ocena' && <SheetChecker sheet={sheet} autoRun onScore={onDone} />}
     </div>
   );

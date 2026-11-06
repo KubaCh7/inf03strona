@@ -19,7 +19,7 @@ export default function WorkshopPage() {
       )}>
         Edytor z podglądem na żywo, konsolą i bazą SQLite w przeglądarce. Przeciągnij tu grafiki i zrzut <code className="inline-code">.sql</code> z archiwum arkusza. Wszystko zapisuje się automatycznie.
       </PageHeader>
-      <Workshop storageKey={sheet ? `sheet:${sheet.code}` : 'free'} sheet={sheet} />
+      <Workshop key={sheet ? `sheet:${sheet.code}` : 'free'} storageKey={sheet ? `sheet:${sheet.code}` : 'free'} sheet={sheet} />
     </div>
   );
 }
