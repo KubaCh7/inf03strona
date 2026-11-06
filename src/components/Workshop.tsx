@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Plus, Trash2, Play, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink } from 'lucide-react';
 import type { Sheet } from '../lib/types';
-import PdfViewer from './PdfViewer';
+import PdfViewer, { preloadPdf } from './PdfViewer';
 import type { Database as Db } from 'sql.js';
 import { useStore } from '../lib/store';
 import { buildSrcDoc } from '../lib/preview';
@@ -44,6 +44,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   const [dbInfo, setDbInfo] = useState<string>('Brak bazy. Wczytaj plik .sql z archiwum arkusza albo utwórz tabele kwerendą.');
   const [sqlOut, setSqlOut] = useState<{ results: QueryResult[]; skipped: string[]; error?: string } | null>(null);
   const sqlRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (sheet) preloadPdf(); }, [sheet]);
   const imgRef = useRef<HTMLInputElement>(null);
 
   // Zapis (debounce)

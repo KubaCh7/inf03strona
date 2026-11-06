@@ -21,6 +21,15 @@ function pdfjs() {
   return lib;
 }
 
+/** Zaczyna ladowac pdf.js w tle (np. przy wejsciu do warsztatu), zeby arkusz pokazal sie od razu. */
+export function preloadPdf() { pdfjs().catch(() => {}); }
+
+/** Kopia pliku z GitHuba przez CDN jsDelivr (szybsza, gdy raw.githubusercontent muli). */
+function mirror(url: string) {
+  const m = url.match(/^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/);
+  return m ? `https://cdn.jsdelivr.net/gh/${m[1]}/${m[2]}@${m[3]}/${m[4]}` : null;
+}
+
 /** Ostra strona PDF: renderowana w rozdzielczosci ekranu (devicePixelRatio), dopiero gdy jest widoczna. */
 function Page({ doc, n, width, zoom }: { doc: PdfDoc; n: number; width: number; zoom: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -71,20 +80,28 @@ function PdfViewerInner({ url, fallback, className = '' }: { url: string; fallba
   const [width, setWidth] = useState(0);
   const [zoom, setZoom] = useState(1);
 
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let on = true;
     let task: LoadingTask | null = null;
     setDoc(null); setErr(false);
+    // proba 0: GitHub, proba 1: mirror jsDelivr, dalej znowu GitHub
+    const alt = mirror(url);
+    const src = attempt % 2 === 1 && alt ? alt : url;
+    // jesli plik nie przyjdzie w 8 s, przelacz zrodlo zamiast wisiec na "Wczytuje"
+    const stall = setTimeout(() => { if (on && attempt < 2) setAttempt((a) => a + 1); }, 8000);
     pdfjs()
-      .then((m) => { task = m.getDocument({ url }) as unknown as LoadingTask; return task.promise; })
-      .then((d) => { if (on) setDoc(d as PdfDoc); })
-      .catch((e) => { console.warn('PDF:', e); if (on) setErr(true); });
+      .then((m) => { task = m.getDocument({ url: src }) as unknown as LoadingTask; return task.promise; })
+      .then((d) => { clearTimeout(stall); if (on) setDoc(d as PdfDoc); })
+      .catch((e) => { clearTimeout(stall); console.warn('PDF:', e); if (!on) return; if (attempt < 2) setAttempt((a) => a + 1); else setErr(true); });
     return () => {
       on = false;
+      clearTimeout(stall);
       // zwolnij pamiec dokumentu; nigdy nie rzucaj bledu przy zamykaniu
       try { const r = (task as LoadingTask | null)?.destroy?.(); if (r instanceof Promise) r.catch(() => {}); } catch { /* ignore */ }
     };
-  }, [url]);
+  }, [url, attempt]);
+  useEffect(() => { setAttempt(0); }, [url]);
   useEffect(() => {
     const el = box.current;
     if (!el) return;
@@ -95,7 +112,7 @@ function PdfViewerInner({ url, fallback, className = '' }: { url: string; fallba
 
   if (err) return (
     <div className={`card grid place-items-center p-8 text-center ${className}`}>
-      <div><p className="font-bold">Nie udało się wczytać arkusza.</p><a className="btn btn-dark mt-3" href={fallback} target="_blank" rel="noreferrer">Otwórz PDF w nowej karcie <ExternalLink size={15} /></a></div>
+      <div><p className="font-bold">Nie udało się wczytać arkusza.</p><button className="btn btn-ghost mt-3 mr-2" onClick={() => setAttempt(0)}>Spróbuj ponownie</button><a className="btn btn-dark mt-3" href={fallback} target="_blank" rel="noreferrer">Otwórz PDF w nowej karcie <ExternalLink size={15} /></a></div>
     </div>
   );
   return (

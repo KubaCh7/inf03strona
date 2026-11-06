@@ -6,6 +6,7 @@ import { sql, MySQL } from '@codemirror/lang-sql';
 import { php, phpLanguage } from '@codemirror/lang-php';
 import { acceptCompletion, autocompletion, completionStatus, hasNextSnippetField, nextSnippetField, prevSnippetField } from '@codemirror/autocomplete';
 import { indentLess, indentMore } from '@codemirror/commands';
+import { vim } from '@replit/codemirror-vim';
 import { emmetSource } from '../lib/emmet';
 import { editorTheme } from '../lib/themes';
 import { useStore } from '../lib/store';
@@ -60,14 +61,20 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema }:
   const stableChange = useCallback((v: string) => changeRef.current(v), []);
   const themeId = useStore((s) => s.equipped.editorTheme);
   const custom = useMemo(() => editorTheme(themeId), [themeId]);
+  const vimOn = useStore((s) => !!s.settings.vim);
+  const setSettings = useStore((s) => s.setSettings);
   const extensions = useMemo(() => [
+    // vim musi byc pierwszy, zeby jego skroty mialy pierwszenstwo
+    ...(vimOn ? [vim({ status: true })] : []),
     ...langFor(file, schema),
     autocompletion({ activateOnTyping: true, icons: true, defaultKeymap: true, closeOnBlur: true, maxRenderedOptions: 80, selectOnOpen: true, aboveCursor: false }),
     ...tabKeys,
     EditorView.lineWrapping,
-  ], [file, schema]);
+  ], [file, schema, vimOn]);
   return (
-    <div className="h-full min-h-0 overflow-hidden" style={{ ['--editor-font' as string]: `${fontSize}px` }}>
+    <div className="relative h-full min-h-0 overflow-hidden" style={{ ['--editor-font' as string]: `${fontSize}px` }}>
+      <button type="button" onClick={() => setSettings({ vim: !vimOn })} title={vimOn ? 'Wyłącz skróty Vima' : 'Włącz skróty Vima'}
+        className={`mono absolute right-2 top-1.5 z-10 rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${vimOn ? 'border-success bg-success text-white' : 'border-line bg-surface/80 text-muted opacity-70 hover:opacity-100'}`}>VIM</button>
       <CodeMirror value={value} height="100%" theme={custom ?? (dark ? 'dark' : 'light')} extensions={extensions} onChange={stableChange}
         indentWithTab={false}
         basicSetup={BASIC_SETUP} className="h-full" />

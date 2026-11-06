@@ -53,6 +53,10 @@ export default function SettingsPage() {
           <button className="btn btn-ghost" onClick={() => setSettings({ tourDone: false })}>Pokaż ponownie</button>
         </div>
         <label className="flex items-center justify-between gap-4 p-5">
+          <span><b>Skróty Vima w edytorze</b><span className="block text-sm text-muted">Tryby normal/insert/visual, <code className="inline-code">hjkl</code>, <code className="inline-code">dd</code>, <code className="inline-code">:w</code> itd. Przełącznik VIM jest też w rogu edytora.</span></span>
+          <input type="checkbox" className="h-5 w-5 accent-[var(--accent)]" checked={!!settings.vim} onChange={(e) => setSettings({ vim: e.target.checked })} />
+        </label>
+        <label className="flex items-center justify-between gap-4 p-5">
           <span><b>Rozmiar czcionki edytora</b><span className="block text-sm text-muted">{settings.editorFont}px</span></span>
           <input type="range" min={11} max={20} value={settings.editorFont} onChange={(e) => setSettings({ editorFont: Number(e.target.value) })} className="accent-[var(--accent)]" />
         </label>
