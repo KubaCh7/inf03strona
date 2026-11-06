@@ -56,6 +56,12 @@ export default function SettingsPage() {
           <span><b>Skróty Vima w edytorze</b><span className="block text-sm text-muted">Tryby normal/insert/visual, <code className="inline-code">hjkl</code>, <code className="inline-code">dd</code>, <code className="inline-code">:w</code> itd. Przełącznik VIM jest też w rogu edytora.</span></span>
           <input type="checkbox" className="h-5 w-5 accent-[var(--accent)]" checked={!!settings.vim} onChange={(e) => setSettings({ vim: e.target.checked })} />
         </label>
+        {settings.vim && (
+          <div className="p-5">
+            <b>.vimrc</b><span className="mb-2 block text-sm text-muted">Twoje mapowania i opcje, wykonywane przy otwarciu edytora. Działa m.in. <code className="inline-code">nnoremap</code>, <code className="inline-code">inoremap jk &lt;Esc&gt;</code>, <code className="inline-code">set rnu</code>, <code className="inline-code">set ts=4 sw=4</code>, <code className="inline-code">set noet</code>.</span>
+            <textarea className="input mono h-32 w-full text-sm" spellCheck={false} placeholder={'" przyklad\nset relativenumber\ninoremap jk <Esc>\nnnoremap <Space>w :w<CR>'} defaultValue={settings.vimrc ?? ''} onBlur={(e) => setSettings({ vimrc: e.target.value })} />
+          </div>
+        )}
         <label className="flex items-center justify-between gap-4 p-5">
           <span><b>Rozmiar czcionki edytora</b><span className="block text-sm text-muted">{settings.editorFont}px</span></span>
           <input type="range" min={11} max={20} value={settings.editorFont} onChange={(e) => setSettings({ editorFont: Number(e.target.value) })} className="accent-[var(--accent)]" />
