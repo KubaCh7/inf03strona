@@ -1,0 +1,2088 @@
+{
+ "c7bba87af02ff": {
+  "answers": [
+   "<body color=\"black\">TEKST</font>",
+   "<font color=\"czarny\">TEKST</font>",
+   "<font color=\"#000000\">TEKST</font>",
+   "<body bgcolor=\"black\">TEKST</body>"
+  ],
+  "show": "none"
+ },
+ "c7a8fbe641cf3": {
+  "answers": [
+   "loop=\"10\"",
+   "balance=\"-10\"",
+   "volume=\"-100\"",
+   "href=\"C:/100.wav\">"
+  ],
+  "show": "none"
+ },
+ "c02ffeffdb650": {
+  "answers": [
+   "klasę.",
+   "wartość.",
+   "selektor.",
+   "deklarację."
+  ],
+  "text": "W podanej regule CSS h1{color: blue} h1 oznacza",
+  "show": "none"
+ },
+ "c8e9ab50e652d": {
+  "answers": [
+   "GIF",
+   "PNG",
+   "PCX",
+   "JPEG"
+  ],
+  "show": "none"
+ },
+ "cf4681ad69cab": {
+  "answers": [
+   "animowaniu obiektu.",
+   "zmianie warstwy obiektu.",
+   "narysowaniu docelowego obiektu.",
+   "geometrycznym transformowaniu obiektu."
+  ],
+  "show": "figure",
+  "image": "/q/cf4681ad69cab-f.webp"
+ },
+ "c95b9508639b6": {
+  "answers": [
+   "SELECT, SELECT INTO",
+   "ALTER, CREATE, DROP",
+   "DENY, GRANT, REVOKE",
+   "DELETE, INSERT, UPDATE"
+  ],
+  "show": "none"
+ },
+ "c15dfc490fa44": {
+  "answers": [
+   "Hierarchię zmiennych.",
+   "Trzy zmienne niepowiązane ze sobą.",
+   "Typ strukturalny składający się z trzech pól.",
+   "Kontakt pomiędzy zmiennymi globalnymi i lokalnymi."
+  ],
+  "text": "Co definiuje w języku C++ przedstawiony fragment kodu?",
+  "code": "struct CONTACT\n{\n  std::string nazwisko;\n  std::string telefon;\n  int numer;\n};",
+  "show": "none"
+ },
+ "cb7180ad4a379": {
+  "answers": [
+   "2 2 1",
+   "2 1 1",
+   "1 2 1",
+   "1 2 2"
+  ],
+  "text": "Które wartości będą kolejno wypisane w wyniku działania przedstawionego skryptu?",
+  "code": "<SCRIPT language = \"JavaScript\">\nvar x = 1;\nvar y;\n/*0*/++y;\n/*1*/document.write (++x);\n/*2*/document.write (\" \");\n/*3*/document.write (x--);\n/*4*/document.write (\" \");\n/*5*/document.write (x);\n</SCRIPT>",
+  "show": "none"
+ },
+ "c30fe84eaac55": {
+  "answers": [
+   "C",
+   "C#",
+   "PHP",
+   "JavaScript"
+  ],
+  "text": "Fragment kodu prezentuje składnię języka",
+  "code": "<html><head></head>\n<body>\n<?php\n  $ilosc = file_get_contents(\"licznik.txt\");\n  $ilosc++;\n  $fp=fopen(\"licznik.txt\",\"w\");\n  if ($fp==null)\n    echo \"BLAD OTWARCIA PLIKU NA SERWERZE\";\n  else{\n    fwrite($fp,$ilosc);\n    fclose($fp);\n  }\n  echo 'Jestes '.$ilosc.' użytkownikiem';\n?>\n</body>\n</html>",
+  "show": "none"
+ },
+ "c032eb0c2e554": {
+  "answers": [
+   "Infrastruktura językowa (CLI).",
+   "Biblioteka klas bazowych (BCL).",
+   "Wspólne środowisko programistyczne (CLP).",
+   "Wspólne środowisko uruchomieniowe (CLR)."
+  ],
+  "show": "figure",
+  "image": "/q/c032eb0c2e554-f.webp",
+  "text": "Jak nazywa się element oznaczony znakiem zapytania w strukturze platformy .NET, który umożliwia tworzenie własnych aplikacji z użyciem frameworków i zamianę kompilowanego kodu pośredniego na kod maszynowy procesora zainstalowanego w komputerze?"
+ },
+ "c0330b56b6481": {
+  "answers": [
+   "<a href='mailto:adres'> tekst </a>",
+   "<a href='http://adres'> tekst </a>",
+   "<a href=\"http://adres\"> tekst <\\a>",
+   "<a href=\"mailto:adres\"> tekst </a>"
+  ],
+  "show": "none"
+ },
+ "c6aade7f8156e": {
+  "answers": [
+   "wypunktowaną.",
+   "numerowaną.",
+   "odnośników.",
+   "skrótów."
+  ],
+  "text": "Fragment kodu napisany w języku HTML zamieszczony w ramce przedstawia listę",
+  "code": "<ol>\n<li>Pierwszy</li>\n<li>Drugi</li>\n<li>Trzeci</li>\n</ol>",
+  "show": "none"
+ },
+ "ca79ee273da76": {
+  "text": "Polecenie colspan służy do łączenia komórek tabeli w poziomie, natomiast rowspan w pionie. Którą z tabel wyświetli fragment kodu napisany w języku HTML?",
+  "show": "answers"
+ },
+ "ccd2fdea6aac8": {
+  "answers": [
+   "<link rel=\"stylesheet\" type=\"text/css\" href=\"./style/default.css\" />",
+   "<link rel=\"stylesheet\" type=\"text/css\" href=\"c:/style/default.css\" />",
+   "<link rel=\"stylesheet\" type=\"text/css\" href=\"...\\style\\default.css\" />",
+   "<link rel=\"stylesheet\" type=\"text/css\" href=\"c:\\style\\default.css\" />"
+  ],
+  "text": "Wskaż sposób, w jaki należy odwołać się do pliku default.css, jeśli index.html znajduje się bezpośrednio w katalogu Strona, a plik default.css w podkatalogu Strona/style?",
+  "show": "none"
+ },
+ "c6a8be10188d4": {
+  "text": "Wskaż stwierdzenie, które jest prawdziwe dla następującej definicji stylu:",
+  "code": "<STYLE type=\"text/css\">\n<!--\n  P {color:blue; font-size:14pt; font-style:italic}\n  A { font-size: 16pt ; text-transform:lowercase; }\n  TD.niebieski { color: blue}\n  TD.czerwony { color: red}\n-->\n</STYLE>",
+  "show": "none"
+ },
+ "c32517e11479b": {
+  "answers": [
+   "#FF00FF",
+   "#00FFFF",
+   "#FFFF00",
+   "#F0F0F0"
+  ],
+  "text": "W palecie kolorów RGB kolor żółty jest połączeniem dwóch kolorów: zielonego i czerwonego. Który z kodów szesnastkowych oznacza kolor żółty?",
+  "show": "none"
+ },
+ "ccd741e54af08": {
+  "answers": [
+   "Projektanci narzędzi deweloperskich.",
+   "Administratorzy systemu bazy danych.",
+   "Administratorzy serwerów i sieci komputerowych.",
+   "Projektanci i programiści Systemu Zarządzania Bazą Danych."
+  ],
+  "text": "Które z wymienionych osób odpowiadają za przygotowanie systemu bazy danych do pracy produkcyjnej w sposób ciągły, zarządzanie użytkownikami i instalowanie nowych wersji systemu bazodanowego?",
+  "show": "none"
+ },
+ "c95cc2df77676": {
+  "answers": [
+   "Z regułami.",
+   "Z atrybutami.",
+   "Z przywilejami obiektowymi.",
+   "Z przywilejami systemowymi."
+  ],
+  "text": "Z jakimi mechanizmami nadawania zabezpieczeń, dającymi możliwości wykonywania operacji na bazie danych, związane są zagadnienia zarządzania kontami, użytkownikami i uprawnieniami?",
+  "show": "none"
+ },
+ "c199ad2eaf676": {
+  "answers": [
+   "Users.",
+   "Security users.",
+   "Użytkownik lokalny.",
+   "Administrator systemu."
+  ],
+  "show": "none"
+ },
+ "cf4ed6606868e": {
+  "answers": [
+   "naturalnych.",
+   "całkowitych.",
+   "w notacji stałoprzecinkowej.",
+   "w notacji zmiennoprzecinkowej."
+  ],
+  "show": "none"
+ },
+ "c8f9d103b75a7": {
+  "answers": [
+   "C#",
+   "Perl",
+   "PHP",
+   "JavaScript"
+  ],
+  "show": "none"
+ },
+ "c2d6e5d1772d9": {
+  "answers": [
+   "Jeden do jednego.",
+   "Wiele do jednego.",
+   "Jeden do wielu.",
+   "Wiele do wielu."
+  ],
+  "text": "Wskaż typ relacji pomiędzy tabelami: Tabela1 (ID_Ucznia, Imię, Nazwisko, Klasa) i Tabela3 (ID_Nauczyciela, Imię, Nazwisko), połączonymi przez Tabela2 (ID_Przedmiotu, ID_Ucznia, ID_Nauczyciela).",
+  "show": "none"
+ },
+ "c3d26b31b8a2c": {
+  "answers": [
+   "Textarea, Option, Input(Checkbox), Input(Checkbox), Input(Submit), Input(Reset)",
+   "Input(Text), Select, Input(Radio), Input(Radio), Input(Submit), Input(Reset)",
+   "Textarea, Select, Input(Radio), Input(Radio), Input(Reset), Input(Submit)",
+   "Input(Text), Input(Checkbox), Select, Select, Input(Submit), Input(Reset)"
+  ],
+  "text": "Które z pól są umieszczone w formularzu?",
+  "show": "figure",
+  "image": "/q/c3d26b31b8a2c-f.webp"
+ },
+ "ccb4f0cff3ec3": {
+  "answers": [
+   "Tagi inteligentne.",
+   "Wartość domyślną.",
+   "Maskę wprowadzania.",
+   "Regułę sprawdzania poprawności."
+  ],
+  "text": "Którą z właściwości pola tabeli należy zdefiniować, aby pole przyjmowało dane składające się wyłącznie z cyfr?",
+  "show": "none"
+ },
+ "c556c33a9a23d": {
+  "answers": [
+   "mysqldump -u root -p baza > kopia.sql",
+   "mysqldump -u root -p baza < kopia.sql",
+   "mysql -u root -p baza < kopia.sql",
+   "mysql -u root -p baza > kopia.sql"
+  ],
+  "show": "none"
+ },
+ "c57a71f6036d2": {
+  "answers": [
+   "cookie(\"owoce\", \"jabłko\", 3600);",
+   "cookie(\"jabłko\", \"owoce\", 3600);",
+   "setcookie(\"owoce\", \"jabłko\", time()+3600);",
+   "setcookie(\"jabłko\", \"owoce\", time()+3600);"
+  ],
+  "text": "W skrypcie PHP należy utworzyć cookie o nazwie \"owoce\", które przyjmie wartość \"jabłko\". Cookie ma być dostępne przez jedną godzinę od jego utworzenia. W tym celu należy w skrypcie PHP użyć funkcji:",
+  "show": "none"
+ },
+ "c9d86854f3eac": {
+  "answers": [
+   "pkt Punkt;",
+   "pkt = new Punkt( );",
+   "pkt  Punkt( );",
+   "Punkt( ) pkt;"
+  ],
+  "text": "Instrukcja języka PHP tworząca obiekt pkt dla zdefiniowanej w ramce klasy Punkt ma postać",
+  "code": "class Punkt {  public $x;\n               public $y;  }",
+  "show": "none"
+ },
+ "ce9fe667f3a06": {
+  "answers": [
+   "LIKE",
+   "DISTINCT",
+   "ORDER BY",
+   "GROUP BY"
+  ],
+  "show": "none"
+ },
+ "c1adbb61616e5": {
+  "answers": [
+   "Tabela o nazwie dane posiada trzy kolumny liczb całkowitych.",
+   "Tabela o nazwie dane posiada jedną kolumnę liczb całkowitych.",
+   "Tabela posiada jedną kolumnę zawierającą trzyelementowe tablice.",
+   "Kolumny tabeli dane nazywają się: kolumna1, kolumna2, kolumna3."
+  ],
+  "show": "none"
+ },
+ "c72d0f2b1b4bf": {
+  "text": "Które polecenie wydane z konsoli systemu operacyjnego, zawierające w swojej składni opcję --repair, umożliwia naprawę bazy danych?",
+  "show": "none"
+ },
+ "c03da54023585": {
+  "answers": [
+   "Array\n(\n  [14] => PHP\n  [10] => Perl\n  [22] => Pike\n  [20] => Python\n)",
+   "Array\n(\n  [0] => PHP\n  [1] => Perl\n  [2] => Pike\n  [3] => Python\n)",
+   "Array\n(\n  [0] => Python\n  [1] => Pike\n  [2] => Perl\n  [3] => PHP\n)",
+   "Array\n(\n  [10] => Perl\n  [14] => PHP\n  [20] => Python\n  [22] => Pike\n)"
+  ],
+  "text": "Wskaż wynik wykonania skryptu napisanego w języku PHP",
+  "code": "<?php\n$tablica=array(10=>\"Perl\",14=>\"PHP\",20=>\"Python\",22=>\"Pike\");\nasort($tablica);\nprint(\"<pre>\");\nprint_r($tablica);\nprint(\"</pre>\");\n?>",
+  "show": "none"
+ },
+ "cc21f3cf13c54": {
+  "answers": [
+   "C++ jest językiem obiektowym.",
+   "JavaScript jest językiem skryptowym.",
+   "SQL jest językiem programowania strukturalnego.",
+   "PHP jest językiem do tworzenia stron w czasie rzeczywistym."
+  ],
+  "show": "none"
+ },
+ "c59c2801e8c84": {
+  "answers": [
+   "0",
+   "2",
+   "3",
+   "32"
+  ],
+  "text": "Jaka wartość zostanie wypisana na standardowym wyjściu dla zamieszczonego w ramce fragmentu programu napisanego w języku C++?",
+  "code": "int obliczenia( int x ){\n  x %= 3;\n  x++;\n  return x;\n}\n\nint main( ){\n  std::cout<<obliczenia(32);",
+  "show": "none"
+ },
+ "c779229c6efd5": {
+  "text": "Wskaż stwierdzenie, które nie jest prawdziwe dla następującej definicji funkcji w języku C++?",
+  "code": "void zamien( float &x, float &y){\n  float tmp;\n  tmp=x;\n  x=y;\n  y=tmp;\n}",
+  "show": "none"
+ },
+ "c8fffde5702da": {
+  "text": "Element zadeklarowany w języku C++ double x*; to",
+  "show": "none"
+ },
+ "c55d579c20800": {
+  "answers": [
+   "3",
+   "4",
+   "3.5",
+   "4.05"
+  ],
+  "text": "Jaką wartość zwróci funkcja zao zdefiniowana w języku C++, wywołana z aktualnym parametrem 3.55",
+  "code": "int zao(float x){\n  return (x + 0.5);\n}",
+  "show": "none"
+ },
+ "c245509238474": {
+  "text": "Które ze stwierdzeń, w odniesieniu do zamieszczonej w ramce definicji funkcji, jest poprawne?",
+  "code": "function czytajImie(){\n  var imie=null;\n  do{\n    imie=prompt(\"podaj imie: \");\n    if(imie.length<3) alert(\"wprowadzony tekst jest niepoprawny\");\n  }while(imie.length<3);\n}",
+  "show": "none"
+ },
+ "c503602f563c6": {
+  "answers": [
+   "12,4",
+   "12,5",
+   "15,4",
+   "15,5"
+  ],
+  "text": "Po wykonaniu zamieszczonego w ramce skryptu napisanego w języku JavaScript w przeglądarce zostanie wypisana wartość",
+  "code": "var a = 5;\nvar b = a--;\na *= 3;\ndocument.write(a + \",\" + b);",
+  "show": "none"
+ },
+ "c39ef798c3432": {
+  "answers": [
+   "logicznego.",
+   "liczbowego.",
+   "string (ciąg znaków).",
+   "nieokreślonego (undefined)."
+  ],
+  "text": "Poprzez deklarację var x=\"true\"; w języku JavaScript tworzy się zmienną typu",
+  "show": "none"
+ },
+ "c88df64ea6638": {
+  "text": "Platforma wspierająca programowanie w technologii .NET to",
+  "show": "none"
+ },
+ "ca776ae56a618": {
+  "answers": [
+   "kompilowanie.",
+   "debugowanie.",
+   "standaryzacja.",
+   "normalizacja."
+  ],
+  "show": "none"
+ },
+ "cbff6f4ee22bd": {
+  "answers": [
+   "zostanie ustawiony dolny margines dla bloku B",
+   "blok B będzie oddalony od bloku A o 20 px",
+   "blok A będzie przesunięty w lewo o 20 px",
+   "bloki A i B będą nachodzić na siebie."
+  ],
+  "text": "Analizując przedstawiony kod zapisany w języku HTML, można stwierdzić, że w przeglądarce",
+  "code": "<div>A</div>\n<div style=\"margin-top: 20px\">B</div>",
+  "show": "none"
+ },
+ "c1a8a0f0feae7": {
+  "answers": [
+   "div {background-color: blue;}",
+   "div {border-color: blue;}",
+   "div {shadow: blue;}",
+   "div {color: blue;}"
+  ],
+  "show": "none"
+ },
+ "ca83336067d1c": {
+  "answers": [
+   "wszystkim odnośnikom odwiedzonym.",
+   "wszystkim odnośnikom nieodwiedzonym.",
+   "każdemu odnośnikowi niezależnie od aktualnego stanu.",
+   "odnośnikowi, w momencie kiedy najechał na niego kursor myszy."
+  ],
+  "text": "W zamieszczonym przykładzie pseudoklasa hover sprawi, że styl pogrubiony będzie przypisany",
+  "code": "a:hover { font-weight: bold; }",
+  "show": "none"
+ },
+ "c251d902e3af3": {
+  "answers": [
+   "Drupal",
+   "Joomla!",
+   "WordPress",
+   "Adobe Flash"
+  ],
+  "show": "none"
+ },
+ "cd2fd57b476e6": {
+  "answers": [
+   "szesnastkowej.",
+   "dziesiętnej.",
+   "CMYK",
+   "HSL"
+  ],
+  "text": "W załączonym fragmencie kodu CSS kolor jest zapisany w postaci",
+  "code": "color: #008000;",
+  "show": "none"
+ },
+ "c831203066081": {
+  "text": "W celu stworzenia relacji wiele do wielu łączącej tabele A i B wystarczy, że",
+  "show": "none"
+ },
+ "cbc5e914ac890": {
+  "answers": [
+   "SELECT imie,nazwisko,klasa from uczniowie where rok_urodzenia = 1994",
+   "SELECT imie,nazwisko,klasa from uczniowie group by rok_urodzenia",
+   "SELECT imie,nazwisko,klasa from uczniowie order by rok_urodzenia",
+   "SELECT imie,nazwisko,klasa from uczniowie order by nazwisko"
+  ],
+  "show": "none"
+ },
+ "c061b9a78aee0": {
+  "answers": [
+   "CREATE INDEX zadania ADD COLUMN zadanie_kompletne int",
+   "ALTER TABLE zadania ADD COLUMN zadanie_kompletne int",
+   "INSERT INTO zadania VALUES zadanie_kompletne",
+   "ADD COLUMN zadanie_kompletne WITH zadania"
+  ],
+  "text": "Które z poleceń umożliwia dodanie kolumny zadanie_kompletne do tabeli zadania?",
+  "show": "none"
+ },
+ "c97152bcbcfe6": {
+  "answers": [
+   "centralnego subskrybenta.",
+   "centralnego wydawcy.",
+   "równorzędnym.",
+   "rozproszonym."
+  ],
+  "show": "figure",
+  "image": "/q/c97152bcbcfe6-f.webp"
+ },
+ "c2f3a906ecc7a": {
+  "answers": [
+   "z kwerendy aktualizującej.",
+   "z więzów integralności.",
+   "z defragmentacji bazy.",
+   "z archiwizacji bazy."
+  ],
+  "show": "none"
+ },
+ "cfe92f98abd0f": {
+  "answers": [
+   "REGENERATE TABLE tbl_name",
+   "OPTIMIZE TABLE tbl_name",
+   "ANALYZE TABLE tbl_name",
+   "REPAIR TABLE tbl_name"
+  ],
+  "show": "none"
+ },
+ "cabe825374605": {
+  "answers": [
+   "od 10 do 1",
+   "od 10 do 2",
+   "od 1 do 10",
+   "od 2 do 10"
+  ],
+  "text": "Wynikiem działania zamieszczonej pętli zapisanej językiem PHP jest wypisanie kolejnych liczb",
+  "code": "for ($i = 10; $i >= 1; $i--)\n  echo $i;",
+  "show": "none"
+ },
+ "c934c60559679": {
+  "answers": [
+   "function licz($a) { echo $a/2; }",
+   "function licz($a) { echo $a*$a/2; }",
+   "function licz($a) { return $a/2; }",
+   "function licz($a) { return $a*$a/2; }"
+  ],
+  "show": "none"
+ },
+ "c648a36a9dcc5": {
+  "answers": [
+   ".htaccess",
+   "htaccess.cnf",
+   "configuration",
+   "configuration.php"
+  ],
+  "show": "none"
+ },
+ "c6a8636179040": {
+  "text": "Kodowanie w standardzie ISO-8859-2 stosowane jest w celu poprawnego wyświetlania",
+  "show": "none"
+ },
+ "c7f12ef0e4c85": {
+  "text": "Polecenie w języku SQL ALTER TABLE USA... ma za zadanie",
+  "show": "none"
+ },
+ "c368216f43943": {
+  "answers": [
+   "SELECT COUNT(*) FROM Koty",
+   "SELECT ROWNUM(*) FROM Koty",
+   "SELECT COUNT(Koty) AS ROWNUM",
+   "SELECT COUNT(ROWNUM) FROM Koty"
+  ],
+  "text": "Aby policzyć wszystkie wiersze tabeli Koty należy użyć polecenia",
+  "show": "none"
+ },
+ "cee9eab7de2f5": {
+  "answers": [
+   "CONSTRAINT (nazwisko, imie) FOREIGN KEY REFERENCES osoby (nazwisko, imie)",
+   "CONSTRAINT (nazwisko, imie) FOREIGN REFERENCES KEY osoby (nazwisko, imie)",
+   "CONSTRAINT fk_osoba_uczen FOREIGN KEY(nazwisko, imie) REFERENCES osoby (nazwisko, imie)",
+   "CONSTRAINT fk_osoba_uczen FOREIGN KEY ON(nazwisko, imie) REFERENCES osoby (nazwisko, imie)"
+  ],
+  "show": "none"
+ },
+ "c95d2aebdc7c9": {
+  "text": "W języku PHP zmienna $_GET jest zmienną",
+  "show": "none"
+ },
+ "c842782a0baa4": {
+  "answers": [
+   "wynik dzielenia liczby przez 2 jest równy 0.",
+   "jest ona liczbą pierwszą.",
+   "jest ona parzysta.",
+   "jest ona dodatnia."
+  ],
+  "text": "Warunek zapisany językiem PHP wypisze liczbę, gdy",
+  "code": "if ($liczba % 2 == 0)\n{\n  echo $liczba;\n}",
+  "show": "none"
+ },
+ "cd81b48f31cc2": {
+  "answers": [
+   "Usunięcie akapitu ze strony.",
+   "Dodanie akapitu na koniec strony.",
+   "Dodanie akapitu na początku strony.",
+   "Wyświetlenie okna dialogowego z napisem akapit."
+  ],
+  "text": "Wskaż rezultat działania fragmentu kodu JavaScript.",
+  "code": "var akapit = document.createElement(\"p\");\ndocument.body.appendChild(akapit);",
+  "show": "none"
+ },
+ "cb6bdb6b9acd4": {
+  "answers": [
+   "ustawienia hasła do bazy danych.",
+   "pobrania danych z bazy danych.",
+   "zabezpieczenia bazy danych.",
+   "połączenia z bazą danych."
+  ],
+  "text": "Funkcja zapisana językiem PHP służy do",
+  "code": "$zapytanie = mysql_query(\"SELECT * FROM napisy\");",
+  "show": "none"
+ },
+ "c5e0c42dff8ef": {
+  "answers": [
+   "dwóch wierszy i dwóch kolumn.",
+   "dwóch wierszy i jednej kolumny.",
+   "jednego wiersza i dwóch kolumn.",
+   "jednego wiersza i jednej kolumny."
+  ],
+  "text": "Zamieszczony w ramce kod wyświetla tabelę składającą się z",
+  "code": "<table border=\"1\">\n<tr>\n  <td> 1 </td>\n  <td> 2 </td>\n</tr>\n</table>",
+  "show": "none"
+ },
+ "cfd1001225946": {
+  "text": "Selektor CSS a:link {color:red} zawarty w kaskadowych arkuszach stylów definiuje",
+  "show": "none"
+ },
+ "cc0e041ed9e52": {
+  "answers": [
+   "#2551212",
+   "#EE0C0C",
+   "#AB1A1D",
+   "#FF0C0C"
+  ],
+  "show": "none"
+ },
+ "c1f505bf8b5c8": {
+  "answers": [
+   "/",
+   "||",
+   "&",
+   "%"
+  ],
+  "show": "none"
+ },
+ "caf72adcedead": {
+  "text": "Kod SELECT imie, pesel, wiek FROM dane WHERE wiek IN (18,30) spowoduje wybranie",
+  "show": "none"
+ },
+ "c2293541d1275": {
+  "answers": [
+   "__new",
+   "__open",
+   "__create",
+   "__construct"
+  ],
+  "show": "none"
+ },
+ "cb747d39c76b9": {
+  "answers": [
+   "2 4 6 8",
+   "1 3 5 7 9",
+   "2 4 6 8 10",
+   "1 2 3 4 5 6 7 8 9 10"
+  ],
+  "text": "Kod zamieszczony w ramce spowoduje wypisanie liczb",
+  "code": "<?php\n  for($x = 1; $x<=10; $x++)\n  {\n    if($x % 2 != 0) continue;\n    echo $x.\" \";\n  }\n?>",
+  "show": "none"
+ },
+ "ca1af73985b4b": {
+  "answers": [
+   "<?php\nfor($x = 2; $x <=54; $x+=2) {echo $x.\" \";}\n?>",
+   "<?php\nfor($x = 1; $x <= 55; $x++) {echo $x.\" \";}\n?>",
+   "<?php\nfor($x = 2; $x <= 56; $x+=2) {echo $x.\" \";}\n?>",
+   "<?php\nfor($x = 1; $x <= 55; $x+=1) {echo $x.\" \";}\n?>"
+  ],
+  "text": "Który kod jest alternatywny do kodu zamieszczonego w ramce?",
+  "code": "<?php\n  for($x = 1; $x<=55; $x++)\n  {\n    if($x % 2 != 0) continue;\n    echo $x.\" \";\n  }\n?>",
+  "show": "none"
+ },
+ "cd2398243bb0f": {
+  "answers": [
+   "przypisze zmiennej s zmienną t.",
+   "wyświetli długość napisu ze zmiennej t.",
+   "przypisze zmiennej s długość napisu ze zmiennej t.",
+   "przypisze zmiennej s fragment napisu ze zmiennej t, o określonej przez zmienną length długości."
+  ],
+  "text": "Zamieszczony w ramce fragment skryptu w języku JavaScript",
+  "code": "t=\"Ala ma kota.\";\ns=t.length;",
+  "show": "none"
+ },
+ "cdb77dd2215a5": {
+  "answers": [
+   "\"ze\"",
+   "\"wo\"",
+   "\"owodzeni\"",
+   "\"wodzenia \""
+  ],
+  "text": "Zamieszczony w ramce fragment kodu w JavaScript wypisze",
+  "code": "x='Powodzenia na egzaminie';\nz=x.substring(3,9);\ny=z.substring(2,4);\ndocument.write(y);",
+  "show": "none"
+ },
+ "c0da371a13121": {
+  "answers": [
+   "\"a\" > \"b\"",
+   "\"ab\" > \"c\"",
+   "\"abc\" > \"def\"",
+   "\"def\" > \"abc\""
+  ],
+  "show": "none"
+ },
+ "c685e1086c1e7": {
+  "text": "W kodzie PHP znak \"//\" oznacza",
+  "show": "none"
+ },
+ "c18c5bfccd451": {
+  "answers": [
+   "pomiędzy znacznikami <body>... </body>.",
+   "w części nagłówkowej witryny internetowej.",
+   "pomiędzy znacznikami paragrafu.",
+   "w stopce witryny internetowej."
+  ],
+  "show": "none"
+ },
+ "ce5416b45df28": {
+  "answers": [
+   "#008010",
+   "#ff0f10",
+   "#ff8010",
+   "#ff8011"
+  ],
+  "show": "none"
+ },
+ "c6853739a9f79": {
+  "answers": [
+   "SELECT nazwisko, imie FROM uczniowie WHERE nazwisko IN 'M%';",
+   "SELECT nazwisko, imie FROM uczniowie WHERE nazwisko LIKE 'M%';",
+   "SELECT nazwisko, imie FROM uczniowie ORDER BY nazwisko = 'M%';",
+   "SELECT nazwisko, imie FROM uczniowie ORDER BY nazwisko IN 'M%';"
+  ],
+  "show": "none"
+ },
+ "c2abf98d754c0": {
+  "answers": [
+   "SELECT nazwa FROM artykuly WHERE typ='pralka' AND cena FROM 1000 TO 1500;",
+   "SELECT nazwa FROM artykuly WHERE typ='pralka' OR cena BETWEEN 1000 OR 1500;",
+   "SELECT nazwa FROM artykuly WHERE typ='pralka' OR cena BETWEEN 1000 AND 1500;",
+   "SELECT nazwa FROM artykuly WHERE typ='pralka' AND cena BETWEEN 1000 AND 1500;"
+  ],
+  "text": "Baza danych zawiera tabelę artykuly z polami: nazwa, typ, producent, cena. Aby wyświetlić wszystkie nazwy artykułów wyłącznie typu pralka, dla których cena jest z przedziału 1 000 PLN i 1 500 PLN, należy zastosować polecenie",
+  "show": "none"
+ },
+ "c5e7f2e78fc5b": {
+  "answers": [
+   "klucz obcy wskazujący na klucz obcy tabeli po stronie \"jeden\".",
+   "klucz sztuczny odnoszący się do kluczy podstawowych obu tabel.",
+   "klucz obcy wskazujący na klucz podstawowy tabeli po stronie \"jeden\".",
+   "klucz podstawowy wskazujący na klucz podstawowy tabeli po stronie \"jeden\"."
+  ],
+  "text": "Aby utworzyć relację jeden do wielu, w tabeli po stronie \"wiele\", należy zdefiniować",
+  "show": "none"
+ },
+ "c3a4afad3ed41": {
+  "answers": [
+   "SELECT szkola FROM klasa = klasa + 1 WHERE klasa >= 1 AND klasa <= 5;",
+   "SELECT nazwisko, imie FROM klasa = klasa + 1 WHERE klasa > 1 OR klasa < 5;",
+   "UPDATE szkola SET klasa = klasa + 1 WHERE klasa >= 1 AND klasa <= 5;",
+   "UPDATE nazwisko, imie SET klasa = klasa + 1 WHERE klasa > 1 OR klasa < 5;"
+  ],
+  "text": "Baza danych 6-letniej szkoły podstawowej zawiera tabelę szkola z polami: imie, nazwisko, klasa. Wszyscy uczniowie klas 1-5 zdali do następnej klasy. Aby zwiększyć wartość w polu klasa o 1 należy użyć polecenia",
+  "show": "none"
+ },
+ "c95976e0a6bc8": {
+  "text": "Dany jest fragment kodu PHP z zadeklarowaną zmienną typu tablicowego",
+  "code": "$imiona = array ('Anna', 'Tomasz', 'Krzysztof', 'Aleksandra');\necho $imiona[2];",
+  "text2": "W wyniku wykonania kodu zostanie wypisane imię",
+  "show": "none"
+ },
+ "ceb65300a85f1": {
+  "answers": [
+   "jest błędny, nieznany operator =>",
+   "definiuje tablicę z trzema wartościami.",
+   "definiuje tablicę z sześcioma wartościami.",
+   "jest błędny, indeksami tablicy mogą być tylko liczby całkowite."
+  ],
+  "text": "Przedstawiony kod języka PHP",
+  "code": "$dane = array ('imie' => 'Anna', 'nazwisko' => 'Nowak', 'wiek' =>21);",
+  "show": "none"
+ },
+ "cbdc09ecadae9": {
+  "answers": [
+   "#imie",
+   "imie2",
+   "imię2",
+   "imię%"
+  ],
+  "show": "none"
+ },
+ "c46a1776b981b": {
+  "text": "Fragment kodu w języku PHP ma następującą postać:",
+  "code": "if ($a > $b && $a > $c)    echo $a;\nelse if ($b > $c)          echo $b;\nelse                       echo $c;",
+  "text2": "Zakładając, że zmienne: a, b, c przechowują wartości numeryczne, wynikiem działania warunku będzie wypisanie liczby",
+  "show": "none"
+ },
+ "c5e5679d5ed2f": {
+  "answers": [
+   "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20",
+   "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19",
+   "0, 4, 8, 12, 16, 20",
+   "0, 4, 8, 12, 16"
+  ],
+  "text": "Fragment kodu w języku PHP ma następującą postać:",
+  "code": "for ($i = 0; $i <= 20; $i += 4)\necho $i.', ';",
+  "text2": "Wynikiem działania pętli będzie wypisanie liczb",
+  "show": "none"
+ },
+ "c5a666d3b32d6": {
+  "text": "Funkcja zapisana w języku PHP ma postać:",
+  "code": "function fun1($liczba)\n{\n  if($liczba % 2 == 0)\n    return 1;\n\n  return 0;\n}",
+  "text2": "Jej zadaniem jest",
+  "show": "none"
+ },
+ "c80f78d0f2c69": {
+  "text": "Fragment kodu w języku PHP ma następującą postać:",
+  "code": "$liczba = $tab[0];\nforeach ($tab as $element)\n{\n  if ($element > $liczba)\n    $liczba = $element;\n}\necho $liczba;",
+  "text2": "Zakładając, że zmienna tablicowa $tab jest wypełniona liczbami naturalnymi, wynikiem programu będzie wypisanie",
+  "show": "none"
+ },
+ "c7d5ab2c3207a": {
+  "text": "Fragment kodu w języku JavaScript realizujący dodawanie dwóch liczb ma następującą postać:",
+  "code": "Podaj pierwszą liczbę: <input type=\"text\" name=\"liczba1\" />\nPodaj drugą liczbę: <input type=\"text\" name=\"liczba2\" />\n....\n<script type=text/javascript>\nfunction dodaj()\n{\n  // ta funkcja realizuje dodawanie i podaje jego wynik\n}\n</script>",
+  "text2": "Aby dodawanie wykonane było po kliknięciu przycisku o nazwie \"dodaj\", należy w wykropkowane miejsce wstawić",
+  "show": "none"
+ },
+ "cdb27743af037": {
+  "answers": [
+   "<!--",
+   "<?",
+   "//",
+   "#"
+  ],
+  "show": "none"
+ },
+ "c098bbd9eb1bb": {
+  "text": "W języku HTML, aby uzyskać efekt formatowania pokazany na obrazku (pogrubiony, pochylony, indeks górny), należy zapisać kod:",
+  "show": "figure",
+  "image": "/q/c098bbd9eb1bb-f.webp"
+ },
+ "c6c7df34d2ce2": {
+  "answers": [
+   "<meta background = blue>",
+   "<meta name = \"!DOCTYPE\">",
+   "<meta title = \"Strona dla hobbystów\">",
+   "<meta name = \"description\" content = \"Masz jakieś hobby? To jest strona dla Ciebie! \">"
+  ],
+  "show": "none"
+ },
+ "c7b07a18cfc4c": {
+  "text": "W języku CSS zapis",
+  "code": "h2 {background-color: green;}",
+  "text2": "sprawi, że koloru zielonego będzie",
+  "show": "none"
+ },
+ "c5bf91e1b4375": {
+  "text": "W języku CSS zapis",
+  "code": "a[target=\"_blank\"] {color: yellow;}",
+  "text2": "sprawi, że kolor żółty przyjmie czcionka",
+  "show": "none"
+ },
+ "cbc30a1696754": {
+  "text": "W języku CSS zapis",
+  "code": "p::first-line {font-size: 150%;}",
+  "text2": "użyty na stronie, na której jest kilka paragrafów, a każdy z nich ma po kilka linii sprawi, że",
+  "show": "none"
+ },
+ "c6b1ad557198e": {
+  "answers": [
+   "<h1>Lokomotywa</h1>\n<p>Stoi na <big>stacji lokomotywa ...</p>",
+   "<h1>Lokomotywa</h1>\n<p>Stoi na <big>stacji</big> lokomotywa ...</p>",
+   "<h1>Lokomotywa</p>\n<p>Stoi na <big>stacji</big> lokomotywa ...</p>",
+   "<p><small>Lokomotywa</small></p>\n<p>Stoi na <big>stacji<big> lokomotywa ...</p>"
+  ],
+  "text": "Który z przedstawionych kodów HTML sformatuje tekst według wzoru? (uwaga: słowo \"stacji\" jest zapisane większą czcionką niż reszta słów w tej linii)",
+  "show": "figure",
+  "image": "/q/c6b1ad557198e-f.webp"
+ },
+ "c32411bdddf93": {
+  "answers": [
+   "rgb(17, FE, 7)",
+   "rgb(11, 127, 7)",
+   "rgb(17, 255, 7)",
+   "rgb(17, 254, 7)"
+  ],
+  "text": "Kolor zapisany w postaci szesnastkowej o wartości #11FE07 w kodzie RGB ma postać",
+  "show": "none"
+ },
+ "c8d45e747e9b2": {
+  "answers": [
+   "Podczas przekształcania polegającego na skalowaniu, skalowany obraz nie zmienia jakości.",
+   "Zapisywany obraz jest opisywany za pośrednictwem figur geometrycznych umieszczonych w układzie współrzędnych.",
+   "Grafika rastrowa nie jest zapisywana w formacie WMF (ang. Windows Metafile Format - format metaplików Windows).",
+   "Jest to prezentacja obrazu za pomocą pionowo-poziomej siatki odpowiednio kolorowanych pikseli na monitorze komputera, drukarce lub innym urządzeniu wyjściowym."
+  ],
+  "show": "none"
+ },
+ "c20162c9e38cc": {
+  "answers": [
+   "16-19 fps",
+   "20-23 fps",
+   "24-30 fps",
+   "31-36 fps"
+  ],
+  "show": "none"
+ },
+ "ce5fa926672ed": {
+  "text": "Dana jest tabela psy o polach: imie, rasa, telefon_wlasciciela, rok_szczepienia. Aby wyszukać telefony właścicieli, których psy były szczepione przed 2015 rokiem, należy użyć polecenia SQL",
+  "show": "none"
+ },
+ "cc5a9be3f3547": {
+  "answers": [
+   "klucz obcy rezyserzy_id tabeli filmy z kluczem obcym id tabeli rezyserzy.",
+   "klucz podstawowy id tabeli filmy z kluczem podstawowym id tabeli rezyserzy.",
+   "klucz obcy rezyserzy_id tabeli filmy z kluczem podstawowym id tabeli rezyserzy.",
+   "klucz podstawowy id tabeli filmy z kluczem obcym rezyserzy_id tabeli rezyserzy."
+  ],
+  "text": "Na rysunku została przedstawiona relacja jeden do wielu między tabelami filmy (id, rezyserzy_id FK, tytul, opis) i rezyserzy (id, imie, nazwisko). Łączy ona",
+  "show": "none"
+ },
+ "c6ed2cfd1d795": {
+  "text": "Polecenie serwera MySQL postaci REVOKE DELETE, UPDATE ON pracownicy FROM 'tKowal'@'localhost' sprawi, że użytkownikowi tKowal zostaną",
+  "show": "none"
+ },
+ "c0ff7d45d564b": {
+  "text": "W bazie danych wykonano następujące polecenia dotyczące praw użytkownika adam",
+  "code": "GRANT ALL PRIVILEGES ON klienci TO adam\nREVOKE SELECT, INSERT, UPDATE ON klienci FROM adam",
+  "text2": "Po wykonaniu poleceń użytkownik adam będzie miał prawa do",
+  "show": "none"
+ },
+ "cb478c6b837d9": {
+  "answers": [
+   "pole klucza obcego nie może być puste.",
+   "pole klucza podstawowego nie może być puste.",
+   "pole klucza podstawowego musi posiadać utworzony indeks.",
+   "w relacji 1..n pole klucza obcego jest połączone z polem klucza obcego innej tabeli."
+  ],
+  "show": "none"
+ },
+ "c977099a5b8b9": {
+  "text": "W formularzu dane z pola input o typie number zostały zapisane do zmiennej a, a następnie przetworzone w skrypcie JavaScript w następujący sposób",
+  "code": "var x = parseFloat(a);",
+  "text2": "Zmienna x będzie typu",
+  "show": "none"
+ },
+ "c6c70714c112c": {
+  "answers": [
+   "<php ... />",
+   "<?php ... ?>",
+   "<php> ... </php>",
+   "<?php> ... <php?>"
+  ],
+  "show": "none"
+ },
+ "c4fee2520e164": {
+  "answers": [
+   "funkcję parseFloat zamiast parseInt na zmiennej liczbowej.",
+   "działanie arytmetyczne, a zawartość zmiennej była napisem.",
+   "działanie arytmetyczne na dwóch zmiennych liczbowych dodatnich.",
+   "funkcję sprawdzającą długość napisu, a zawartość zmiennej była liczbą."
+  ],
+  "show": "none"
+ },
+ "c9b7dbacf36c5": {
+  "answers": [
+   "if(a>0 || a<100 || b<0)",
+   "if(a>0 && a<100 && b>0)",
+   "if((a>0 || a<100) && b>0)",
+   "if((a>0 && a<100) || b<0)"
+  ],
+  "show": "none"
+ },
+ "c6b42ecd1b472": {
+  "answers": [
+   "0",
+   "5",
+   "6",
+   "10"
+  ],
+  "text": "Ile iteracji będzie miała pętla zapisana w języku PHP, zakładając, że zmienna sterująca nie jest modyfikowana we wnętrzu pętli?",
+  "code": "for ($i = 0; $i <= 10; $i+=2)   { ........... }",
+  "show": "none"
+ },
+ "c561f7f15e455": {
+  "answers": [
+   "zwrócenie liczb z przedziału a .. 99",
+   "wypisanie liczb z przedziału a .. 99 i zwrócenie wartości 100",
+   "wypisanie wartości zmiennej a oraz zwrócenie wartości zmiennej n",
+   "wypisanie liczb z przedziału a .. 100 i zwrócenie wartości zmiennej n"
+  ],
+  "text": "Dla dowolnego a z przedziału (0, 99) zadaniem funkcji zapisanej w języku JavaScript jest",
+  "code": "function fun1(a)\n{\n  for (n = a; n <= 100; n++)\n    document.write(n);\n  return n;\n}",
+  "show": "none"
+ },
+ "c4fbcee674471": {
+  "answers": [
+   "utworzenie nowej klasy napis1.",
+   "wywołanie metody obiektu napisy.",
+   "utworzenie obiektu napis1 klasy napisy.",
+   "zadeklarowanie zmiennej napis1 i wywołanie funkcji, której argumentem jest napis1."
+  ],
+  "text": "Zapis w języku JavaScript var napis1= new napisy(); ma za zadanie",
+  "show": "none"
+ },
+ "c756dd08f0fe6": {
+  "answers": [
+   "0, 1, 2, 3, 4, 5, 6, 7, 8, 9",
+   "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10",
+   "0, 10, 20, 30, 40, 50, 60, 70, 80, 90",
+   "10, 20, 30, 40, 50, 60, 70, 80, 90, 100"
+  ],
+  "text": "Pętla zapisana w języku PHP wstawi do tablicy liczby",
+  "code": "$x = 0;\nfor ($i = 0; $i < 10; $i++)\n{\n  $tabl[$i] = $x;\n  $x = $x + 10;\n}",
+  "show": "none"
+ },
+ "cdeb3d6504fc9": {
+  "answers": [
+   "Perl",
+   "PHP",
+   "Python",
+   "JavaScript"
+  ],
+  "show": "none"
+ },
+ "c6c2d40134d07": {
+  "text": "Jaka treść komunikatu powinna być wstawiona w przedstawionym kodzie PHP zamiast znaków zapytania?",
+  "code": "$a = mysql_connect('localhost', 'adam', 'mojeHasło');\nif (!$a)\n  echo \"??????????????????\";",
+  "show": "none"
+ },
+ "c09adbabd6ac8": {
+  "answers": [
+   "nieprawidłowe dane.",
+   "wybór losowej wartości ze zmiennych a, b i c",
+   "w zmiennej x minimalna wartość ze zmiennych a, b, c",
+   "w zmiennej x maksymalna wartość ze zmiennych a, b, c"
+  ],
+  "text": "Aby prawidłowo udokumentować linię kodu języka JavaScript, należy po znakach // wpisać komentarz",
+  "code": "x = Math.max(a, b, c);     //",
+  "show": "none"
+ },
+ "c4e351a27386a": {
+  "text": "W języku HTML, aby uzyskać efekt jak na przykładzie (większy \"Duży tekst\", potem \"zwykły tekst\"), należy zastosować konstrukcję",
+  "show": "figure",
+  "image": "/q/c4e351a27386a-f.webp"
+ },
+ "c33e68bb8056b": {
+  "answers": [
+   "jest niepoprawny, w atrybucie href należy podać adres URL.",
+   "jest niepoprawny, zastosowano błędnie znak \"#\" w atrybucie href.",
+   "jest poprawny, po wybraniu odnośnika otworzy się strona internetowa o adresie URL \"hobby\".",
+   "jest poprawny, po wybraniu odnośnika aktualna strona zostanie przewinięta do elementu o nazwie \"hobby\"."
+  ],
+  "text": "Zapis znacznika HTML w postaci",
+  "code": "<a href=\"#hobby\">przejdź</a>",
+  "show": "none"
+ },
+ "c19d4080c1a73": {
+  "answers": [
+   "na pasku tytułu przeglądarki.",
+   "w treści strony, na banerze strony.",
+   "w polu adresu, za wpisanym adresem URL.",
+   "w treści strony, w pierwszym wyświetlonym nagłówku."
+  ],
+  "text": "W części nagłówkowej kodu HTML zapisano",
+  "code": "<title>Strona miłośników psów</title>",
+  "text2": "Zapisany tekst zostanie wyświetlony",
+  "show": "none"
+ },
+ "cfa703b107b67": {
+  "answers": [
+   "<h1>Rozdział 1<p>tekst <h2>Podrozdział 1.1<p>tekst <h2>Podrozdział 1.2",
+   "<ul><li>Rozdział 1<li>tekst<li>Podrozdział 1.1<li>tekst<li>Podrozdział 1.2</ul>",
+   "<big>Rozdział 1</big>tekst<big>Podrozdział 1.1</big>tekst<big>Podrozdział 1.2</big>",
+   "<h1>Rozdział 1</h1> <p>tekst</p> <h2>Podrozdział 1.1</h2> <p>tekst</p> <h2>Podrozdział 1.2</h2>"
+  ],
+  "text": "Przeglądarka internetowa wyświetliła stronę z hierarchiczną strukturą: Rozdział 1, tekst, Podrozdział 1.1, tekst, Podrozdział 1.2. Wskaż kod HTML, który poprawnie definiuje przedstawioną hierarchiczną strukturę tekstu:",
+  "show": "figure",
+  "image": "/q/cfa703b107b67-f.webp"
+ },
+ "ce24ef376a0bc": {
+  "text": "W języku CSS zapis w postaci:",
+  "code": "p { background-image: url(\"rysunek.png\"); }",
+  "text2": "sprawi, że rysunek.png będzie",
+  "show": "none"
+ },
+ "c8083b81b9594": {
+  "text": "W języku CSS zdefiniowano formatowanie",
+  "code": "p > i {color: blue}",
+  "text2": "Oznacza to, że kolorem niebieskim zostanie zapisany",
+  "show": "none"
+ },
+ "cd45bf6e36af0": {
+  "text": "W języku CSS zapis postaci",
+  "code": "h1::first-letter {color: red;}",
+  "text2": "sprawi, że koloru czerwonego będzie",
+  "show": "none"
+ },
+ "c1fc5732f0172": {
+  "answers": [
+   "<p>Ala ma <b>kota</b> <br />\na <b>kot</b> ma Alę</p>",
+   "<p>Ala ma <b>kota</i> <br />\na <b>kot</b> ma Alę</p>",
+   "<p>Ala ma <b>kota <br />\na <i>kot</i> ma Alę</p>",
+   "<p>Ala ma <b>kota</b> <br />\na <i>kot</i> ma Alę</p>"
+  ],
+  "text": "Który z przedstawionych kodów XHTML sformatuje tekst według podanego wzoru? (w pierwszej linii \"Ala ma kota\" słowo kota jest pogrubione, w drugiej \"a kot ma Alę\" słowo kot jest pochylone)",
+  "show": "figure",
+  "image": "/q/c1fc5732f0172-f.webp"
+ },
+ "cfd51124accdf": {
+  "answers": [
+   "#FF0F80",
+   "#FF1008",
+   "#801008",
+   "#800F80"
+  ],
+  "show": "none"
+ },
+ "cdbda0e740d52": {
+  "answers": [
+   "704 x 576 px",
+   "720 x 480 px",
+   "1280 x 1024 px",
+   "1920 x 1080 px"
+  ],
+  "show": "none"
+ },
+ "cda11e8d6ee5e": {
+  "answers": [
+   "zamienia nazwę tabeli miasta na nazwę kod",
+   "dodaje do tabeli kolumnę o nazwie kod typu text",
+   "dodaje do tabeli dwie kolumny o nazwach: kod i text",
+   "w tabeli miasta zamienia nazwę kolumny kod na nazwę text"
+  ],
+  "text": "Polecenie języka SQL w postaci ALTER TABLE 'miasta' ADD 'kod' text;",
+  "show": "none"
+ },
+ "cae8c12e46226": {
+  "answers": [
+   "SELECT SUM(ocena) FROM ilosc_kodu;",
+   "SELECT SUM(ilosc_kodu) FROM programisci;",
+   "SELECT COUNT(programisci) FROM ilosc_kodu;",
+   "SELECT MAX(ilosc_kodu) FROM programisci;"
+  ],
+  "text": "Dana jest tabela programisci o polach: id, nick, ilosc_kodu, ocena. Pole ilosc_kodu zawiera liczbę linii kodu napisanych przez programistę w danym miesiącu. Aby policzyć sumę linii kodu, który napisali wszyscy programiści, należy użyć polecenia",
+  "show": "none"
+ },
+ "cd5d1d108f6da": {
+  "text": "W tabeli artykuly wykonano następujące polecenia dotyczące praw użytkownika jan",
+  "code": "GRANT ALL PRIVILEGES ON artykuly TO jan\nREVOKE SELECT, UPDATE ON artykuly FROM jan",
+  "text2": "Po wykonaniu poleceń użytkownik jan będzie miał prawa do",
+  "show": "none"
+ },
+ "ce62d22eea8d0": {
+  "answers": [
+   "DBCC CHECKDB",
+   "SAVE DATABASE",
+   "RESTORE DATABASE",
+   "REBACKUP DATABASE"
+  ],
+  "show": "none"
+ },
+ "c034ed6aafe6d": {
+  "text": "W formularzu dane z pola input o typie number zostały zapisane do zmiennej a, a następnie przetworzone w skrypcie JavaScript w następujący sposób",
+  "code": "var x = parseInt(a);",
+  "text2": "Zmienna x będzie typu",
+  "show": "none"
+ },
+ "c42c2da86b1e6": {
+  "answers": [
+   "wstawić znaki $ przed nazwami zmiennych.",
+   "wstawić nawiasy klamrowe do sekcji if oraz else",
+   "w liniach 2 i 5 zmienne a i b wstawić w cudzysłów.",
+   "w liniach 3 i 6 zamienić znaki cudzysłowu na apostrof, np. ' jest mniejsze'"
+  ],
+  "text": "W przedstawionym kodzie JavaScript dla ułatwienia ponumerowano linie. W kodzie znajduje się błąd, gdyż po uruchomieniu żaden komunikat nie zostaje wyświetlony. Aby wyeliminować błąd, należy",
+  "code": "1. if (a < b)\n2.   document.write(a);\n3.   document.write(\" jest mniejsze\");\n4. else\n5.   document.write(b);\n6.   document.write(\" jest mniejsze\");",
+  "show": "none"
+ },
+ "c2d6b2d628901": {
+  "answers": [
+   "0",
+   "10",
+   "11",
+   "Nieskończenie wiele."
+  ],
+  "text": "Ile iteracji będzie miała przedstawiona pętla zapisana w języku PHP, zakładając, że zmienna sterująca nie jest modyfikowana we wnętrzu pętli?",
+  "code": "for ($i = 0; $i <= 10; $i++)   { ........... }",
+  "show": "none"
+ },
+ "c238fbf6fce06": {
+  "answers": [
+   "if (a > 0 || b > 0 || b > 100) ...",
+   "if (a > 0 && b > 0 || b > 100) ...",
+   "if (a > 0 || (b > 0 && b < 100)) ...",
+   "if (a > 0 && b > 0 && b < 100) ..."
+  ],
+  "show": "none"
+ },
+ "c3e9970072b22": {
+  "text": "Zadaniem przedstawionej funkcji zapisanej w języku JavaScript jest",
+  "code": "function fun1(a, b)\n{\n  if (a % 2 != 0)  a++;\n  for (n = a; n <= b; n+=2)\n    document.write(n);\n}",
+  "show": "none"
+ },
+ "c7161bba7f5ab": {
+  "answers": [
+   "obj1",
+   "oblicz",
+   "czescCalkowita",
+   "czescUlamkowa"
+  ],
+  "text": "Przedstawiony kod został zapisany w języku JavaScript. W podanej definicji obiektu metodą jest element o nazwie",
+  "code": "var obj1 = {\n  czescUlamkowa: 10,\n  czescCalkowita: 20,\n  oblicz: function ()  { ..... }\n}",
+  "show": "none"
+ },
+ "c45e0dbf075e3": {
+  "answers": [
+   "nazwę konta ze znakiem @, czyli 'adres@'",
+   "cały adres e-mail, czyli 'adres@host.pl'",
+   "samą nazwę domeny, czyli 'host.pl'",
+   "samą nazwę konta, czyli 'adres'"
+  ],
+  "text": "Fragment kodu w języku PHP wypisze",
+  "code": "$n = 'adres@host.pl';\n$dl = strlen($n);\n$i = 0;\nwhile ($i < $dl && $n[$i] != '@')\n{\n  echo $n[$i];\n  $i++;\n}",
+  "show": "none"
+ },
+ "c426062334d39": {
+  "text": "W przedstawionym kodzie PHP, zamiast znaków zapytania powinien pojawić się komunikat:",
+  "code": "$x = mysql_query('SELECT * FROM mieszkancy');\nif (!$x)\n  echo \"?????????????????????\";",
+  "show": "none"
+ },
+ "cba9fe361b830": {
+  "answers": [
+   "nieprawidłowe dane",
+   "zmiana stylu atrybutu innerHTML",
+   "wyświetlenie tekstu \"Date()\" w znaczniku o id = napis",
+   "wyświetlenie daty i czasu w znaczniku o id = napis"
+  ],
+  "text": "Aby prawidłowo udokumentować przedstawioną linię kodu języka JavaScript, należy po znakach // wpisać komentarz",
+  "code": "document.getElementById(\"napis\").innerHTML = Date();     //",
+  "show": "none"
+ },
+ "ce1a586814e7f": {
+  "text": "W języku JavaScript metoda document.getElementById(id) ma za zadanie",
+  "show": "none"
+ },
+ "c67842e44ab92": {
+  "answers": [
+   "conf.php",
+   ".htaccess",
+   ".apacheConf",
+   "configuration.php"
+  ],
+  "show": "none"
+ },
+ "c8863e1fef405": {
+  "answers": [
+   "pseudoklasę :visited",
+   "pseudoklasę :hover",
+   "pseudoelement :first-line",
+   "nowy selektor klasy dla wiersza tabeli."
+  ],
+  "show": "none"
+ },
+ "c1ad432bfce04": {
+  "answers": [
+   "iConji.",
+   "favicon.",
+   "webicon.",
+   "emoticon."
+  ],
+  "show": "none"
+ },
+ "c0a41efc744b2": {
+  "answers": [
+   "znacznik <div>",
+   "znaczniki <frame> i <table>",
+   "znacznik <p> z formatowaniem",
+   "znaczniki <h1>, <h2> oraz <p>"
+  ],
+  "show": "none"
+ },
+ "c5c0bf13a91e7": {
+  "answers": [
+   "Jeżeli w instrukcji używa się kilku atrybutów, ich kolejność powinna być zgodna z alfabetem, np. <img alt=\"...\" src=\"...\" />",
+   "Wyłączanie znaczników musi następować w odwrotnej kolejności, niż były one włączane, np. <p>...<big>...</big></p>",
+   "Znaczniki, oprócz samozamykających się, działają do momentu ich wyłączenia znakiem \"/\", np. <p>...</p>",
+   "W znacznikach nie są rozróżniane wielkie i małe litery, np. <p> i <P> to ten sam znacznik."
+  ],
+  "show": "none"
+ },
+ "cf43910e68114": {
+  "answers": [
+   "MP3",
+   "AAC",
+   "WMA",
+   "FLAC"
+  ],
+  "show": "none"
+ },
+ "c07bed1105bf4": {
+  "answers": [
+   "SELECT sklepy FROM nazwa WHERE branza='spożywczy' BETWEEN miasto='Wrocław';",
+   "SELECT sklepy FROM branza='spożywczy' WHERE miasto='Wrocław';",
+   "SELECT nazwa FROM sklepy WHERE branza='spożywczy' OR miasto='Wrocław';",
+   "SELECT nazwa FROM sklepy WHERE branza='spożywczy' AND miasto='Wrocław';"
+  ],
+  "show": "none"
+ },
+ "c8363c87855e9": {
+  "answers": [
+   "SELECT model FROM podzespoly WHERE typ='RAM' AND producent='Kingston' ORDER BY cena ASC;",
+   "SELECT model FROM podzespoly WHERE typ='RAM' AND producent='Kingston' ORDER BY cena DESC;",
+   "SELECT model FROM podzespoly WHERE typ='RAM' OR producent='Kingston' ORDER BY cena DESC;",
+   "SELECT model FROM producent WHERE typ='RAM' OR producent='Kingston' ORDER BY podzespoly ASC;"
+  ],
+  "show": "none"
+ },
+ "c6edb01e3702a": {
+  "answers": [
+   "SELECT nazwisko, imie FROM mieszkancy AS 'Poznań' OR 'Kraków';",
+   "SELECT nazwisko, imie FROM mieszkancy WHERE miasto HAVING 'Poznań' OR 'Kraków';",
+   "SELECT nazwisko, imie FROM mieszkancy WHERE miasto='Poznań' OR miasto='Kraków';",
+   "SELECT nazwisko, imie FROM mieszkancy WHERE miasto BETWEEN 'Poznań' OR 'Kraków';"
+  ],
+  "text": "Zdefiniowano bazę danych z tabelą mieszkancy o polach: nazwisko, imie, miasto. Następnie stworzono następujące zapytanie do bazy:",
+  "code": "SELECT nazwisko, imie FROM mieszkancy WHERE miasto='Poznań'\nUNION ALL\nSELECT nazwisko, imie FROM mieszkancy WHERE miasto='Kraków';",
+  "text2": "Wskaż zapytanie, które zwróci identyczne dane.",
+  "show": "none"
+ },
+ "c7b2279f90c97": {
+  "answers": [
+   "1. punkt 1\n2. punkt 2\n    ◦ podpunkt1\n    ◦ podpunkt2\n    ◦ podpunkt3\n3. punkt3",
+   "1. punkt 1\n2. punkt 2\n3. punkt3\n    ◦ podpunkt1\n    ◦ podpunkt2\n    ◦ podpunkt3",
+   "1. punkt 1\n2. punkt 2\n    ◦ podpunkt1\n        ▪ podpunkt2\n        ▪ podpunkt3\n3. punkt3",
+   "• punkt 1\n• punkt 2\n    1. podpunkt1\n        ▪ podpunkt2\n        ▪ podpunkt3\n• punkt3"
+  ],
+  "text": "Poniżej przedstawiono fragment kodu języka HTML:",
+  "code": "<ol>\n  <li>punkt 1</li>  <li>punkt 2</li>\n  <ul>\n    <li>podpunkt1</li>\n    <ul>  <li>podpunkt2</li>  <li>podpunkt3</li>  </ul>\n  </ul>\n  <li>punkt3</li>\n</ol>",
+  "text2": "Jest on definicją listy:",
+  "show": "none"
+ },
+ "c5b86411c8e4f": {
+  "answers": [
+   "\\\\",
+   "\\b",
+   "\\n",
+   "\\t"
+  ],
+  "show": "none"
+ },
+ "cb054cd8aa8f6": {
+  "answers": [
+   "n-elementów tablicy.",
+   "co drugiego elementu tablicy.",
+   "sumy wszystkich elementów tablicy.",
+   "sumy tych elementów tablicy, których wartości są nieparzyste."
+  ],
+  "text": "Dana jest tablica n-elementowa o nazwie t[n]. Zadaniem algorytmu zapisanego w postaci kroków jest wypisanie sumy",
+  "code": "K1: i = 0; wynik = 0;\nK2: Dopóki i < n wykonuj K3 .. K4\n  K3: wynik ← wynik + t[i]\n  K4: i ← i + 2\nK5: wypisz wynik",
+  "show": "none"
+ },
+ "ce93304287fcb": {
+  "text": "Dana jest tablica o nazwie tab wypełniona liczbami całkowitymi różnymi od zera. Przedstawiony kod zapisany w języku PHP ma za zadanie",
+  "code": "foreach ($tab as &$liczba)\n  $liczba = $liczba * (-1);\nunset($liczba);",
+  "show": "none"
+ },
+ "c3a9e51ec9155": {
+  "answers": [
+   "pusty napis.",
+   "wartość nie liczbową.",
+   "dowolną całkowitą wartość liczbową.",
+   "dowolną dodatnią wartość liczbową."
+  ],
+  "text": "Warunek zapisany w JavaScript jest prawdziwy, gdy zmienna x przechowuje",
+  "code": "if (( !isNaN(x) ) && ( x > 0 ))",
+  "show": "none"
+ },
+ "cef43f954374b": {
+  "answers": [
+   "zwrócić wynik potęgowania a^n",
+   "wypisać kolejne liczby od a do n",
+   "wypisać wynik mnożenia a przez n",
+   "zwrócić iloczyn kolejnych liczb od 1 do a"
+  ],
+  "text": "Przedstawiona funkcja zapisana kodem JavaScript ma za zadanie",
+  "code": "function oblicz(a, n)\n{\n  wynik = 1;\n  for(i = 0; i < n; i++)\n    wynik *= a;\n  return (wynik);\n}",
+  "show": "none"
+ },
+ "c509388729b2d": {
+  "text": "Aby w języku HTML uzyskać formatowanie paragrafu dla tekstu \"Tekst może być zaznaczony albo istotny dla autora\" (słowo zaznaczony wyróżnione tłem, istotny pochylone), należy zastosować kod",
+  "show": "figure",
+  "image": "/q/c509388729b2d-f.webp"
+ },
+ "cda28c41d6fe9": {
+  "text": "Zamieszczony kod HTML formularza zostanie wyświetlony przez przeglądarkę w sposób:",
+  "show": "answers"
+ },
+ "cd63aec0a0bd6": {
+  "answers": [
+   "będzie pisał kod bez wcięć.",
+   "nie postawi średnika po wyrażeniu w instrukcji if, jeśli po nim nastąpiła sekcja else.",
+   "będzie deklarował zmienne wewnątrz warunku.",
+   "pobierze wartość z formularza, w którym pole input nie było wypełnione."
+  ],
+  "show": "none"
+ },
+ "c35f3d428ad93": {
+  "answers": [
+   "mysql_field_len",
+   "mysql_list_fields",
+   "mysql_fetch_row",
+   "mysql_fetch_lengths"
+  ],
+  "show": "none"
+ },
+ "c1f8d38c6fa71": {
+  "answers": [
+   "w logu pod warunkiem ustawienia odpowiedniego parametru w pliku php.ini.",
+   "w podglądzie zdarzeń systemu Windows.",
+   "w oknie edytora, w którym powstaje kod PHP.",
+   "ignorowane przez przeglądarkę oraz interpreter kodu PHP."
+  ],
+  "show": "none"
+ },
+ "cc13b6c1b15c3": {
+  "answers": [
+   "PHP i MySQL",
+   "Apache i PHP",
+   "Apache, PHP i MySQL",
+   "IIS, PERL i MySQL"
+  ],
+  "show": "none"
+ },
+ "cdc94a339df24": {
+  "answers": [
+   "<meta keywords = \"psy, koty, gryzonie\">",
+   "<meta name=\"keywords\" =\"psy, koty, gryzonie\">",
+   "<meta name=\"keywords\" content=\"psy, koty, gryzonie\">",
+   "<meta name=\"description\" content=\"psy, koty, gryzonie\">"
+  ],
+  "show": "none"
+ },
+ "c1f0e07ece8be": {
+  "answers": [
+   "oznacza, że kliknięcie na link nie przeniesie do strony website.com.",
+   "oznacza, że kliknięcie na link otworzy go w osobnej karcie przeglądarki.",
+   "jest informacją dla robota wyszukiwarki Google, aby nie podążał za tym linkiem.",
+   "jest informacją dla przeglądarki internetowej, aby nie formatowała słowa \"link\" jako odnośnika."
+  ],
+  "text": "W języku HTML zdefiniowano znacznik a. Wartość nofollow atrybutu rel",
+  "code": "<a href=\"http://website.com\" rel=\"nofollow\">link</a>",
+  "show": "none"
+ },
+ "cfedc5cb5410e": {
+  "answers": [
+   "nie wyświetli strony internetowej.",
+   "w miejscu grafiki wypisze tekst \"pejzaż\".",
+   "w miejscu grafiki wypisze tekst \"rysunek.png\".",
+   "w miejscu grafiki wypisze błąd wyświetlania strony."
+  ],
+  "text": "Zapisano kod HTML wstawiający grafikę na stronę internetową. Jeżeli rysunek.png nie zostanie odnaleziony, przeglądarka",
+  "code": "<img src=\"rysunek.png\" alt=\"pejzaż\">",
+  "show": "none"
+ },
+ "c62799c60d1cb": {
+  "answers": [
+   "p {text-indent: 30px;}",
+   "p {text-spacing: 30px;}",
+   "p {line-height: 30px;}",
+   "p {line-indent: 30px;}"
+  ],
+  "show": "none"
+ },
+ "c524cbd1255e8": {
+  "text": "W języku CSS zdefiniowano następujące formatowanie.",
+  "code": "h1 i {color: red;}",
+  "text2": "Kolorem czerwonym zostanie zapisany",
+  "show": "none"
+ },
+ "cda72be16b396": {
+  "answers": [
+   ":active",
+   ":hover",
+   ":visited",
+   ":coursor"
+  ],
+  "show": "none"
+ },
+ "cc2cbe8e83d29": {
+  "answers": [
+   "punktorem listy nienumerowanej będzie rys.gif",
+   "rys.gif będzie stanowił ramkę dla listy nienumerowanej.",
+   "wyświetli się rysunek rys.gif jako tło listy nienumerowanej.",
+   "każdy z punktów listy będzie miał osobne tło pobrane z grafiki rys.gif"
+  ],
+  "text": "Zapis CSS postaci:",
+  "code": "ul { list-style-image: url('rys.gif'); }",
+  "text2": "sprawi, że na stronie internetowej",
+  "show": "none"
+ },
+ "c5fb5c0807ec5": {
+  "text": "W kodzie źródłowym zapisanym w języku HTML wskaż błąd walidacji dotyczący tego fragmentu.",
+  "code": "<h6>CSS</h6>\n<p>Kaskadowe arkusze stylów (<b>ang. <i>Cascading Style Sheets</b></i>)<br>to język służący...</p>",
+  "show": "none"
+ },
+ "c28d6280dfef0": {
+  "text": "W ramce przedstawiono właściwości pliku graficznego. W celu optymalizacji czasu ładowania rysunku na stronę WWW należy",
+  "code": "Wymiary: 4272 x 2848px\nRozdzielczość: 72 dpi\nFormat: JPG",
+  "show": "none"
+ },
+ "c270ddec9a340": {
+  "answers": [
+   "Brasero",
+   "Winamp",
+   "Audacity",
+   "RealPlayer"
+  ],
+  "show": "none"
+ },
+ "c39de0611b6ad": {
+  "answers": [
+   "DROP pracownicy FROM rodzaj_umowy = 0;",
+   "DROP pracownicy WHERE rodzaj_umowy IS NULL;",
+   "DELETE pracownicy WHERE rodzaj_umowy = brak;",
+   "DELETE FROM pracownicy WHERE rodzaj_umowy IS NULL;"
+  ],
+  "text": "Dana jest tabela pracownicy. Polecenie MySQL usuwające wszystkie rekordy z tabeli, dla których nie wypełniono pola rodzaj_umowy, ma postać",
+  "show": "none"
+ },
+ "c2edef653e506": {
+  "text": "W przedstawionym fragmencie kwerendy języka SQL, komenda SELECT ma za zadanie zwrócić",
+  "code": "SELECT COUNT(wartosc) FROM...",
+  "show": "none"
+ },
+ "c0bace629a668": {
+  "answers": [
+   "SELECT * FROM ksiazki WHERE cena < 50;",
+   "SELECT tytul FROM ksiazki WHERE cena < 50;",
+   "SELECT tytul FROM ksiazki WHERE cena > '50 zł';",
+   "SELECT ksiazki FROM tytul WHERE cena < '50 zł';"
+  ],
+  "show": "none"
+ },
+ "ca84bea6375aa": {
+  "answers": [
+   "... filmy JOIN rezyserzy ON filmy.id = rezyserzy.id ...",
+   "... filmy JOIN rezyserzy ON filmy.id = rezyserzy.filmyID ...",
+   "... filmy JOIN rezyserzy ON filmy.rezyserID = rezyserzy.id ...",
+   "... filmy JOIN rezyserzy ON filmy.rezyserID = rezyserzy.filmyID ..."
+  ],
+  "text": "Tabela filmy zawiera klucz główny id oraz klucz obcy rezyserID. Tabela rezyserzy zawiera klucz główny id. Obydwie tabele połączone są relacją jeden po stronie reżyserzy do wielu po stronie filmy. Aby w kwerendzie SELECT połączyć tabele filmy i reżyserzy, należy zapisać",
+  "show": "none"
+ },
+ "c838816ed6498": {
+  "text": "Na rysunku przedstawiono dwie tabele: Klienci (ID, imie, nazwisko, telefon) oraz Zamowienia (ID, data). Aby połączyć je relacją jeden do wielu, jeden po stronie Klienci, wiele po stronie Zamowienia, należy",
+  "show": "none"
+ },
+ "c3b37725a7f25": {
+  "text": "Przedstawione polecenie MySQL ma za zadanie",
+  "code": "ALTER TABLE ksiazki MODIFY tytul VARCHAR(100) NOT NULL;",
+  "show": "none"
+ },
+ "cae5ac7a19ca1": {
+  "answers": [
+   "UPDATE podzespoly SET URL = 'toshiba.pl';",
+   "UPDATE producent = 'TOSHIBA' SET URL = 'toshiba.pl';",
+   "UPDATE podzespoly.producent = 'TOSHIBA' SET URL = 'toshiba.pl';",
+   "UPDATE podzespoly SET URL = 'toshiba.pl' WHERE producent = 'TOSHIBA';"
+  ],
+  "text": "W tabeli podzespoly należy zmienić wartość pola URL na 'toshiba.pl' dla wszystkich rekordów, gdzie pole producent to TOSHIBA. W języku SQL modyfikacja ta będzie miała postać:",
+  "show": "none"
+ },
+ "c17f6c2ad691f": {
+  "answers": [
+   "REVOKE ALL ON tabela1 FROM 'anna'@'localhost'",
+   "REVOKE CREATE, ALTER, DROP ON tabela1 FROM 'anna'@'localhost'",
+   "REVOKE CREATE, UPDATE, DROP ON tabela1 FROM 'anna'@'localhost'",
+   "REVOKE CREATE, INSERT, DELETE ON tabela1 FROM 'anna'@'localhost'"
+  ],
+  "show": "none"
+ },
+ "c4b7ef67a96bb": {
+  "answers": [
+   "if(liczba > 100 || liczba <= 200)",
+   "if(liczba < 100 || liczba >= 200)",
+   "if(liczba > 100 && liczba <= 200)",
+   "if(liczba < 100 && liczba <= 200)"
+  ],
+  "text": "W języku JavaScript aby sprawdzić warunek czy liczba znajduje się w przedziale (100, 200>, należy zapisać:",
+  "show": "none"
+ },
+ "c408f8a0756cc": {
+  "answers": [
+   "Jest to język o słabej kontroli typów.",
+   "Nazwy zmiennych są poprzedzone znakiem !",
+   "Deklaracja zmiennych następuje po słowie var",
+   "W nazwach zmiennych nie jest rozróżniana wielkość liter."
+  ],
+  "show": "none"
+ },
+ "c23343e297901": {
+  "text": "W języku PHP funkcja trim ma za zadanie",
+  "show": "none"
+ },
+ "cec8c8899adfa": {
+  "text": "W języku JavaScript zapis w ramce oznacza, że",
+  "code": "x = przedmiot.nazwa();",
+  "show": "none"
+ },
+ "c428dc04b7e99": {
+  "text": "W języku JavaScript zapisano funkcję.",
+  "code": "function fun1(f)\n{\n  if (f<0) f = f * (-1);\n  return f;\n}",
+  "text2": "Ma ona za zadanie",
+  "show": "none"
+ },
+ "c991ebf3d501f": {
+  "answers": [
+   "kolejnymi liczbami od 0 do 9 i wypisanie ich.",
+   "kolejnymi liczbami od -100 do 100 i wypisanie wartości ujemnych.",
+   "10 losowymi wartościami, a następnie wypisanie wartości ujemnych.",
+   "100 losowymi wartościami, a następnie wypisanie wartości dodatnich."
+  ],
+  "text": "Działaniem przedstawionego kodu PHP będzie wypełnienie tablicy",
+  "code": "$tab = array();\nfor($i = 0; $i < 10; $i++) {\n  $tab[$i] = rand(-100, 100);\n}\nforeach ($tab as $x) {\n  if ($x < 0) echo \"$x \";\n}",
+  "show": "none"
+ },
+ "c0d97f3fc12d7": {
+  "answers": [
+   "będzie równa 11 i zostanie wypisana w oknie popup.",
+   "będzie równa 10 i zostanie wypisana w dokumencie HTML.",
+   "będzie równa 11 i zostanie wypisana w konsoli przeglądarki internetowej.",
+   "będzie równa 10 i zostanie wypisana w głównym oknie przeglądarki internetowej."
+  ],
+  "text": "W języku JavaScript zapisano fragment kodu.",
+  "code": "<script>\n  var x = 10;\n  x++;\n  console.log(x);\n</script>",
+  "text2": "Po wykonaniu skryptu zmienna x",
+  "show": "none"
+ },
+ "c4566288599ed": {
+  "answers": [
+   "mysqli_exit()",
+   "mysqli_close()",
+   "mysqli_commit()",
+   "mysqli_rollback()"
+  ],
+  "show": "none"
+ },
+ "c6a9da335ecbf": {
+  "answers": [
+   "Nieprawidłowo zadeklarowano zmienne.",
+   "Przed klauzulą else nie powinno być średnika.",
+   "W klauzuli if występuje przypisanie zamiast porównania.",
+   "Instrukcje wewnątrz sekcji if oraz else powinny być zamienione miejscami."
+  ],
+  "text": "W ramce przedstawiono kod JavaScript z błędem logicznym. Program powinien wypisywać informację, czy liczby są sobie równe czy nie, lecz nie wykonuje tego. Wskaż odpowiedź, która dotyczy błędu.",
+  "code": "var x=5; var y=3;\nif (x=y)\n  document.getElementById(\"demo\").innerHTML = 'zmienne są równe';\nelse\n  document.getElementById(\"demo\").innerHTML = 'zmienne się różnią';",
+  "show": "none"
+ },
+ "c1f856f3bacdc": {
+  "answers": [
+   "10 15 20 25 30 35 40 45",
+   "10 15 20 25 30 35 40 45 50",
+   "0 5 10 15 20 25 30 35 40 45",
+   "0 5 10 15 20 25 30 35 40 45 50"
+  ],
+  "text": "W wyniku działania pętli zapisanej w języku PHP zostanie wypisany ciąg liczb:",
+  "code": "$liczba = 10;\nwhile ($liczba < 50) {\n  echo \"$liczba \";\n  $liczba = $liczba + 5;\n}",
+  "show": "none"
+ },
+ "c6997867c5404": {
+  "answers": [
+   "skorzystać z funkcji gradientu.",
+   "zastosować funkcję sumy z kołem.",
+   "zastosować funkcję wykluczenia z kołem.",
+   "skorzystać z funkcji wstaw / dopasuj tekst do ścieżki."
+  ],
+  "text": "W programie INKSCAPE / COREL aby uzyskać przedstawiony efekt napisu (tekst wygięty w łuk), należy",
+  "show": "figure",
+  "image": "/q/c6997867c5404-f.webp"
+ },
+ "cddf57acc3fc1": {
+  "text": "W języku HTML zapisano definicję tabeli. Który rysunek obrazuje efekt jej działania?",
+  "show": "answers"
+ },
+ "cc23e7b16484a": {
+  "text": "Zastosowanie definicji stylu CSS sprawi, że nagłówki drugiego stopnia będą zapisane",
+  "code": "h2 {\n  text-decoration: overline;\n  font-style: italic;\n  line-height: 60px;\n}",
+  "show": "none"
+ },
+ "ca04812a1c373": {
+  "text": "W języku CSS zapisano wspólne formatowanie dla pewnej grupy znaczników. Formatowanie takich znaczników w kodzie HTML nastąpi przez atrybut",
+  "code": ".format1 {  …  }",
+  "show": "none"
+ },
+ "caad0f62ace93": {
+  "text": "Przedstawiono efekt formatowania CSS (pierwsza litera akapitu jest duża i niebieska) oraz kod HTML. Jak należy zdefiniować styl, aby osiągnąć takie formatowanie?",
+  "code": "<p>\nGdybym miał jedenaście kapeluszy,<br />\npierwszy schowałbym w szafie, żeby się nie kurzył.\n</p>",
+  "show": "figure",
+  "image": "/q/caad0f62ace93-f.webp"
+ },
+ "c86b94f2c9ce1": {
+  "text": "Jeśli zmienna $x przechowuje dowolną liczbę naturalną dodatnią, przedstawiony kod źródłowy PHP ma za zadanie wyświetlić",
+  "code": "$licznik = 0;\nwhile ($licznik != $x)\n{\n  echo $licznik;\n  $licznik++;\n}",
+  "show": "none"
+ },
+ "c1e2de2f02fb5": {
+  "text": "W języku HTML zdefiniowano listę, która",
+  "code": "<ol>\n  <li>biały</li>\n  <li>czerwony\n  <ul>\n    <li>różowy</li>\n    <li>pomarańczowy</li>\n  </ul></li>\n  <li>niebieski</li>\n</ol>",
+  "show": "none"
+ },
+ "c350e609a256c": {
+  "text": "Jaką szerokość strony pozostawiono na jej treść, na podstawie przedstawionej definicji CSS?",
+  "code": "body {\n  border:  2px;\n  height:  600px;\n  width:   560px;  }",
+  "show": "none"
+ },
+ "c701724593e9b": {
+  "text": "Dla którego akapitu zastosowano przedstawioną właściwość stylu CSS?",
+  "show": "answers"
+ },
+ "cfcea520b9cf5": {
+  "show": "none"
+ },
+ "c5298329b1ca6": {
+  "answers": [
+   "SELECT imie, hobby FROM Osoby, Zainteresowania;",
+   "SELECT imie, hobby FROM Osoby, Zainteresowania WHERE Osoby.id = Zainteresowania.id;",
+   "SELECT imie, hobby FROM Osoby.Zainteresowania_id = Zainteresowania.id FROM Osoby, Zainteresowania;",
+   "SELECT imie, hobby FROM Osoby JOIN Zainteresowania ON Osoby.Zainteresowania_id = Zainteresowania.id;"
+  ],
+  "text": "Tabele Osoby (id, Zainteresowania_id FK, imie, nazwisko, wiek) i Zainteresowania (id, hobby) są połączone relacją jeden do wielu. Które zapytanie SQL należy zapisać, aby korzystając z tej relacji, prawidłowo wyświetlić imiona oraz odpowiadające im hobby?",
+  "show": "none"
+ },
+ "cd81d9613af88": {
+  "text": "Którą wartość będzie przechowywała zmienna a po wykonaniu przedstawionej sekwencji instrukcji języka PHP?",
+  "code": "$a = 1;\n$a++;\n$a += 10;\n--$a;",
+  "show": "none"
+ },
+ "c4572f1fc385c": {
+  "text": "Formularz, którego fragment przedstawiono, został obsłużony w skrypcie PHP. Wskaż prawidłowo zapisane pobranie wartości wprowadzonej do pola edycyjnego.",
+  "code": "<form method=\"post\">\n  Imię: <input type=\"text\" name=\"imie\">\n  ...",
+  "show": "none"
+ },
+ "ccfb1e0ce03ac": {
+  "text": "W języku PHP, aby połączyć się z bazą danych MySQL przy pomocy biblioteki mysqli, stosując zamieszczony zapis, w miejscu parametru 'c' należy zapisać",
+  "code": "$a = new mysqli('b', 'c', 'd', 'e')",
+  "show": "none"
+ },
+ "cfab8852b5900": {
+  "text": "Działaniem przedstawionego kodu PHP jest wypełnienie tablicy",
+  "code": "$tab = array();\nfor($i=0; $i<10; $i++)\n{\n  $tab[$i] = rand(-100, 100);\n}\nforeach($tab as $x)\n{\n  if($x < 0)\n    echo \"$x \";\n}",
+  "show": "none"
+ },
+ "c115e6d734621": {
+  "answers": [
+   "if ($liczba==10)\n  $liczba++;\nelse\n  $liczba = 0;",
+   "if ($liczba==10 or $liczba==20)\n  $liczba++;\nelse\n  $liczba = 0;",
+   "if ($liczba==10 or $liczba==20)\n  $liczba++;",
+   "if ($liczba==10 and $liczba==20)\n  $liczba++;\nelse\n  $liczba = 0;"
+  ],
+  "text": "Wskaż instrukcję równoważną do instrukcji switch zapisanej językiem PHP.",
+  "code": "switch ($liczba) {\n  case 10:\n  case 20: $liczba++;  break;\n  default: $liczba = 0;\n}",
+  "show": "none"
+ },
+ "c0c4f3a145063": {
+  "text": "Tabele: Klienci (id, imie, nazwisko, poziom) i Zgloszenia (id, Klienci_id FK, opis) są powiązane relacją jeden do wielu. Aby wybrać jedynie opis zgłoszenia oraz odpowiadające mu nazwisko klienta dla zgłoszenia numer 5, należy wydać polecenie",
+  "show": "none"
+ },
+ "c9b6307a3a28a": {
+  "text": "Do którego pola klasy Dane możliwy będzie dostęp z zewnątrz poprzez nazwę obiektu utworzonego jako instancja tej klasy?",
+  "code": "class Dane {\n  public $a;\n  private $b;\n  protected $c;\n}",
+  "show": "none"
+ },
+ "c327f6d1b5b55": {
+  "answers": [
+   "if(dzialanie == 1) wynik = a + b;\nelse if(dzialanie == 2) wynik = a - b;\nelse if(dzialanie == 3) wynik = a * b;\nelse wynik = a / b;",
+   "if(dzialanie == 1) wynik = a + b;\nelse if(dzialanie == 2) wynik = a - b;\nelse if(dzialanie == 3) wynik = a * b;\nelse if(dzialanie == 4) wynik = a / b;",
+   "if(dzialanie != 1) wynik = a + b;\nif(dzialanie != 2) wynik = a - b;\nif(dzialanie != 3) wynik = a * b;\nif(dzialanie != 4) wynik = a / b;",
+   "if(dzialanie = 1) wynik = a + b;\nelse if(dzialanie = 2) wynik = a - b;\nelse if(dzialanie = 3) wynik = a * b;\nelse if(dzialanie = 4) wynik = a / b;"
+  ],
+  "text": "Instrukcją równoważną funkcjonalnie do przedstawionej instrukcji JavaScript jest",
+  "code": "switch (dzialanie)  {\n  case 1: wynik = a + b; break;\n  case 2: wynik = a - b; break;\n  case 3: wynik = a * b; break;\n  case 4: wynik = a / b; break;\n}",
+  "show": "none"
+ },
+ "c2e0b415ddb6d": {
+  "text": "Jaki będzie efekt wykonania przedstawionych instrukcji JavaScript?",
+  "code": "var elementy = document.getElementsByClassName(\"styl1\");\n  for(var i = 0; i < elementy.length; i++)\n    elementy[i].style.fontWeight = \"bolder\";",
+  "show": "none"
+ },
+ "c1c24d56f6033": {
+  "text": "Po wykonaniu przedstawionego kodu JavaScript działającego na wcześniej zainicjalizowanej tablicy liczby w zmiennej wynik jest przechowywana suma",
+  "code": "var wynik = 0;\nfor (i = 0; i < 100; i++)\n  if (liczby[i] % 2 == 0)\n    wynik += liczby[i];",
+  "show": "none"
+ },
+ "c9d7c8751b5d9": {
+  "text": "Przedstawiona funkcja zapisana w języku PHP",
+  "code": "function dzialania(int $x, float $y) {\n  $z = $x + $y;\n  return $z;\n}",
+  "show": "none"
+ },
+ "ce6503a74f362": {
+  "text": "Przedstawiony błąd, wygenerowany podczas interpretacji kodu PHP, może być spowodowany",
+  "code": "Notice: Trying to access array offset on value of type null in C:\\xampp\\htdocs\\1\\biuro.php on line 38",
+  "show": "none"
+ },
+ "c80ca3e4e63f5": {
+  "text": "Tabela gory, której fragment przedstawiono, zawiera polskie pasma górskie wraz z ich szczytami. Wskaż kwerendę liczącą dla każdego pasma górskiego średnią wysokość jego szczytów.",
+  "code": "id  | pasmo             | nazwa                  | wysokosc\n134 | Góry Bystrzyckie  | (brak nazwy)           | 949\n137 | Góry Bystrzyckie  | Anielska Kopa          | 871\n74  | Beskid Żywiecki   | Babia Góra (Diablak)   | 1725\n41  | Beskid Śląski     | Barania Góra           | 1220\n145 | Góry Karczewskie  | Baraniec               | 723\n128 | Góry Bardzkie     | Bardzka Góra (Kalwaria)| 583\n297 | Tatry             | Beskid                 | 2012",
+  "show": "none"
+ },
+ "c38aed2fbaa89": {
+  "answers": [
+   "SELECT nazwisko, tytul FROM autorzy, artykuly WHERE ocena == 5;",
+   "SELECT nazwisko, tytul FROM autorzy JOIN artykuly ON autorzy.id = autorzy_id;",
+   "SELECT nazwisko, tytul FROM autorzy JOIN artykuly ON autorzy.id = artykuly.id;",
+   "SELECT nazwisko, tytul FROM autorzy JOIN artykuly ON autorzy.id = autorzy_id WHERE ocena = 5;"
+  ],
+  "text": "Z przedstawionych tabel Artykuly (id, Autorzy_id FK, tytul, ocena, rok) i Autorzy (id, imie, nazwisko, narodowosc) należy wybrać jedynie nazwiska autorów i tytuły ich artykułów, które zostały ocenione na 5. Kwerenda wybierająca te dane ma postać",
+  "show": "none"
+ },
+ "c1bcaa974a07a": {
+  "answers": [
+   "Blok 1: <header>\nBlok 2: <article>\nBlok 3: <footer>\nBlok 4: <footer>",
+   "Blok 1: <header>\nBlok 2: <header>\nBlok 3: <div>\nBlok 4: <footer>",
+   "Blok 1: <header>\nBlok 2: <main>\nBlok 3: <main>\nBlok 4: <footer>",
+   "Blok 1: <header>\nBlok 2: <main>\nBlok 3: <aside>\nBlok 4: <footer>"
+  ],
+  "text": "Który wykaz znaczników definiujących przedstawiony projekt witryny w sposób semantyczny (znaczeniowy) jest zgodny ze standardem HTML 5? Układ: Blok 1 na górze, pod nim Blok 2 (szeroki, po lewej) i Blok 3 (wąski, po prawej), na dole Blok 4.",
+  "show": "figure",
+  "image": "/q/c1bcaa974a07a-f.webp"
+ },
+ "c940433066415": {
+  "text": "Wskaż paragraf sformatowany przedstawionym stylem CSS.",
+  "show": "answers"
+ },
+ "c953cf287f813": {
+  "text": "W arkuszu CSS zapisano przedstawione style. Jeżeli hiperłącze zostanie wybrane, to po powrocie na stronę to hiperłącze będzie w kolorze",
+  "code": "a         { color: Brown; }\na:link    { color: Green; }\na:visited { color: Red;   }\na:hover   { color: Yellow;}",
+  "show": "none"
+ },
+ "cc219dc9042e3": {
+  "text": "Dla uzyskania przedstawionego efektu (płynne przejście od jasnego przez ciemny z powrotem do jasnego) w edytorze grafiki rastrowej zastosowano",
+  "show": "figure",
+  "image": "/q/cc219dc9042e3-f.webp"
+ },
+ "c4ee38d6ba335": {
+  "text": "W wyniku walidacji dokumentu HTML został wygenerowany błąd przedstawiony poniżej. Aby go wyeliminować należy",
+  "code": "Error: An img element must have an alt attribute, except under certain conditions.\nFrom line 7, column 1; to line 7, column 21\n<h1>…</h1>↩<img src=\"rys1.jpg\" >↩<p>…",
+  "show": "none"
+ },
+ "ca0860fda1e6c": {
+  "drop": true
+ },
+ "cccde27d96901": {
+  "text": "Którą wartość zwróci funkcja zapisana w języku C++, jeżeli jej parametrami są a = 4 oraz b = 3?",
+  "code": "long int fun1(int a, int b)\n{\n  long int wynik = 1;\n  for (int i = 0; i < b; i++)\n    wynik *= a;\n  return wynik;\n}",
+  "show": "none"
+ },
+ "ca1b518c5f894": {
+  "text": "Które wyrażenie należy wstawić w miejsce ??? w pętli zapisanej w języku C++, aby zostały wyświetlone jedynie elementy tablicy tab",
+  "code": "int tab[6];\nfor (int i = 0; ???; i++)\n  cout << tab[i];",
+  "show": "none"
+ },
+ "c08bae60811d0": {
+  "text": "Tabele: uslugi (id, kadra_id FK, rodzaj, nazwa, cena) oraz kadra (id, imie, nazwisko, stanowisko) są połączone relacją (kadra_id → kadra.id). Z relacji tej można wyczytać, że jest ona relacją",
+  "show": "none"
+ },
+ "c452593963207": {
+  "text": "Tabela odloty zawiera rekordy:",
+  "code": "id | samoloty_id | nr_rejsu | kierunek  | czas     | dzien      | status_lotu\n1  | 1 | FR1646 | Neapol    | 09:20:00 | 2019-07-25 | wystartowal\n2  | 1 | FR1327 | ALICANTE  | 09:10:00 | 2019-07-25 | Opozniony 10 min\n3  | 2 | W63425 | Warszawa  | 09:45:00 | 2019-07-25 | odprawa\n4  | 3 | LX5647 | Londyn LT | 10:03:00 | 2019-07-25 | odprawa\n5  | 3 | LX5673 | Malta     | 10:06:00 | 2019-07-25 | opoznienie 20 min\n6  | 3 | LX5622 | Wieden    | 10:13:00 | 2019-07-25 |\n7  | 4 | LH9821 | Berlin    | 10:16:00 | 2019-07-25 |\n8  | 4 | LH9888 | Hamburg   | 10:19:00 | 2019-07-25 |\n\nSELECT id FROM odloty WHERE samoloty_id > 2 AND kierunek LIKE '_a%';",
+  "text2": "Zastosowanie zapytania SQL spowoduje zwrócenie danych:",
+  "show": "none"
+ },
+ "c28c620080b16": {
+  "answers": [
+   "SELECT Zamowienia.id, nazwa FROM Zamowienia JOIN Firmy WHERE poziom = 4;",
+   "SELECT id, nazwa FROM Zamowienia JOIN Firmy ON Zamowienia.Firmy_id = Firmy.id WHERE poziom = 4;",
+   "SELECT Zamowienia.id, nazwa FROM Zamowienia JOIN Firmy ON Zamowienia.id = Firmy.id WHERE poziom = 4;",
+   "SELECT Zamowienia.id, nazwa FROM Zamowienia JOIN Firmy ON Zamowienia.Firmy_id = Firmy.id WHERE poziom = 4;"
+  ],
+  "text": "Tabele: Firmy (id, nazwa, poziom) i Zamowienia (id, Firmy_id FK, uwagi) są powiązane relacją jeden do wielu. Aby wybrać jedynie id zamówienia wraz z odpowiadającą mu nazwą firmy dla firm, których poziom jest równy 4, należy zastosować polecenie",
+  "show": "none"
+ },
+ "c7b29f7fd0e44": {
+  "text": "Pole autor w tabeli ksiazka jest",
+  "code": "CREATE TABLE ksiazka (\n  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,\n  tytul VARCHAR(200),\n  autor SMALLINT UNSIGNED NOT NULL,\n  CONSTRAINT `dane` FOREIGN KEY (autor) REFERENCES autorzy(id)\n);",
+  "show": "none"
+ },
+ "c240406614237": {
+  "text": "Na obrazie przedstawiono projekt układu bloków witryny: BLOK 1 na całą szerokość, pod nim obok siebie BLOK 2, BLOK 3 i BLOK 4, na dole BLOK 5 na całą szerokość. Zakładając, że bloki są realizowane za pomocą znaczników sekcji, a szerokość została zdefiniowana jedynie dla bloków 2, 3 i 4, ich formatowanie powinno zawierać właściwość",
+  "show": "none"
+ },
+ "c51b48a433e65": {
+  "answers": [
+   "<form method=\"skrypt.php\">\n  ...\n  <input value=\"WYŚLIJ\">\n</form>",
+   "<form method=\"skrypt.php\">\n  ...\n  <input type=\"reset\" value=\"WYŚLIJ\">\n</form>",
+   "<form action=\"skrypt.php\">\n  ...\n  <input type=\"WYŚLIJ\">\n</form>",
+   "<form action=\"skrypt.php\">\n  ...\n  <input type=\"submit\" value=\"WYŚLIJ\">\n</form>"
+  ],
+  "text": "Formularz wysyła dane do skryptu skrypt.php po wciśnięciu przycisku o treści \"WYŚLIJ\". Wskaż poprawną definicję formularza.",
+  "show": "none"
+ },
+ "cb4833a3cc2fb": {
+  "text": "Które formatowanie obramowania odpowiada stylowi border-style: dotted solid;?",
+  "show": "answers"
+ },
+ "cca1f0f43e4bb": {
+  "text": "Które pole edycyjne zostało sformatowane przedstawionym stylem zakładając, że pozostałe własności pola przyjmują wartości domyślne, a użytkownik wpisał imię Krzysztof w przeglądarce?",
+  "show": "answers"
+ },
+ "c451e7781b6a8": {
+  "text": "Przedstawiona transformacja obrazu rastrowego (kolorowe zdjęcie tygrysa zamienione na czarno-białe) jest możliwa dzięki funkcji",
+  "show": "figure",
+  "image": "/q/c451e7781b6a8-f.webp"
+ },
+ "c9a6df79a2023": {
+  "answers": [
+   "<?php date(\"Y-m-d\") + time(\"G:i:s\"); ?>",
+   "<?php echo date(\"Y-m-d G:i:s\"); ?>",
+   "<?php echo date(\"Ymd Gis\"); ?>",
+   "<?php date(\"Y-m-d G:i:s\"); ?>"
+  ],
+  "text": "Który ze skryptów wyświetla aktualną datę oraz czas, w formacie: 2019-09-23 10:58:16?",
+  "show": "none"
+ },
+ "c77ef41e39f2d": {
+  "text": "Efektem wielokrotnego wykonania kodu PHP jest",
+  "code": "if (!isset($_COOKIE[\"ciastko\"]))\n  $zm = 1;\nelse\n  $zm = intval($_COOKIE[\"ciastko\"]) + 1;\nsetcookie(\"ciastko\", $zm);",
+  "show": "none"
+ },
+ "c1c2f74a5ac5e": {
+  "answers": [
+   "$suma = 0;\nwhile ($x <= 20) {\n  $suma += $x;\n  $x++;\n}",
+   "$suma = 0;\n$x = 10;\nwhile ($x <= 20) {\n  $suma += $x;\n  $x++;\n}",
+   "$suma = 0;\n$x = 1;\nwhile ($x <= 10) {\n  $suma += $x;\n}",
+   "$suma = 0;\n$x = 10;\nwhile ($x <= 20) {\n  $suma = $x;\n  $x++;\n}"
+  ],
+  "text": "Wskaż kod równoważny do przedstawionego kodu zapisanego językiem PHP.",
+  "code": "$suma = 0;\nfor ($x = 10; $x <= 20; $x++) {\n  $suma += $x;\n}",
+  "show": "none"
+ },
+ "ce3a5b61f9d4c": {
+  "text": "Na listingu kodu JavaScript w wykropkowanej części definicji obiektu osoba należy wpisać kod, który prawidłowo obsłuży instrukcję osoba.j = \"PL\"; Który to będzie kod?",
+  "code": "var osoba = {\n  imie: \"Jan\",\n  jezyk: \"EN\",\n  set j(nazwa) {  ...  }\n};",
+  "show": "none"
+ },
+ "cd55426b6ba2b": {
+  "text": "Wskaż na czym polega błąd w kodzie zapisanym w języku C++.",
+  "code": "char str1[30] = 'Ala ma kota';\nprintf(\"%s\", str1);",
+  "show": "none"
+ },
+ "c97fb99ff2f61": {
+  "text": "W bazie danych MySQL utworzono tabelę. Aby jednoznacznie zdefiniować, że pole ID jest kluczem głównym, należy dopisać",
+  "code": "CREATE TABLE Osoby (\n  ID int NOT NULL,\n  nazwisko varchar(255) NOT NULL,\n  wiek int);",
+  "show": "none"
+ },
+ "cb030812e3b92": {
+  "text": "Tabele: Studenci (id, imie, nazwisko, grupa), Zapisy (idStudenta, idZajecia), Zajecia (id, nazwa, wykladowca) są powiązane relacją. Aby wybrać jedynie nazwiska studentów oraz odpowiadające im idZajecia dla studentów z grupy 15, należy wydać kwerendę",
+  "show": "none"
+ },
+ "c2365414c7c45": {
+  "text": "Na obrazie przedstawiono projekt układu bloków witryny: w pierwszym rzędzie BLOK 1 i BLOK 2, w drugim BLOK 3 (wąski) i BLOK 4 (szeroki), na dole BLOK 5 na całą szerokość. Zakładając, że bloki są realizowane za pomocą znaczników sekcji, ich formatowanie w CSS, oprócz ustawionych szerokości dla bloków: 1, 2, 3, 4 (blok 5 nie ma ustawionej szerokości), powinno zawierać właściwość",
+  "show": "none"
+ },
+ "c0382250ac800": {
+  "show": "figure",
+  "image": "/q/c0382250ac800-f.webp"
+ },
+ "c5e15a7fe12ba": {
+  "answers": [
+   "echo date('d.m.Y, H:i', $_COOKIE['c1']);\nsetcookie('c1', time());",
+   "if(isset($_COOKIE['c1']))\n  echo date($_COOKIE['c1']);\nsetcookie('c1', time(), time() + 30 * 86400);",
+   "echo date($_COOKIE['c1']);\nsetcookie('c1', time(), time() + 30 * 86400);",
+   "setcookie('c1', time(), time() + 30 * 86400);"
+  ],
+  "show": "none"
+ },
+ "c940ed0fe923f": {
+  "text": "Instrukcja break w przedstawionym kodzie PHP sprawi, że",
+  "code": "for($i = 1; $i <= 3; $i++) {\n  for($j = 1; $j <= 3; $j++) {\n    echo \"Iteracja: ($i, $j)\";\n    if($i == 2 and $j == 2)\n      break;\n  }\n}",
+  "show": "none"
+ },
+ "ccef9981909fe": {
+  "drop": true
+ },
+ "c58d91ae835dd": {
+  "drop": true
+ },
+ "c431d18b86746": {
+  "text": "Wskaż przycisk sformatowany przedstawionym stylem CSS.",
+  "show": "answers"
+ },
+ "cf5dec6381e80": {
+  "text": "Co można powiedzieć o stylu hiperłącza na podstawie opisu CSS, zakładając, że żadne inne style nie zostały zdefiniowane?",
+  "code": "a:link {\n  color: green;\n  text-decoration: none;\n}\na:hover {\n  color: red;\n  text-decoration: underline;\n}",
+  "show": "none"
+ },
+ "ceddb8e8cb23b": {
+  "text": "Do ilu pól edycyjnych zostanie przypisane tło Teal dla przedstawionego fragmentu dokumentu HTML i stylu CSS?",
+  "code": "<input type=\"text\">\n<input type=\"number\">\n<input type=\"email\">\n<input type=\"number\">\n<input>\n\ninput[type=\"number\"] {\n  background-color: Teal;\n}",
+  "show": "none"
+ },
+ "c3e2699bd8a6d": {
+  "drop": true
+ },
+ "c799989e37c1c": {
+  "text": "Aby zaprojektować kształt logo dla strony WWW sposobem przedstawionym na obrazie, należy zastosować funkcję",
+  "show": "figure",
+  "image": "/q/c799989e37c1c-f.webp"
+ },
+ "cc9044e97a960": {
+  "text": "Zastosowana w dokumencie HTML definicja multimediów sprawi, że na stronie",
+  "code": "<video controls>\n  <source src=\"video1.mp4\" type=\"video/mp4\">\n  <source src=\"video1.ogg\" type=\"video/ogg\">\n  Komunikat dotyczący video\n</video>",
+  "show": "none"
+ },
+ "c7f950b082a92": {
+  "text": "Po wykonaniu fragmentu kodu HTML i JavaScript na stronie będzie wyświetlony obraz z pliku",
+  "code": "<img id=\"obraz\" src=\"kol1.jpg\">\n<button id=\"przycisk\">Przycisk</button>\n\n<script>\n  document.getElementById(\"obraz\").src = \"kol2.jpg\";\n</script>",
+  "show": "none"
+ },
+ "cfe55d58e3c07": {
+  "answers": [
+   "while (i < 10)  {\n  document.write(i + ' ');\n  i += 10;\n}",
+   "while (i < 100)\n  document.write(i + ' ');",
+   "i = 0;\nwhile (i < 100)  {\n  document.write(i + ' ');\n  i += 10;\n}",
+   "i = 0;\nwhile (i < 10)  {\n  document.write(i + ' ');\n  i++;\n}"
+  ],
+  "text": "Instrukcją równoważną funkcjonalnie do przedstawionej instrukcji JavaScript jest",
+  "code": "for (i = 0; i < 100; i += 10)\n  document.write(i + ' ');",
+  "show": "none"
+ },
+ "ccbd7f322607f": {
+  "text": "Które wartości będą przechowywane w zmiennych po wykonaniu przedstawionej pętli języka PHP?",
+  "code": "$i= 20;   $a=0;\nwhile($i) {\n  $a += 2;\n  $i--;\n}",
+  "show": "none"
+ },
+ "c794920b4d901": {
+  "text": "Które wartości będą przechowywane w zmiennych po wykonaniu przedstawionego kodu języka PHP?",
+  "code": "$i= 20;   $a=0;\nwhile($i) {\n  $a += 2;\n  $i--;\n}",
+  "show": "none"
+ },
+ "c31f9720065b5": {
+  "text": "Podczas działania skryptu JavaScript został w konsoli wygenerowany błąd związany z działaniami na atrybucie elementu DOM. Z komunikatu wynika, że próbowano ustawić atrybut dla",
+  "code": "Uncaught TypeError: Cannot set property 'src' of null\n    at fun1 (index.html:43)\n    at HTMLImageElement.onclick (index.html:29)",
+  "show": "none"
+ },
+ "c3cc305ba80c1": {
+  "text": "Z przedstawionych tabel Klienci (id, Uslugi_id FK, imie, nazwisko) i Uslugi (id, nazwa, cena) należy wybrać jedynie imiona klientów oraz odpowiadające im nazwy usług, które są droższe niż 10 zł. Kwerenda wybierająca te dane ma postać",
+  "show": "none"
+ },
+ "c5d7a665ba76b": {
+  "answers": [
+   "<ul>\n  <li>Tytuł</li>\n  <li>Znaczniki języka HTML</li>\n  <li>Autor</li>\n  <li>Ewa Konieczna</li>\n  <li>Słowa kluczowe</li>\n  <li>witryny internetowe, HTML</li>\n</ul>",
+   "<dl>\n  <dt>Tytuł</dt>\n  <dd>Znaczniki języka HTML</dd>\n  <dt>Autor</dt>\n  <dd>Ewa Konieczna</dd>\n  <dt>Słowa kluczowe</dt>\n  <dd>witryny internetowe, HTML</dd>\n</dl>",
+   "<ol>\n  <li>Tytuł</li>\n  <dl>Znaczniki języka HTML</dl>\n  <li>Autor</li>\n  <dl>Ewa Konieczna</dl>\n  <li>Słowa kluczowe</li>\n  <dl>witryny internetowe, HTML</dl>\n</ol>",
+   "<table>\n  <tr>Tytuł</tr>\n  <td>Znaczniki języka HTML</td>\n  <tr>Autor</tr>\n  <td>Ewa Konieczna</td>\n  <tr>Słowa kluczowe</tr>\n  <td>witryny internetowe, HTML</td>\n</table>"
+  ],
+  "text": "Zakładając, że żadne style CSS nie zostały zdefiniowane, przedstawiony efekt (Tytuł, pod nim wcięte \"Znaczniki języka HTML\", Autor, wcięte \"Ewa Konieczna\", Słowa kluczowe, wcięte \"witryny internetowe, HTML\") zostanie uzyskany przy pomocy",
+  "show": "figure",
+  "image": "/q/c5d7a665ba76b-f.webp"
+ },
+ "cae2f49adcd8d": {
+  "answers": [
+   "img {\n  width: 100px;\n  border-radius:10%;\n}",
+   "img {\n  width: 100px;\n  border-radius:50px;\n}",
+   "img {\n  width: 100px;\n  border:50% green;\n}",
+   "img {\n  width: 100px;\n  shape:circle;\n}"
+  ],
+  "text": "Wskaż styl CSS, za pomocą którego uzyskano przedstawiony efekt (kwadratowe zdjęcie zostało wyświetlone jako koło).",
+  "show": "figure",
+  "image": "/q/cae2f49adcd8d-f.webp"
+ },
+ "cce82142a5250": {
+  "answers": [
+   "ul li:hover { background-color: DodgerBlue; }",
+   "ul li:active { background-color: DodgerBlue; }",
+   "ul li:nth-child(odd) { background-color: DodgerBlue; }",
+   "ul li:nth-child(even) { background-color: DodgerBlue; }"
+  ],
+  "text": "Wskaż styl CSS za pomocą którego został uzyskany przedstawiony efekt: na liście psy, koty, chomiki, świnki morskie, rybki tło mają tylko pozycje \"koty\" i \"świnki morskie\".",
+  "show": "figure",
+  "image": "/q/cce82142a5250-f.webp"
+ },
+ "cf44d0ef7491f": {
+  "text": "Wskaż pole edycyjne sformatowane przedstawionym stylem CSS",
+  "show": "answers"
+ },
+ "c041b9469e054": {
+  "text": "Wskaż blok sformatowany przedstawionym stylem CSS.",
+  "show": "answers"
+ },
+ "c4c7f1854b17e": {
+  "text": "Przedstawiona transformacja obrazu, w edytorze grafiki rastrowej, została wykonana przy pomocy filtru",
+  "show": "figure",
+  "image": "/q/c4c7f1854b17e-f.webp"
+ },
+ "cf502c473f175": {
+  "text": "Aby wyłączyć dźwięk dla wyświetlanego w przeglądarce filmu, do przedstawionej definicji znacznika <video> należy dodać atrybut",
+  "code": "<video>\n  <source src=\"film.mp4\" type=\"video/mp4\">\n</video>",
+  "show": "none"
+ },
+ "c878d2175aef5": {
+  "text": "W wyniku walidacji strony został wygenerowany błąd:",
+  "code": "Error: The only allowed value for the charset attribute for the meta element is utf-8.\nFrom line 5, column 1; to line 5, column 27\ne</title>↩<meta charset=\"iso-8859-2\">↩</hea",
+  "text2": "Oznacza on, że",
+  "show": "none"
+ },
+ "c593f213cd932": {
+  "text": "Przedstawiony serwis internetowy (W3C CSS Validation Service, walidacja przez URI) służy do walidacji",
+  "show": "none"
+ },
+ "c8b1aa88d50cf": {
+  "text": "Podczas działania skryptu JavaScript został wygenerowany błąd związany z działaniami na atrybucie elementu DOM. Z komunikatu wyświetlonego w konsoli wynika, że próbowano ustawić atrybut dla",
+  "code": "Uncaught TypeError: Cannot set property 'src' of null\n    at fun1 (index.html:43)\n    at HTMLImageElement.onclick (index.html:29)",
+  "show": "none"
+ },
+ "cb77b2c58b2be": {
+  "show": "figure",
+  "image": "/q/cb77b2c58b2be-f.webp"
+ },
+ "c1d4899afaf8c": {
+  "text": "Co będzie wynikiem po wywołaniu przedstawionego skryptu?",
+  "code": "<?php\nclass Owoc {\n  function __construct() {  echo \"test1\";  }\n  function __destruct()  {  echo \"test2\";  }\n}\n$gruszka = new Owoc();\n?>",
+  "show": "none"
+ },
+ "cf503464fd0e6": {
+  "text": "Jakiego rodzaju mechanizm kontroli bezpieczeństwa wykonywania aplikacji zawiera środowisko uruchomieniowe platformy .NET Framework?"
+ }
+}

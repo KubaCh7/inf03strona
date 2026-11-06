@@ -96,7 +96,19 @@ const qs = Q.map(([category, text, answers, explanation]) => {
 });
 // Pytania z opublikowanych arkuszy pisemnych CKE (scripts/extract_theory.py)
 const cke = JSON.parse(readFileSync('data/cke_questions.json', 'utf8'));
-for (const q of cke) qs.push({ id: q.id, category: q.category, text: q.text, answers: q.answers, correct: q.correct, explanation: q.explanation, source: 'cke', image: q.image, imageAnswers: q.imageAnswers, ocr: q.ocr, sources: q.sources });
+// Reczne poprawki (data/cke_fixes.json): tekst zamiast skanu, kod w osobnym bloku, poprawione odpowiedzi.
+// show: 'none' = bez obrazka, 'figure' = rysunek pod pytaniem, 'answers' = odpowiedzi tylko na obrazku.
+const fixes = JSON.parse(readFileSync('data/cke_fixes.json', 'utf8'));
+for (const q0 of cke) {
+  const f = fixes[q0.id] ?? {};
+  if (f.drop) continue;
+  const q = { ...q0, ...f };
+  if (f.answers && f.answers.length !== 4) throw new Error('Zle poprawki: ' + q.id);
+  const show = q.image ? (f.show ?? 'none') : 'none';
+  qs.push({ id: q.id, category: q.category, text: q.text, answers: q.answers, correct: q.correct, explanation: q.explanation, source: 'cke',
+    ...(show !== 'none' && { image: q.image }), ...(show === 'answers' && { imageAnswers: true }), ...(show === 'figure' && { figure: true }),
+    ...(q.code && { code: q.code }), ...(q.text2 && { text2: q.text2 }), ocr: q.ocr, sources: q.sources });
+}
 if (new Set(qs.map((q) => q.id)).size !== qs.length) throw new Error('Zduplikowane pytania');
 const fcs = FC.map(([deck, front, back, example], i) => ({ id: `${deck}-${i}`, deck, front, back, example: example ?? null }));
 writeFileSync('src/data/questions.json', JSON.stringify(qs));

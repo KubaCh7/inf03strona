@@ -83,7 +83,7 @@ export default function Sprint() {
         <div className="mt-4 grid gap-2">
           {q.answers.map((a, k) => (
             <button key={k} onClick={() => answer(k)} className="flex items-center gap-3 rounded-xl border border-line px-4 py-3 text-left hover:bg-surface-2">
-              <span className="mono grid h-7 w-7 shrink-0 place-items-center rounded-md border border-line text-sm">{'ABCD'[k]}</span><code className="font-[inherit]">{answerLabel(q, a, q.order[k])}</code>
+              <span className="mono grid h-7 w-7 shrink-0 place-items-center rounded-md border border-line text-sm">{'ABCD'[k]}</span><code className="whitespace-pre-wrap font-[inherit]">{answerLabel(q, a, q.order[k])}</code>
             </button>
           ))}
         </div>
