@@ -41,6 +41,8 @@ type State = {
   activeExam: ActiveExam | null;
   syncCode: string;
   lastSync: string | null;
+  account: { username: string; email: string | null; token: string } | null;
+  accountSaved: string | null;
 
   addXp: (n: number) => void;
   addMinute: () => void;
@@ -62,6 +64,8 @@ type State = {
   setActiveExam: (e: ActiveExam | null) => void;
   replaceAll: (data: Partial<State>) => void;
   setSync: (code: string, at: string | null) => void;
+  setAccount: (a: State['account']) => void;
+  setAccountSaved: (at: string | null) => void;
 };
 
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = (Math.random() * 16) | 0; return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16); }));
@@ -94,6 +98,8 @@ export const useStore = create<State>()(
       activeExam: null,
       syncCode: uuid(),
       lastSync: null,
+      account: null,
+      accountSaved: null,
 
       addXp: (n) => set((s) => {
         const d = today();
@@ -166,6 +172,8 @@ export const useStore = create<State>()(
       setActiveExam: (e) => set({ activeExam: e }),
       replaceAll: (data) => set(data),
       setSync: (code, at) => set({ syncCode: code, lastSync: at }),
+      setAccount: (a) => set({ account: a }),
+      setAccountSaved: (at) => set({ accountSaved: at }),
     }),
     { name: 'pracownia03', version: 1, merge: (persisted, current) => { const p = (persisted ?? {}) as Partial<State>; return { ...current, ...p, equipped: { ...DEFAULT_EQUIPPED, ...(p.equipped ?? {}), look: { ...DEFAULT_LOOK, ...(p.equipped?.look ?? {}) } } } as State; } },
   ),

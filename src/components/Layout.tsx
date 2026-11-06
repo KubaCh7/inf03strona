@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import {
-  BookOpen, CalendarCheck, Coins, ShoppingBag, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info,
+  BookOpen, CalendarCheck, Coins, ShoppingBag, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info, UserRound,
 } from 'lucide-react';
 import { levelInfo, liveStreak, useStore, weekMinutes } from '../lib/store';
 import { isDue } from '../lib/fsrs';
@@ -14,6 +14,7 @@ import ReturnToExam from './ReturnToExam';
 import Avatar from './Avatar';
 import { applyAppStyle } from '../lib/themes';
 import { celebrate } from '../lib/effects';
+import { useAccountSync } from '../lib/account';
 
 const NAV = [
   { group: 'Nauka', items: [
@@ -37,6 +38,9 @@ const NAV = [
     { to: '/postep', label: 'Postęp', icon: ChartLine },
     { to: '/ustawienia', label: 'Ustawienia', icon: Settings },
     { to: '/o-projekcie', label: 'O projekcie', icon: Info },
+  ] },
+  { group: 'Konto', items: [
+    { to: '/konto', label: 'Konto', icon: UserRound },
   ] },
 ];
 
@@ -168,6 +172,7 @@ export default function Layout() {
   useTheme();
   useRewardEffect();
   useStudyClock();
+  useAccountSync();
   const loc = useLocation();
   const [more, setMore] = useState(false);
   const xp = useStore((s) => s.xp);
