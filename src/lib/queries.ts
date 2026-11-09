@@ -131,6 +131,8 @@ export const levelOf = (d: number): Level => (d <= 2 ? 'latwe' : d <= 4 ? 'sredn
 export const isLevel = (x: string | null): x is Level => x === 'latwe' || x === 'srednie' || x === 'trudne';
 
 export type Mode = 'baza' | 'losowo';
+/** Czy trudnosc d pasuje do filtra: dokladna trudnosc 1–10 ma pierwszenstwo przed poziomem. */
+export const fitsDiff = (d: number, level: Level | null, exact?: number | null) => (exact ? d === exact : !level || levelOf(d) === level);
 type Done = Record<string, { ok: boolean } | undefined>;
 const key = (code: string, n: number) => `${code}#${n}`;
 
@@ -139,8 +141,8 @@ const key = (code: string, n: number) => `${code}#${n}`;
  * baza: dalej w tym samym arkuszu (nierozwiazane z poziomu), a gdy koniec – pierwsza z innego losowego arkusza.
  * losowo: losowa nierozwiazana z poziomu (inna niz biezaca).
  */
-export function pickNext(q: SheetQueries[], done: Done, o: { qual: string; level: Level | null; mode: Mode; current?: { code: string; n: number }; newSheet?: boolean }) {
-  const fits = (t: QueryTask) => !o.level || levelOf(t.difficulty) === o.level;
+export function pickNext(q: SheetQueries[], done: Done, o: { qual: string; level: Level | null; exact?: number | null; mode: Mode; current?: { code: string; n: number }; newSheet?: boolean }) {
+  const fits = (t: QueryTask) => fitsDiff(t.difficulty, o.level, o.exact);
   const sheets = q.filter((s) => !o.qual || s.code.startsWith(o.qual));
   const open = (s: SheetQueries) => s.tasks.filter((t) => fits(t) && !done[key(s.code, t.n)]?.ok);
   const rnd = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];

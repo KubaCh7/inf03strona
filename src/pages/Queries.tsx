@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router';
 import { ArrowLeft, ArrowRight, Check, Database, Layers, Play, Search, Shuffle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { SESSION_LABEL, useContent } from '../lib/data';
-import { useQueries, DIFF_LABEL, LEVELS, LEVEL_CLASS, LEVEL_LABEL, isLevel, levelOf, pickNext, type Level, type Mode } from '../lib/queries';
+import { useQueries, DIFF_LABEL, LEVELS, LEVEL_CLASS, LEVEL_LABEL, fitsDiff, isLevel, levelOf, pickNext, type Level, type Mode } from '../lib/queries';
 import { useStore } from '../lib/store';
 import { Loading, PageHeader, Progress } from '../components/ui';
 import QueryRunner from '../components/QueryRunner';
@@ -28,7 +28,10 @@ export default function Queries() {
   const [level, setLevelS] = useState<Level | null>(() => readPref<Level | null>('level', null));
   const [mode, setModeS] = useState<Mode>(() => readPref<Mode>('mode', 'baza'));
   const setQual = (v: string) => { setQualS(v); savePref('qual', v); };
-  const setLevel = (v: Level | null) => { setLevelS(v); savePref('level', v); };
+  const [exact, setExactS] = useState<number | null>(() => readPref<number | null>('exact', null));
+  // poziom i dokladna trudnosc wykluczaja sie: wybor jednego czysci drugi
+  const setLevel = (v: Level | null) => { setLevelS(v); savePref('level', v); setExactS(null); savePref('exact', null); };
+  const setExact = (v: number | null) => { setExactS(v); savePref('exact', v); if (v) { setLevelS(null); savePref('level', null); } };
   const setMode = (v: Mode) => { setModeS(v); savePref('mode', v); };
   const titles = useMemo(() => new Map((c?.sheets ?? []).map((s) => [s.code, s])), [c]);
   if (!q || !c) return <Loading />;
@@ -36,12 +39,14 @@ export default function Queries() {
   const all = inQual.flatMap((s) => s.tasks.map((t) => ({ s, t })));
   const solved = all.filter(({ s, t }) => done[`${s.code}#${t.n}`]?.ok).length;
   const count = (l: Level | null) => all.filter(({ t }) => !l || levelOf(t.difficulty) === l).length;
-  const list = inQual.filter((s) => (!level || s.tasks.some((t) => levelOf(t.difficulty) === level)) && (!term || `${s.code} ${titles.get(s.code)?.title ?? ''} ${s.db ?? ''}`.toLowerCase().includes(term.toLowerCase())))
+  const countExact = (d: number) => all.filter(({ t }) => t.difficulty === d).length;
+  const filtering = !!level || !!exact;
+  const list = inQual.filter((s) => (!filtering || s.tasks.some((t) => fitsDiff(t.difficulty, level, exact))) && (!term || `${s.code} ${titles.get(s.code)?.title ?? ''} ${s.db ?? ''}`.toLowerCase().includes(term.toLowerCase())))
     .sort((a, b) => { const A = titles.get(a.code), B = titles.get(b.code); return (B?.year ?? 0) * 10 + (B?.session === 'czerwiec' ? 1 : 0) - ((A?.year ?? 0) * 10 + (A?.session === 'czerwiec' ? 1 : 0)) || a.code.localeCompare(b.code); });
 
   const start = () => {
-    const x = pickNext(q, done, { qual, level, mode });
-    if (x) nav(`/kwerendy/${encodeURIComponent(x.code)}?n=${x.n}&tryb=${mode}${level ? `&poziom=${level}` : ''}${qual ? `&kw=${qual}` : '&kw='}`);
+    const x = pickNext(q, done, { qual, level, exact, mode });
+    if (x) nav(`/kwerendy/${encodeURIComponent(x.code)}?n=${x.n}&tryb=${mode}${level ? `&poziom=${level}` : ''}${exact ? `&trud=${exact}` : ''}${qual ? `&kw=${qual}` : '&kw='}`);
   };
 
   return (
@@ -56,7 +61,21 @@ export default function Queries() {
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs text-muted">Poziom:</span>
             {LEVELS.map((l) => <button key={l} className="chip" aria-pressed={level === l} onClick={() => setLevel(level === l ? null : l)}><span className={`h-2 w-2 rounded-full ${l === 'latwe' ? 'bg-success' : l === 'srednie' ? 'bg-js' : 'bg-danger'}`} />{LEVEL_LABEL[l]} <span className="mono text-xs opacity-70">{count(l)}</span></button>)}
-            <button className="chip" aria-pressed={!level} onClick={() => setLevel(null)}>Wszystkie <span className="mono text-xs opacity-70">{count(null)}</span></button>
+            <button className="chip" aria-pressed={!level && !exact} onClick={() => setLevel(null)}>Wszystkie <span className="mono text-xs opacity-70">{count(null)}</span></button>
+          </div>
+          <div className="flex w-full flex-wrap items-center gap-1">
+            <span className="text-xs text-muted">Dokładna trudność:</span>
+            {Array.from({ length: 10 }, (_, i) => i + 1).map((d) => {
+              const n = countExact(d);
+              return (
+                <button key={d} disabled={!n} title={n ? `${n} kwerend o trudności ${d}/10 (${DIFF_LABEL(d)})` : 'Brak kwerend o tej trudności'}
+                  className={`mono flex h-8 min-w-9 flex-col items-center justify-center rounded-lg border px-1.5 text-xs font-bold leading-none disabled:opacity-30 ${exact === d ? 'border-ink bg-ink text-bg' : 'border-line bg-surface hover:border-ink/40'}`}
+                  onClick={() => setExact(exact === d ? null : d)}>
+                  <span className="flex items-center gap-1"><span className={`h-1.5 w-1.5 rounded-full ${dot(d)}`} />{d}</span>
+                  <span className="mt-0.5 text-[9px] font-normal opacity-70">{n}</span>
+                </button>
+              );
+            })}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs text-muted">Tryb:</span>
@@ -65,7 +84,7 @@ export default function Queries() {
           </div>
           <button className="btn btn-primary ml-auto" onClick={start}><Play size={15} />Start</button>
         </div>
-        <p className="mt-2 text-xs text-muted">{mode === 'baza' ? 'Losujemy jedną bazę z arkusza i robisz po kolei wszystkie jej kwerendy' : 'Każda kolejna kwerenda jest z innej, losowej bazy'}{level ? ` (tylko ${SHORT[level]})` : ''}. Rozwiązane pomijamy.</p>
+        <p className="mt-2 text-xs text-muted">{mode === 'baza' ? 'Losujemy jedną bazę z arkusza i robisz po kolei wszystkie jej kwerendy' : 'Każda kolejna kwerenda jest z innej, losowej bazy'}{exact ? ` (tylko trudność ${exact}/10)` : level ? ` (tylko ${SHORT[level]})` : ''}. Rozwiązane pomijamy.</p>
       </div>
       <div className="card mb-4 flex flex-wrap items-center gap-2 p-3">
         <label className="flex min-w-56 flex-1 items-center gap-2"><Search size={16} className="text-muted" /><input className="input" placeholder="Szukaj: tytuł, kod, nazwa bazy" value={term} onChange={(e) => setTerm(e.target.value)} /></label>
@@ -90,7 +109,7 @@ export default function Queries() {
               </div>
               <div className="mt-3 flex gap-1.5">
                 {s.tasks.map((t) => (
-                  <span key={t.n} title={`Zapytanie ${t.n}: ${SHORT[levelOf(t.difficulty)]} (${DIFF_LABEL(t.difficulty)})`} className={`flex h-9 flex-1 flex-col items-center justify-center rounded-md leading-none ${done[`${s.code}#${t.n}`]?.ok ? 'bg-success text-white' : 'bg-surface-2'} ${level && levelOf(t.difficulty) !== level ? 'opacity-35' : ''}`}>
+                  <span key={t.n} title={`Zapytanie ${t.n}: ${SHORT[levelOf(t.difficulty)]} (${DIFF_LABEL(t.difficulty)})`} className={`flex h-9 flex-1 flex-col items-center justify-center rounded-md leading-none ${done[`${s.code}#${t.n}`]?.ok ? 'bg-success text-white' : 'bg-surface-2'} ${filtering && !fitsDiff(t.difficulty, level, exact) ? 'opacity-35' : ''}`}>
                     <span className="mono flex items-center gap-1 text-[11px] font-bold">{done[`${s.code}#${t.n}`]?.ok ? <Check size={11} /> : <span className={`h-1.5 w-1.5 rounded-full ${dot(t.difficulty)}`} />}{t.n}</span>
                     <span className="mt-0.5 text-[9px] opacity-80">{SHORT[levelOf(t.difficulty)]}</span>
                   </span>
@@ -120,10 +139,11 @@ export function QuerySheet() {
   const fromLadder = sp.get('z') === 'nauka';
   const mode = (sp.get('tryb') === 'baza' || sp.get('tryb') === 'losowo' ? sp.get('tryb') : null) as Mode | null;
   const lvl = sp.get('poziom'); const level = isLevel(lvl) ? lvl : null;
+  const exact = Number(sp.get('trud')) || null;
   const qual = sp.get('kw') ?? 'INF.03';
-  const keep = (n2: number, code2 = code) => `/kwerendy/${encodeURIComponent(code2)}?n=${n2}&tryb=${mode}${level ? `&poziom=${level}` : ''}&kw=${qual}`;
-  const trainNext = (newSheet = false) => { const x = pickNext(q, done, { qual, level, mode: mode!, current: { code, n: task.n }, newSheet }); if (x) nav(keep(x.n, x.code)); };
-  const sameSheetNext = mode === 'baza' ? sheet.tasks.find((t) => t.n > task.n && (!level || levelOf(t.difficulty) === level) && !done[`${code}#${t.n}`]?.ok) : undefined;
+  const keep = (n2: number, code2 = code) => `/kwerendy/${encodeURIComponent(code2)}?n=${n2}&tryb=${mode}${level ? `&poziom=${level}` : ''}${exact ? `&trud=${exact}` : ''}&kw=${qual}`;
+  const trainNext = (newSheet = false) => { const x = pickNext(q, done, { qual, level, exact, mode: mode!, current: { code, n: task.n }, newSheet }); if (x) nav(keep(x.n, x.code)); };
+  const sameSheetNext = mode === 'baza' ? sheet.tasks.find((t) => t.n > task.n && fitsDiff(t.difficulty, level, exact) && !done[`${code}#${t.n}`]?.ok) : undefined;
   // nastepne zadanie: w drabince SQL (wg trudnosci) albo kolejne w arkuszu
   const ladder = q.filter((s) => s.code.slice(0, 5) === code.slice(0, 5)).flatMap((s) => s.tasks.map((t) => ({ s, t }))).sort((a, b) => a.t.difficulty - b.t.difficulty || a.s.code.localeCompare(b.s.code) || a.t.n - b.t.n);
   const idx = ladder.findIndex((x) => x.s.code === code && x.t.n === task.n);
@@ -147,11 +167,11 @@ export function QuerySheet() {
         <div>
           <p className="mono text-sm text-muted">{sheet.code}</p>
           <h1 className="text-3xl font-extrabold">{meta?.title ?? sheet.code}</h1>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm"><LevelTag d={task.difficulty} /><span className="text-muted">Zapytanie {task.n} · trudność {task.difficulty}/10</span>{mode && <span className="chip !py-0.5 !text-[11px]">{mode === 'baza' ? 'Cała baza po kolei' : 'Losowo'}{level ? ` · ${SHORT[level]}` : ''}</span>}</p>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm"><LevelTag d={task.difficulty} /><span className="text-muted">Zapytanie {task.n} · trudność {task.difficulty}/10</span>{mode && <span className="chip !py-0.5 !text-[11px]">{mode === 'baza' ? 'Cała baza po kolei' : 'Losowo'}{exact ? ` · trudność ${exact}` : level ? ` · ${SHORT[level]}` : ''}</span>}</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {sheet.tasks.map((t) => (
-            <button key={t.n} className={`chip ${level && levelOf(t.difficulty) !== level ? 'opacity-40' : ''}`} aria-pressed={t.n === task.n} onClick={() => (mode ? nav(keep(t.n)) : setSp(fromLadder ? { n: String(t.n), z: 'nauka' } : { n: String(t.n) }))}>
+            <button key={t.n} className={`chip ${(level || exact) && !fitsDiff(t.difficulty, level, exact) ? 'opacity-40' : ''}`} aria-pressed={t.n === task.n} onClick={() => (mode ? nav(keep(t.n)) : setSp(fromLadder ? { n: String(t.n), z: 'nauka' } : { n: String(t.n) }))}>
               {done[`${sheet.code}#${t.n}`]?.ok && <Check size={13} className="text-success" />}Zapytanie {t.n} <span className={`h-1.5 w-1.5 rounded-full ${dot(t.difficulty)}`} />
             </button>
           ))}
