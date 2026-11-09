@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { ArrowLeft, ArrowRight, Check, Database, Layers, Play, Search, Shuffle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Database, LayoutGrid, Layers, List, Play, Search, Shuffle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { SESSION_LABEL, useContent } from '../lib/data';
-import { useQueries, DIFF_LABEL, LEVELS, LEVEL_CLASS, LEVEL_LABEL, fitsDiff, isLevel, levelOf, pickNext, type Level, type Mode } from '../lib/queries';
+import { useQueries, DIFF_LABEL, LEVELS, LEVEL_CLASS, LEVEL_LABEL, fitsDiff, flatList, isLevel, levelOf, pickNext, type Level, type Mode } from '../lib/queries';
 import { useStore } from '../lib/store';
 import { Loading, PageHeader, Progress } from '../components/ui';
 import QueryRunner from '../components/QueryRunner';
@@ -29,6 +29,8 @@ export default function Queries() {
   const [mode, setModeS] = useState<Mode>(() => readPref<Mode>('mode', 'baza'));
   const setQual = (v: string) => { setQualS(v); savePref('qual', v); };
   const [exact, setExactS] = useState<number | null>(() => readPref<number | null>('exact', null));
+  const [view, setViewS] = useState<'arkusze' | 'kwerendy'>(() => readPref<'arkusze' | 'kwerendy'>('view', 'arkusze'));
+  const setView = (v: 'arkusze' | 'kwerendy') => { setViewS(v); savePref('view', v); };
   // poziom i dokladna trudnosc wykluczaja sie: wybor jednego czysci drugi
   const setLevel = (v: Level | null) => { setLevelS(v); savePref('level', v); setExactS(null); savePref('exact', null); };
   const setExact = (v: number | null) => { setExactS(v); savePref('exact', v); if (v) { setLevelS(null); savePref('level', null); } };
@@ -39,6 +41,7 @@ export default function Queries() {
   const all = inQual.flatMap((s) => s.tasks.map((t) => ({ s, t })));
   const solved = all.filter(({ s, t }) => done[`${s.code}#${t.n}`]?.ok).length;
   const count = (l: Level | null) => all.filter(({ t }) => !l || levelOf(t.difficulty) === l).length;
+  const flat = flatList(q, qual, level, exact).filter(({ s, t }) => !term || `${s.code} ${titles.get(s.code)?.title ?? ''} ${s.db ?? ''} ${t.text}`.toLowerCase().includes(term.toLowerCase()));
   const countExact = (d: number) => all.filter(({ t }) => t.difficulty === d).length;
   const filtering = !!level || !!exact;
   const list = inQual.filter((s) => (!filtering || s.tasks.some((t) => fitsDiff(t.difficulty, level, exact))) && (!term || `${s.code} ${titles.get(s.code)?.title ?? ''} ${s.db ?? ''}`.toLowerCase().includes(term.toLowerCase())))
@@ -90,6 +93,31 @@ export default function Queries() {
         <label className="flex min-w-56 flex-1 items-center gap-2"><Search size={16} className="text-muted" /><input className="input" placeholder="Szukaj: tytuł, kod, nazwa bazy" value={term} onChange={(e) => setTerm(e.target.value)} /></label>
         {['INF.03', 'EE.09', 'E.14', ''].map((k) => <button key={k} className="chip" aria-pressed={qual === k} onClick={() => setQual(k)}>{k || 'Wszystkie'}</button>)}
       </div>
+      <div className="mb-4 flex gap-1 rounded-xl bg-surface-2 p-1">
+        <button className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-bold ${view === 'arkusze' ? 'bg-surface shadow-sm' : 'text-muted'}`} onClick={() => setView('arkusze')}><LayoutGrid size={15} />Arkusze <span className="mono text-xs font-normal opacity-70">{list.length}</span></button>
+        <button className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-bold ${view === 'kwerendy' ? 'bg-surface shadow-sm' : 'text-muted'}`} onClick={() => setView('kwerendy')}><List size={15} />Pojedyncze kwerendy <span className="mono text-xs font-normal opacity-70">{flat.length}</span></button>
+      </div>
+      {view === 'kwerendy' ? (
+        <div className="card divide-y divide-line">
+          <p className="px-4 py-2.5 text-sm text-muted"><b className="text-ink">{flat.length}</b> kwerend{exact ? ` o trudności ${exact}/10` : level ? ` (${SHORT[level]})` : ''}{qual ? ` z arkuszy ${qual}` : ''}. Od najtrudniejszych. Kliknij, żeby rozwiązać; „Następna z listy” prowadzi dalej po tej liście.</p>
+          {flat.length === 0 && <p className="p-6 text-center text-sm text-muted">Brak kwerend dla tych filtrów.</p>}
+          {flat.map(({ s, t }, i) => {
+            const ok = done[`${s.code}#${t.n}`]?.ok;
+            const sh = titles.get(s.code);
+            return (
+              <Link key={`${s.code}#${t.n}`} to={`/kwerendy/${encodeURIComponent(s.code)}?n=${t.n}&tryb=lista${level ? `&poziom=${level}` : ''}${exact ? `&trud=${exact}` : ''}&kw=${qual}`} className="flex items-start gap-3 px-4 py-3 hover:bg-surface-2">
+                <span className="mono w-7 shrink-0 pt-0.5 text-right text-xs text-muted">{i + 1}.</span>
+                <span className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md ${ok ? 'bg-success text-white' : 'border border-line'}`}>{ok ? <Check size={13} /> : <span className={`h-2 w-2 rounded-full ${dot(t.difficulty)}`} />}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm">{t.text.charAt(0).toUpperCase() + t.text.slice(1)}</span>
+                  <span className="mono mt-0.5 block truncate text-[11px] text-muted">{sh?.title ?? s.code} · {s.code} · zapytanie {t.n} · <Database size={10} className="inline" /> {s.db ?? 'baza'}</span>
+                </span>
+                <span className="flex shrink-0 flex-col items-end gap-1"><LevelTag d={t.difficulty} /><span className="mono text-[11px] text-muted">{t.difficulty}/10</span></span>
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
       <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
         {list.map((s) => {
           const sh = titles.get(s.code);
@@ -119,6 +147,7 @@ export default function Queries() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }
@@ -137,12 +166,15 @@ export function QuerySheet() {
   const task = sheet.tasks.find((t) => t.n === n) ?? sheet.tasks[0];
   const meta = c.sheets.find((s) => s.code === code);
   const fromLadder = sp.get('z') === 'nauka';
-  const mode = (sp.get('tryb') === 'baza' || sp.get('tryb') === 'losowo' ? sp.get('tryb') : null) as Mode | null;
+  const mode = (['baza', 'losowo', 'lista'].includes(sp.get('tryb') ?? '') ? sp.get('tryb') : null) as Mode | null;
   const lvl = sp.get('poziom'); const level = isLevel(lvl) ? lvl : null;
   const exact = Number(sp.get('trud')) || null;
   const qual = sp.get('kw') ?? 'INF.03';
   const keep = (n2: number, code2 = code) => `/kwerendy/${encodeURIComponent(code2)}?n=${n2}&tryb=${mode}${level ? `&poziom=${level}` : ''}${exact ? `&trud=${exact}` : ''}&kw=${qual}`;
-  const trainNext = (newSheet = false) => { const x = pickNext(q, done, { qual, level, exact, mode: mode!, current: { code, n: task.n }, newSheet }); if (x) nav(keep(x.n, x.code)); };
+  const listAll = mode === 'lista' ? flatList(q, qual, level, exact) : [];
+  const listIdx = listAll.findIndex((x) => x.s.code === code && x.t.n === task.n);
+  const listNext = mode === 'lista' ? listAll.slice(listIdx + 1).find((x) => !done[`${x.s.code}#${x.t.n}`]?.ok) ?? listAll[listIdx + 1] : undefined;
+  const trainNext = (newSheet = false) => { if (mode === 'lista') { if (listNext) nav(keep(listNext.t.n, listNext.s.code)); return; } const x = pickNext(q, done, { qual, level, exact, mode: mode!, current: { code, n: task.n }, newSheet }); if (x) nav(keep(x.n, x.code)); };
   const sameSheetNext = mode === 'baza' ? sheet.tasks.find((t) => t.n > task.n && fitsDiff(t.difficulty, level, exact) && !done[`${code}#${t.n}`]?.ok) : undefined;
   // nastepne zadanie: w drabince SQL (wg trudnosci) albo kolejne w arkuszu
   const ladder = q.filter((s) => s.code.slice(0, 5) === code.slice(0, 5)).flatMap((s) => s.tasks.map((t) => ({ s, t }))).sort((a, b) => a.t.difficulty - b.t.difficulty || a.s.code.localeCompare(b.s.code) || a.t.n - b.t.n);
@@ -167,7 +199,7 @@ export function QuerySheet() {
         <div>
           <p className="mono text-sm text-muted">{sheet.code}</p>
           <h1 className="text-3xl font-extrabold">{meta?.title ?? sheet.code}</h1>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm"><LevelTag d={task.difficulty} /><span className="text-muted">Zapytanie {task.n} · trudność {task.difficulty}/10</span>{mode && <span className="chip !py-0.5 !text-[11px]">{mode === 'baza' ? 'Cała baza po kolei' : 'Losowo'}{exact ? ` · trudność ${exact}` : level ? ` · ${SHORT[level]}` : ''}</span>}</p>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm"><LevelTag d={task.difficulty} /><span className="text-muted">Zapytanie {task.n} · trudność {task.difficulty}/10</span>{mode && <span className="chip !py-0.5 !text-[11px]">{mode === 'baza' ? 'Cała baza po kolei' : mode === 'lista' ? `Lista · ${listIdx + 1}/${listAll.length}` : 'Losowo'}{exact ? ` · trudność ${exact}` : level ? ` · ${SHORT[level]}` : ''}</span>}</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {sheet.tasks.map((t) => (
@@ -184,7 +216,7 @@ export function QuerySheet() {
           <button className="btn btn-ghost" onClick={() => nav(-1)}><ArrowLeft size={16} />Wróć</button>
           <span className="flex flex-wrap gap-2">
             {mode === 'baza' && <button className="btn btn-ghost" onClick={() => trainNext(true)}><Shuffle size={16} />Inna baza</button>}
-            <button className="btn btn-dark" onClick={() => trainNext(false)}>{mode === 'baza' ? (sameSheetNext ? `Zapytanie ${sameSheetNext.n}` : 'Następna baza') : 'Następna losowa'}<ArrowRight size={16} /></button>
+            {(mode !== 'lista' || listNext) && <button className="btn btn-dark" onClick={() => trainNext(false)}>{mode === 'baza' ? (sameSheetNext ? `Zapytanie ${sameSheetNext.n}` : 'Następna baza') : mode === 'lista' ? 'Następna z listy' : 'Następna losowa'}<ArrowRight size={16} /></button>}
           </span>
         </div>
       ) : (

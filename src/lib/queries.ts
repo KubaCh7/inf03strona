@@ -130,7 +130,13 @@ export const LEVEL_CLASS: Record<Level, string> = { latwe: 'bg-success-soft text
 export const levelOf = (d: number): Level => (d <= 2 ? 'latwe' : d <= 4 ? 'srednie' : 'trudne');
 export const isLevel = (x: string | null): x is Level => x === 'latwe' || x === 'srednie' || x === 'trudne';
 
-export type Mode = 'baza' | 'losowo';
+export type Mode = 'baza' | 'losowo' | 'lista';
+/** Plaska lista kwerend (zakladka „Pojedyncze kwerendy”): od najtrudniejszych, potem najnowsze arkusze. */
+export function flatList(q: SheetQueries[], qual: string, level: Level | null, exact: number | null) {
+  return q.filter((s) => !qual || s.code.startsWith(qual))
+    .flatMap((s) => s.tasks.filter((t) => fitsDiff(t.difficulty, level, exact)).map((t) => ({ s, t })))
+    .sort((a, b) => b.t.difficulty - a.t.difficulty || b.s.code.localeCompare(a.s.code) || a.t.n - b.t.n);
+}
 /** Czy trudnosc d pasuje do filtra: dokladna trudnosc 1–10 ma pierwszenstwo przed poziomem. */
 export const fitsDiff = (d: number, level: Level | null, exact?: number | null) => (exact ? d === exact : !level || levelOf(d) === level);
 type Done = Record<string, { ok: boolean } | undefined>;
