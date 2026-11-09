@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { Check, ChevronDown, ChevronRight, Database, Eye, KeyRound, Play, ShieldCheck, Table2, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Database, Eye, KeyRound, Lightbulb, Play, ShieldCheck, Table2, X } from 'lucide-react';
 import type { QueryResult } from '../lib/sql';
 import { run } from '../lib/sql';
+import { makeHints } from '../lib/hints';
 import { checkQuery, DIFF_LABEL, freshFromDump, getDump, getSolutions, KIND_LABEL, schemaOf, type CheckOutcome, type QueryTask, type Schema, type SheetQueries } from '../lib/queries';
 import { useStore } from '../lib/store';
 import { DifficultyBar, Loading } from './ui';
@@ -66,9 +67,10 @@ export default function QueryRunner({ sheet, task, onSolved }: { sheet: SheetQue
   const [check, setCheck] = useState<CheckOutcome | null>(null);
   const [solution, setSolution] = useState<string | null | undefined>(undefined);
   const [showSol, setShowSol] = useState(false);
+  const [hintN, setHintN] = useState(0);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { setSql(useStore.getState().queries[key]?.sql ?? ''); setOut(null); setCheck(null); setShowSol(false); setSolution(undefined); }, [key]);
+  useEffect(() => { setSql(useStore.getState().queries[key]?.sql ?? ''); setOut(null); setCheck(null); setShowSol(false); setSolution(undefined); setHintN(0); }, [key]);
   useEffect(() => {
     if (!sheet.dump) { setDump(''); setSchema([]); return; }
     let on = true;
@@ -93,6 +95,11 @@ export default function QueryRunner({ sheet, task, onSolved }: { sheet: SheetQue
     setCheck(r);
     setBusy(false);
     if (r.ok) { saveQuery(key, sql, true); onSolved?.(); }
+  }
+  const hints = useMemo(() => (solution === undefined ? null : makeHints(task.text, solution)), [solution, task.text]);
+  async function nextHint() {
+    if (solution === undefined) { const sols = await getSolutions(sheet.solutionPath); setSolution(sols[task.n] ?? null); }
+    setHintN((n) => n + 1);
   }
   async function reveal() {
     if (solution === undefined) { const sols = await getSolutions(sheet.solutionPath); setSolution(sols[task.n] ?? null); }
@@ -126,9 +133,24 @@ export default function QueryRunner({ sheet, task, onSolved }: { sheet: SheetQue
         <div className="flex flex-wrap gap-2">
           <button className="btn btn-ghost" onClick={exec} disabled={dump === null}><Play size={16} />Wykonaj</button>
           <button className="btn btn-primary" onClick={doCheck} disabled={dump === null || busy}><ShieldCheck size={16} />{busy ? 'Sprawdzam…' : 'Sprawdź'}</button>
-          <button className="btn btn-ghost ml-auto" onClick={reveal}><Eye size={16} />Pokaż rozwiązanie</button>
+          <button className="btn btn-ghost ml-auto" onClick={nextHint} disabled={!!hints && hintN >= hints.length}><Lightbulb size={16} />{hintN === 0 ? 'Podpowiedź' : hints && hintN >= hints.length ? 'Brak kolejnych podpowiedzi' : `Kolejna podpowiedź (${hintN + 1}/${hints?.length ?? '…'})`}</button>
+          <button className="btn btn-ghost" onClick={reveal}><Eye size={16} />Pokaż rozwiązanie</button>
         </div>
         <p className="text-xs text-muted">Podpowiedzi znają tabele i kolumny tej bazy (Ctrl+Spacja). Kwerenda działa na świeżej kopii bazy za każdym razem.</p>
+
+        {hintN > 0 && hints && (
+          <div className="card pop space-y-2 border-js/50 p-4">
+            <p className="eyebrow flex items-center gap-1.5"><Lightbulb size={13} className="text-js" />Podpowiedzi {Math.min(hintN, hints.length)}/{hints.length}</p>
+            <ol className="space-y-2">
+              {hints.slice(0, hintN).map((h, i) => (
+                <li key={i} className="flex gap-2 text-sm">
+                  <span className="mono grid h-5 w-5 shrink-0 place-items-center rounded-full bg-js/15 text-[11px] font-bold">{i + 1}</span>
+                  {h.includes('\n') ? <div className="min-w-0 flex-1"><p>{h.split('\n')[0]}</p><pre className="mono mt-1 overflow-x-auto whitespace-pre-wrap rounded-lg bg-surface-2 p-2 text-xs">{h.split('\n').slice(1).join('\n')}</pre></div> : <span>{h}</span>}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
 
         {showSol && (
           <div className="card pop p-4">
