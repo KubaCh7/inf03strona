@@ -2,7 +2,10 @@ import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { html, htmlLanguage } from '@codemirror/lang-html';
 import { css, cssLanguage } from '@codemirror/lang-css';
 import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
-import { sql, MySQL } from '@codemirror/lang-sql';
+import { sql, MySQL, SQLDialect } from '@codemirror/lang-sql';
+
+// MySQL, ale nazwy tabel/kolumn z wielkimi literami (Pacjent, idKlienta) podpowiadane BEZ backtickow
+const MySQLNoQuotes = SQLDialect.define({ ...MySQL.spec, caseInsensitiveIdentifiers: true });
 import { php, phpLanguage } from '@codemirror/lang-php';
 import { acceptCompletion, autocompletion, completionStatus, hasNextSnippetField, nextSnippetField, prevSnippetField } from '@codemirror/autocomplete';
 import { indentLess, indentMore } from '@codemirror/commands';
@@ -20,7 +23,17 @@ const cssEmmet = emmetSource('stylesheet');
 function langFor(file: string, schema?: Record<string, string[]>, autoClose = true): Extension[] {
   if (file.endsWith('.css')) return [css(), cssLanguage.data.of({ autocomplete: cssEmmet })];
   if (file.endsWith('.js')) return [javascript(), javascriptLanguage.data.of({ autocomplete: listSource(JS_COMPLETIONS) })];
-  if (file.endsWith('.sql') || file.endsWith('.txt')) return [sql({ dialect: MySQL, upperCaseKeywords: true, schema }), MySQL.language.data.of({ autocomplete: listSource(SQL_COMPLETIONS) })];
+  if (file.endsWith('.sql') || file.endsWith('.txt')) {
+    // kolumny z bazy podpowiadane takze bez prefiksu tabeli (np. idPac + Tab -> idPacjenta), bez backtickow
+    const cols = new Map<string, string[]>();
+    for (const [t, cs] of Object.entries(schema ?? {})) for (const c of cs) cols.set(c, [...(cols.get(c) ?? []), t]);
+    const colItems = [...cols].map(([label, ts]) => ({ label, type: 'property', detail: ts.join(', '), boost: -1 }));
+    return [
+      sql({ dialect: MySQLNoQuotes, upperCaseKeywords: true, schema }),
+      MySQLNoQuotes.language.data.of({ autocomplete: listSource(SQL_COMPLETIONS) }),
+      ...(colItems.length ? [MySQLNoQuotes.language.data.of({ autocomplete: listSource(colItems, /\w+$/) })] : []),
+    ];
+  }
   if (file.endsWith('.php')) return [
     php(), phpLanguage.data.of({ autocomplete: listSource(PHP_COMPLETIONS) }),
     htmlLanguage.data.of({ autocomplete: htmlEmmet }),
@@ -42,7 +55,8 @@ const tabKeys = [
     run: (v) => (completionStatus(v.state) === 'active' ? acceptCompletion(v) : hasNextSnippetField(v.state) ? nextSnippetField(v) : false),
     shift: prevSnippetField,
   }])),
-  Prec.lowest(keymap.of([{ key: 'Tab', run: indentMore, shift: indentLess }])),
+  // bez podpowiedzi: zaznaczenie -> wciecie linii, kursor -> odstep w miejscu kursora (jak VS Code)
+  Prec.lowest(keymap.of([{ key: 'Tab', run: (v) => (v.state.selection.ranges.some((r) => !r.empty) ? indentMore(v) : (v.dispatch(v.state.replaceSelection('  '), { scrollIntoView: true, userEvent: 'input' }), true)), shift: indentLess }])),
 ];
 
 // Staly obiekt: nowy obiekt przy kazdym renderze przebudowywal edytor i gubil pola snippetow

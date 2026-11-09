@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Expand, Shrink, AArrowDown, AArrowUp } from 'lucide-react';
 import type { Sheet } from '../lib/types';
 import PdfViewer, { preloadPdf } from './PdfViewer';
@@ -202,6 +202,20 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
     setImages((i) => ({ ...i, ...next }));
   }
 
+  // schemat wczytanej bazy do podpowiedzi w kwerendy.txt (tabele i kolumny, bez backtickow)
+  const schemaRef = useRef<{ key: string; val: Record<string, string[]> } | null>(null);
+  const dbSchema = useMemo(() => {
+    if (!db) return undefined;
+    const out: Record<string, string[]> = {};
+    try {
+      const t = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")[0];
+      for (const [name] of t?.values ?? []) out[String(name)] = (db.exec(`PRAGMA table_info("${String(name).replace(/"/g, '""')}")`)[0]?.values ?? []).map((c) => String(c[1]));
+    } catch { /* baza w trakcie zmian */ }
+    // ten sam obiekt, gdy tabele/kolumny sie nie zmienily (inaczej edytor przebudowywalby sie po kazdej kwerendzie)
+    const key = JSON.stringify(out);
+    if (schemaRef.current?.key !== key) schemaRef.current = { key, val: out };
+    return schemaRef.current.val;
+  }, [db, dbVer]);
   const isPhp = active.endsWith('.php');
   const isSql = /\.(sql|txt)$/i.test(active);
   const isDesktop = useIsDesktop();
@@ -237,7 +251,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
       <div className="min-h-0 flex-1">
         {active && files[active] !== undefined ? (
           <Suspense fallback={<Loading label="Ładuję edytor…" />}>
-            <Editor key={active} file={active} value={files[active] ?? ''} onChange={setFile} fontSize={fontSize} onRun={isSql ? (q) => void execSql(q) : undefined} />
+            <Editor key={active} file={active} value={files[active] ?? ''} onChange={setFile} fontSize={fontSize} schema={/\.(sql|txt)$/i.test(active) ? dbSchema : undefined} onRun={isSql ? (q) => void execSql(q) : undefined} />
           </Suspense>
         ) : (
           <div className="grid h-full place-items-center p-6 text-center">
