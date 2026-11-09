@@ -29,7 +29,9 @@ export default function Sheets() {
   const toggle = (k: string, v: string) => { const l = list(k); set(k, l.includes(v) ? l.filter((x) => x !== v) : [...l, v]); };
 
   const q = get('q').toLowerCase();
-  const quals = list('kw');
+  // domyslnie INF.03; kw=wszystkie pokazuje wszystkie kwalifikacje
+  const kwRaw = sp.get('kw');
+  const quals = kwRaw === null ? ['INF.03'] : kwRaw === 'wszystkie' ? [] : list('kw');
   const langs = list('jezyk');
   const years = list('rok');
   const tagGroups = list('tag');
@@ -65,7 +67,7 @@ export default function Sheets() {
 
   if (!c) return <Loading />;
   const done = c.sheets.filter((s) => progress[s.code]?.status === 'done').length;
-  const activeCount = [quals, langs, years, tagGroups, statuses].reduce((n, l) => n + l.length, 0) + (min > 1 || max < 10 ? 1 : 0);
+  const activeCount = [kwRaw === null ? [] : quals, langs, years, tagGroups, statuses].reduce((n, l) => n + l.length, 0) + (min > 1 || max < 10 ? 1 : 0);
 
   return (
     <div>
@@ -84,7 +86,8 @@ export default function Sheets() {
           <button className="btn btn-ghost" onClick={() => setShowFilters((x) => !x)}><SlidersHorizontal size={16} />Filtry{activeCount ? ` (${activeCount})` : ''}</button>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          {QUALS.map((k) => <button key={k} className="chip" aria-pressed={quals.includes(k)} onClick={() => toggle('kw', k)}>{k} <span className="mono text-xs opacity-70">{c.sheets.filter((s) => s.qualification === k).length}</span></button>)}
+          {QUALS.map((k) => <button key={k} className="chip" aria-pressed={quals.includes(k)} onClick={() => { const nx = quals.includes(k) ? quals.filter((x) => x !== k) : [...quals, k]; set('kw', nx.length ? nx : 'wszystkie'); }}>{k} <span className="mono text-xs opacity-70">{c.sheets.filter((s) => s.qualification === k).length}</span></button>)}
+          <button className="chip" aria-pressed={quals.length === 0} onClick={() => set('kw', 'wszystkie')}>Wszystkie <span className="mono text-xs opacity-70">{c.sheets.length}</span></button>
           <span className="mx-1 w-px self-stretch bg-line" />
           {LANGS.map((k) => <button key={k} className="chip" aria-pressed={langs.includes(k)} onClick={() => toggle('jezyk', k)}>{k}</button>)}
         </div>

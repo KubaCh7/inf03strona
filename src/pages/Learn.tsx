@@ -19,7 +19,7 @@ const LEVELS = [[1, 2, 'Rozgrzewka'], [3, 4, 'Łatwe'], [5, 6, 'Średnie'], [7, 
 
 type Item = { key: string; title: string; difficulty: number; done: boolean; to: string; sub?: string; section?: string };
 
-function useLadder(topic: Topic): Item[] | null {
+function useLadder(topic: Topic, allQuals = false): Item[] | null {
   const q = useQueries();
   const c = useContent();
   const practice = useStore((s) => s.practice);
@@ -27,7 +27,8 @@ function useLadder(topic: Topic): Item[] | null {
   if (topic === 'sql') {
     if (!q || !c) return null;
     const titles = new Map(c.sheets.map((s) => [s.code, s.title]));
-    return q.flatMap((s) => s.tasks.map((t) => ({
+    // domyslnie tylko kwerendy z arkuszy INF.03
+    return q.filter((s) => allQuals || s.code.startsWith('INF.03')).flatMap((s) => s.tasks.map((t) => ({
       key: `${s.code}#${t.n}`, title: t.text.charAt(0).toUpperCase() + t.text.slice(1), difficulty: t.difficulty, done: !!queries[`${s.code}#${t.n}`]?.ok,
       to: `/kwerendy/${encodeURIComponent(s.code)}?n=${t.n}&z=nauka`, sub: `${titles.get(s.code) ?? s.code} · zapytanie ${t.n}`,
     }))).sort((a, b) => a.difficulty - b.difficulty || a.key.localeCompare(b.key));
@@ -40,7 +41,7 @@ export default function Learn() {
   const practice = useStore((s) => s.practice);
   const queries = useStore((s) => s.queries);
   const count = (t: Topic) => {
-    if (t === 'sql') { const all = (q ?? []).flatMap((s) => s.tasks.map((x) => `${s.code}#${x.n}`)); return [all.filter((k) => queries[k]?.ok).length, all.length]; }
+    if (t === 'sql') { const all = (q ?? []).filter((s) => s.code.startsWith('INF.03')).flatMap((s) => s.tasks.map((x) => `${s.code}#${x.n}`)); return [all.filter((k) => queries[k]?.ok).length, all.length]; }
     const all = PRACTICE.filter((p) => p.topic === t); return [all.filter((p) => practice[p.id]?.ok).length, all.length];
   };
   return (
@@ -70,7 +71,8 @@ export function LearnTopic() {
   const { topic = 'html' } = useParams() as { topic: Topic };
   const nav = useNavigate();
   const info = TOPICS.find((t) => t.k === topic);
-  const items = useLadder(topic);
+  const [allQuals, setAllQuals] = useState(false);
+  const items = useLadder(topic, allQuals);
   const [showDone, setShowDone] = useState(true);
   if (!info) return <div className="card p-8">Nie ma takiego tematu.</div>;
   if (!items) return <Loading />;
@@ -80,7 +82,7 @@ export function LearnTopic() {
     <div className="max-w-4xl">
       <Link to="/nauka" className="mb-3 inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} />Nauka</Link>
       <PageHeader eyebrow={`${items.length} zadań · ${done} zrobionych`} title={<span style={{ color: info.color }}>{info.name}</span>} right={next && <button className="btn btn-primary" onClick={() => nav(next.to)}>Następne zadanie <ArrowRight size={16} /></button>}>
-        {topic === 'sql' ? 'Prawdziwe kwerendy z arkuszy CKE, posortowane od najprostszego SELECT-a do złączeń z grupowaniem.' : 'Podpunkty od podstaw do poziomu egzaminu. Każde zadanie ma wyjaśnienie i gotowe rozwiązanie, gdy utkniesz.'}
+        {topic === 'sql' ? <>Prawdziwe kwerendy z arkuszy {allQuals ? 'CKE (INF.03, EE.09, E.14)' : 'INF.03'}, posortowane od najprostszego SELECT-a do złączeń z grupowaniem. <button className="text-accent underline" onClick={() => setAllQuals((x) => !x)}>{allQuals ? 'Tylko INF.03' : 'Pokaż też EE.09 i E.14'}</button></> : 'Podpunkty od podstaw do poziomu egzaminu. Każde zadanie ma wyjaśnienie i gotowe rozwiązanie, gdy utkniesz.'}
       </PageHeader>
       <Progress value={done / items.length} className="mb-4" />
       {topic !== 'sql' && (

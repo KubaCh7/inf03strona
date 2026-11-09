@@ -15,7 +15,7 @@ async function fromSupabase(): Promise<Content> {
     import('../data/questions.json'),
     supabase.from('flashcards').select('id, deck, front, back, example').limit(5000),
   ]);
-  if (f.error) throw new Error('supabase');
+  if (f.error || !Array.isArray(f.data)) throw new Error('supabase');
   return {
     sheets: s.default as Sheet[],
     questions: q.default as Question[],

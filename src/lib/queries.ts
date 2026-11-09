@@ -121,3 +121,42 @@ export async function checkQuery(dump: string, task: QueryTask, userSql: string,
 
 export const DIFF_LABEL = (d: number) => (d <= 2 ? 'rozgrzewka' : d <= 4 ? 'łatwe' : d <= 6 ? 'średnie' : d <= 8 ? 'trudne' : 'bardzo trudne');
 export const KIND_LABEL: Record<QueryTask['kind'], string> = { select: 'SELECT', modify: 'zmiana danych', user: 'użytkownik', grant: 'uprawnienia' };
+
+// ---- Poziomy trudnosci kwerend (rowny podzial INF.03: 1–2 / 3–4 / 5+) ----
+export type Level = 'latwe' | 'srednie' | 'trudne';
+export const LEVELS: Level[] = ['latwe', 'srednie', 'trudne'];
+export const LEVEL_LABEL: Record<Level, string> = { latwe: 'Łatwe', srednie: 'Średnie', trudne: 'Trudne' };
+export const LEVEL_CLASS: Record<Level, string> = { latwe: 'bg-success-soft text-success', srednie: 'bg-js/15 text-[#A16207] dark:text-js', trudne: 'bg-danger-soft text-danger' };
+export const levelOf = (d: number): Level => (d <= 2 ? 'latwe' : d <= 4 ? 'srednie' : 'trudne');
+export const isLevel = (x: string | null): x is Level => x === 'latwe' || x === 'srednie' || x === 'trudne';
+
+export type Mode = 'baza' | 'losowo';
+type Done = Record<string, { ok: boolean } | undefined>;
+const key = (code: string, n: number) => `${code}#${n}`;
+
+/**
+ * Nastepna kwerenda do treningu.
+ * baza: dalej w tym samym arkuszu (nierozwiazane z poziomu), a gdy koniec – pierwsza z innego losowego arkusza.
+ * losowo: losowa nierozwiazana z poziomu (inna niz biezaca).
+ */
+export function pickNext(q: SheetQueries[], done: Done, o: { qual: string; level: Level | null; mode: Mode; current?: { code: string; n: number }; newSheet?: boolean }) {
+  const fits = (t: QueryTask) => !o.level || levelOf(t.difficulty) === o.level;
+  const sheets = q.filter((s) => !o.qual || s.code.startsWith(o.qual));
+  const open = (s: SheetQueries) => s.tasks.filter((t) => fits(t) && !done[key(s.code, t.n)]?.ok);
+  const rnd = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
+  if (o.mode === 'baza') {
+    if (o.current && !o.newSheet) {
+      const same = q.find((s) => s.code === o.current!.code);
+      const nxt = same && open(same).find((t) => t.n > o.current!.n);
+      if (nxt) return { code: same!.code, n: nxt.n };
+    }
+    const cand = sheets.filter((s) => s.code !== o.current?.code && open(s).length);
+    const s = rnd(cand.length ? cand : sheets.filter((x) => x.tasks.some(fits)));
+    if (!s) return null;
+    const t = open(s)[0] ?? s.tasks.find(fits);
+    return t ? { code: s.code, n: t.n } : null;
+  }
+  let pool = sheets.flatMap((s) => open(s).map((t) => ({ code: s.code, n: t.n }))).filter((x) => !(o.current && x.code === o.current.code && x.n === o.current.n));
+  if (!pool.length) pool = sheets.flatMap((s) => s.tasks.filter(fits).map((t) => ({ code: s.code, n: t.n })));
+  return rnd(pool) ?? null;
+}

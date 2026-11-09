@@ -21,7 +21,8 @@ export default function CheckerPage() {
         <label className="eyebrow mb-2 block" htmlFor="sheet-sel">Arkusz</label>
         <select id="sheet-sel" className="input" value={code} onChange={(e) => setSp({ code: e.target.value })}>
           <option value="">Wybierz…</option>
-          {c.sheets.map((s) => <option key={s.code} value={s.code}>{s.code} · {s.title}</option>)}
+          <optgroup label="INF.03">{c.sheets.filter((s) => s.qualification === 'INF.03').map((s) => <option key={s.code} value={s.code}>{s.code} · {s.title}</option>)}</optgroup>
+          <optgroup label="Starsze: EE.09 i E.14">{c.sheets.filter((s) => s.qualification !== 'INF.03').map((s) => <option key={s.code} value={s.code}>{s.code} · {s.title}</option>)}</optgroup>
         </select>
         {sheet && <p className="mt-2 text-sm"><Link className="text-accent underline" to={`/arkusze/${encodeURIComponent(sheet.code)}`}>Otwórz arkusz</Link> · <Link className="text-accent underline" to={`/warsztat/${encodeURIComponent(sheet.code)}`}>Warsztat</Link></p>}
       </div>
