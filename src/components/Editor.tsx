@@ -10,6 +10,7 @@ import { php, phpLanguage } from '@codemirror/lang-php';
 import { acceptCompletion, autocompletion, completionStatus, hasNextSnippetField, nextSnippetField, prevSnippetField } from '@codemirror/autocomplete';
 import { indentLess, indentMore } from '@codemirror/commands';
 import { vimExtensions } from '../lib/vimMode';
+import { htmlAttrBehaviour } from '../lib/htmlAttrs';
 import { emmetSource } from '../lib/emmet';
 import { editorTheme } from '../lib/themes';
 import { useStore } from '../lib/store';
@@ -35,12 +36,13 @@ function langFor(file: string, schema?: Record<string, string[]>, autoClose = tr
     ];
   }
   if (file.endsWith('.php')) return [
-    php(), phpLanguage.data.of({ autocomplete: listSource(PHP_COMPLETIONS) }),
+    php(), phpLanguage.data.of({ autocomplete: listSource(PHP_COMPLETIONS) }), htmlAttrBehaviour,
     htmlLanguage.data.of({ autocomplete: htmlEmmet }),
     htmlLanguage.data.of({ autocomplete: listSource(PHP_COMPLETIONS.filter((c) => c.label === '<?php')) }),
   ];
   return [
     html({ autoCloseTags: autoClose }),
+    htmlAttrBehaviour,
     htmlLanguage.data.of({ autocomplete: htmlEmmet }),
     // JS wewnatrz <script> i CSS wewnatrz <style>
     javascriptLanguage.data.of({ autocomplete: listSource(JS_COMPLETIONS) }),
