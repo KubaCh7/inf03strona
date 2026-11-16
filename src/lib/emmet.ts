@@ -18,7 +18,9 @@ const names = (kind: 'markup' | 'stylesheet') => {
 function applyAbbr(kind: 'markup' | 'stylesheet', abbr: string) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
     let out: string;
-    try { out = expand(abbr, kind === 'markup' ? MARKUP : STYLE); } catch { out = abbr; }
+    // pelna nazwa wlasciwosci CSS (border-radius) to nie skrot: Emmet zrobilby z niej "border: radius;"
+    if (kind === 'stylesheet' && /^-?[a-z]+(-[a-z]+)+$/.test(abbr)) out = `${abbr}: \${0};`;
+    else try { out = expand(abbr, kind === 'markup' ? MARKUP : STYLE); } catch { out = abbr; }
     // jak w VS Code: w szablonie strony nie skaczemy po wartosciach meta viewport
     out = out.replace(/\$\{\d+:(device-width|1\.0|IE=edge)\}/g, '$1');
     // snippet CodeMirror nie lubi samotnych { } w tekscie
