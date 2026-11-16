@@ -47,6 +47,8 @@ type State = {
   lastSync: string | null;
   account: { username: string; email: string | null; token: string } | null;
   accountSaved: string | null;
+  claimedGifts: string[];
+  isAdmin: boolean;
 
   addXp: (n: number) => void;
   addMinute: () => void;
@@ -71,11 +73,13 @@ type State = {
   setSync: (code: string, at: string | null) => void;
   setAccount: (a: State['account']) => void;
   setAccountSaved: (at: string | null) => void;
+  receiveGift: (g: { id: string; coins: number; xp: number; item: string | null }) => void;
+  setIsAdmin: (v: boolean) => void;
 };
 
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = (Math.random() * 16) | 0; return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16); }));
 
-export const PERSISTED_KEYS = ['xp', 'streak', 'activity', 'qstats', 'tests', 'sheets', 'lessons', 'queries', 'practice', 'coins', 'coinsEarned', 'owned', 'equipped', 'skipped', 'cards', 'newCardsDay', 'workspaces', 'settings', 'sprintBest', 'dailyQuestion'] as const;
+export const PERSISTED_KEYS = ['xp', 'streak', 'activity', 'qstats', 'tests', 'sheets', 'lessons', 'queries', 'practice', 'coins', 'coinsEarned', 'owned', 'equipped', 'skipped', 'cards', 'newCardsDay', 'workspaces', 'settings', 'sprintBest', 'dailyQuestion', 'claimedGifts'] as const;
 
 export const useStore = create<State>()(
   persist(
@@ -105,6 +109,8 @@ export const useStore = create<State>()(
       lastSync: null,
       account: null,
       accountSaved: null,
+      claimedGifts: [],
+      isAdmin: false,
 
       addXp: (n) => set((s) => {
         const d = today();
@@ -180,6 +186,18 @@ export const useStore = create<State>()(
       setSync: (code, at) => set({ syncCode: code, lastSync: at }),
       setAccount: (a) => set({ account: a }),
       setAccountSaved: (at) => set({ accountSaved: at }),
+      // prezent od admina: monety, XP (bez dodatkowych monet za XP) i przedmiot ze sklepu; kazdy prezent tylko raz
+      receiveGift: (g) => set((s) => {
+        if (s.claimedGifts.includes(g.id)) return {};
+        const coins = Math.max(0, s.coins + g.coins);
+        return {
+          claimedGifts: [...s.claimedGifts, g.id].slice(-500),
+          coins, coinsEarned: s.coinsEarned + Math.max(0, g.coins),
+          xp: Math.max(0, s.xp + g.xp),
+          owned: g.item && !s.owned.includes(g.item) ? [...s.owned, g.item] : s.owned,
+        };
+      }),
+      setIsAdmin: (v) => set({ isAdmin: v }),
     }),
     { name: 'pracownia03', version: 1, merge: (persisted, current) => { const p = (persisted ?? {}) as Partial<State>; return { ...current, ...p, equipped: { ...DEFAULT_EQUIPPED, ...(p.equipped ?? {}), look: { ...DEFAULT_LOOK, ...(p.equipped?.look ?? {}) } } } as State; } },
   ),

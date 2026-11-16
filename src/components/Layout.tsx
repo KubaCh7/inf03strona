@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import {
-  BookOpen, CalendarCheck, Coins, ShoppingBag, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info, UserRound, Trophy,
+  BookOpen, CalendarCheck, Coins, ShoppingBag, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info, UserRound, Trophy, Crown,
 } from 'lucide-react';
 import { levelInfo, liveStreak, useStore, weekMinutes } from '../lib/store';
 import { isDue } from '../lib/fsrs';
@@ -15,6 +15,8 @@ import Avatar from './Avatar';
 import { applyAppStyle } from '../lib/themes';
 import { celebrate } from '../lib/effects';
 import { useAccountSync } from '../lib/account';
+import { useGifts } from '../lib/gifts';
+import GiftModal from './GiftModal';
 
 const NAV = [
   { group: 'Nauka', items: [
@@ -42,6 +44,7 @@ const NAV = [
   ] },
   { group: 'Konto', items: [
     { to: '/konto', label: 'Konto', icon: UserRound },
+    { to: '/admin', label: 'Panel admina', icon: Crown, admin: true },
   ] },
 ];
 
@@ -174,6 +177,9 @@ export default function Layout() {
   useRewardEffect();
   useStudyClock();
   useAccountSync();
+  const gifts = useGifts();
+  const isAdmin = useStore((s) => s.isAdmin);
+  const nav = NAV.map((g) => ({ ...g, items: g.items.filter((i) => !('admin' in i) || isAdmin) }));
   const loc = useLocation();
   const [more, setMore] = useState(false);
   const xp = useStore((s) => s.xp);
@@ -194,7 +200,7 @@ export default function Layout() {
       <aside className={`fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-surface/85 px-3 py-5 backdrop-blur ${focus ? '' : 'md:flex'}`}>
         <NavLink to="/" className="mb-6 px-2"><Logo /></NavLink>
         <nav className="flex-1 space-y-5 overflow-y-auto">
-          {NAV.map((g) => (
+          {nav.map((g) => (
             <div key={g.group}>
               <p className="eyebrow mb-1.5 px-3">{g.group}</p>
               <div className="space-y-0.5">{g.items.map((i) => <SideItem key={i.to} {...i} />)}</div>
@@ -241,13 +247,14 @@ export default function Layout() {
       </nav>
 
       <ReturnToExam />
+      {gifts.gifts.length > 0 && <GiftModal gifts={gifts.gifts} onClose={gifts.close} />}
       {tour.open && !more && <Tour onClose={tour.close} />}
       {more && (
         <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
           <button className="absolute inset-0 bg-black/40" aria-label="Zamknij" onClick={() => setMore(false)} />
           <div className="pop absolute inset-x-0 bottom-0 max-h-[80dvh] overflow-y-auto rounded-t-2xl border-t border-line bg-surface p-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)' }}>
             <div className="mb-3 flex items-center justify-between"><p className="display text-lg font-bold">Więcej</p><button onClick={() => setMore(false)} className="btn btn-ghost px-2 py-1" aria-label="Zamknij"><X size={18} /></button></div>
-            {NAV.map((g) => (
+            {nav.map((g) => (
               <div key={g.group} className="mb-3">
                 <p className="eyebrow mb-1 px-1">{g.group}</p>
                 <div className="grid grid-cols-2 gap-1.5">{g.items.map((i) => <SideItem key={i.to} {...i} />)}</div>
