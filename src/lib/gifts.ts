@@ -23,7 +23,7 @@ export function useGifts() {
     };
     // z kontem: chwila na wczytanie postepu z konta (tam sa juz odebrane prezenty), zeby nie odebrac drugi raz
     const first = setTimeout(check, token ? 4000 : 1500);
-    const every = setInterval(check, 3 * 60 * 1000);
+    const every = setInterval(check, 60 * 1000);
     const onVis = () => { if (document.visibilityState === 'visible') void check(); };
     document.addEventListener('visibilitychange', onVis);
     return () => { stop = true; clearTimeout(first); clearInterval(every); document.removeEventListener('visibilitychange', onVis); };

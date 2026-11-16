@@ -10,6 +10,7 @@ import { php, phpLanguage } from '@codemirror/lang-php';
 import { acceptCompletion, autocompletion, completionStatus, hasNextSnippetField, nextSnippetField, prevSnippetField } from '@codemirror/autocomplete';
 import { indentLess, indentMore } from '@codemirror/commands';
 import { vimExtensions } from '../lib/vimMode';
+import { canFormat, formatCode } from '../lib/format';
 import { htmlAttrBehaviour } from '../lib/htmlAttrs';
 import { emmetSource } from '../lib/emmet';
 import { editorTheme } from '../lib/themes';
@@ -86,6 +87,36 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema, o
   const viewRef = useRef<EditorView | null>(null);
   const runRef = useRef(onRun);
   runRef.current = onRun;
+  const [toast, setToast] = useState<{ ok: boolean; text: string } | null>(null);
+  const toastT = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const say = (ok: boolean, text: string) => { setToast({ ok, text }); if (toastT.current) clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), ok ? 1800 : 5000); };
+  const fileRef = useRef(file);
+  fileRef.current = file;
+  /** Ctrl+S / :w – sformatuj plik (jak Format on Save w VS Code). Zapis i tak jest automatyczny. */
+  const save = useCallback(async () => {
+    const v = viewRef.current;
+    if (!v) return;
+    const f = fileRef.current;
+    if (!canFormat(f)) { say(true, 'Zapisano'); return; }
+    const before = v.state.doc.toString();
+    const r = await formatCode(f, before);
+    if ('error' in r) { say(false, `Zapisano, ale nie sformatowano (błąd składni): ${r.error}`); return; }
+    if (v.state.doc.toString() !== before) return; // ktos pisal w trakcie: nie nadpisuj
+    if (r.text === before) { say(true, 'Zapisano (już sformatowane)'); return; }
+    // kursor w tej samej linii co przed formatowaniem
+    const head = v.state.selection.main.head;
+    const line = v.state.doc.lineAt(head).number;
+    v.dispatch({ changes: { from: 0, to: before.length, insert: r.text }, userEvent: 'format' });
+    const ln = Math.min(line, v.state.doc.lines);
+    v.dispatch({ selection: { anchor: v.state.doc.line(ln).to }, scrollIntoView: true });
+    say(true, 'Zapisano i sformatowano');
+  }, []);
+  useEffect(() => {
+    const el = viewRef.current?.dom;
+    const h = () => void save();
+    el?.addEventListener('p03-save', h);
+    return () => el?.removeEventListener('p03-save', h);
+  });
   const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
   useEffect(() => {
     const o = new MutationObserver(() => setDark(document.documentElement.classList.contains('dark')));
@@ -110,6 +141,7 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema, o
     ...(vimOn ? [] : [EditorView.lineWrapping]),
     // Ctrl+Enter: wykonaj kwerende pod kursorem (pliki .sql/.txt)
     Prec.highest(keymap.of([
+      { key: 'Mod-s', preventDefault: true, run: (v) => { v.dom.dispatchEvent(new CustomEvent('p03-save', { bubbles: true })); return true; } },
       { key: 'Mod-Enter', run: (v) => { if (!runRef.current) return false; runRef.current(statementAt(v), false); return true; } },
       { key: 'Mod-Shift-Enter', run: (v) => { if (!runRef.current) return false; runRef.current(v.state.doc.toString(), true); return true; } },
     ])),
@@ -125,6 +157,7 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema, o
           <span className="ml-1 hidden text-[11px] text-muted xl:inline">Ctrl+Enter</span>
         </div>
       )}
+      {toast && <div className={`pointer-events-none absolute bottom-2 right-2 z-20 max-w-[80%] rounded-lg px-3 py-1.5 text-xs font-bold shadow-lg ${toast.ok ? 'bg-success text-white' : 'bg-danger text-white'}`}>{toast.text}</div>}
       <CodeMirror onCreateEditor={(v) => { viewRef.current = v; }} value={value} height="100%" theme={custom ?? (dark ? 'dark' : 'light')} extensions={extensions} onChange={stableChange}
         indentWithTab={false}
         basicSetup={vimOn ? BASIC_SETUP_VIM : BASIC_SETUP} className={onRun ? 'h-[calc(100%-2rem)]' : 'h-full'} />

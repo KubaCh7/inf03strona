@@ -47,7 +47,7 @@ export default function Admin() {
     const g = override ? { target: null, coins: override.coins, xp: override.xp, item: null, message: override.msg, hours: 168 } : { target: target || null, coins, xp, item: item || null, message, hours };
     try {
       await adminSendGift(g);
-      setMsg({ ok: true, text: `Wysłano ${g.target ? `do ${g.target}` : 'do wszystkich'}. Każdy dostanie to przy następnym wejściu (albo w ciągu 3 minut, jeśli jest na stronie).` });
+      setMsg({ ok: true, text: `Wysłano ${g.target ? `do ${g.target}` : 'do wszystkich'}. Kto jest na stronie, zobaczy to w ciągu minuty, reszta przy następnym wejściu.` });
       if (!override) { setCoins(0); setXp(0); setItem(''); setMessage(''); }
       void reload();
     } catch (e) { setMsg({ ok: false, text: (e as Error).message }); }
@@ -73,7 +73,7 @@ export default function Admin() {
           </label>
           <label className="block"><span className="mb-1 block text-sm font-bold">Ważne przez</span>
             <select className="input" value={hours} onChange={(e) => setHours(Number(e.target.value))}>
-              {[[24, '1 dzień'], [72, '3 dni'], [168, '7 dni'], [720, '30 dni']].map(([h, l]) => <option key={h} value={h}>{l}</option>)}
+              {[[1, 'Jednorazowo, tylko teraz (1 godz.)'], [24, '1 dzień'], [72, '3 dni'], [168, '7 dni'], [720, '30 dni']].map(([h, l]) => <option key={h} value={h}>{l}</option>)}
             </select>
           </label>
           <label className="block"><span className="mb-1 flex items-center gap-1.5 text-sm font-bold"><Coins size={15} />Monety</span><input type="number" className="input" value={coins} onChange={(e) => setCoins(Number(e.target.value) || 0)} /></label>
@@ -84,6 +84,7 @@ export default function Admin() {
               {items.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.price} monet)</option>)}
             </select>
           </label>
+          <p className="text-xs text-muted sm:col-span-2">Każdy widzi wiadomość i dostaje prezent tylko raz. „Jednorazowo” = zobaczą ją tylko osoby, które wejdą na stronę w ciągu godziny (kto jest teraz online, dostaje ją w ciągu minuty).</p>
           <label className="block sm:col-span-2"><span className="mb-1 flex items-center gap-1.5 text-sm font-bold"><Megaphone size={15} />Wiadomość</span>
             <textarea className="input h-24" maxLength={500} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Np. Powodzenia na egzaminie! Albo samo ogłoszenie bez prezentu." />
           </label>

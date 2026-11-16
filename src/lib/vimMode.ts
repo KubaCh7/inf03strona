@@ -94,12 +94,14 @@ function setup() {
   num('tabstop', ['ts']); num('shiftwidth', ['sw']);
 
   // :w i spolka: zapis jest automatyczny, wiec tylko potwierdzamy jak Vim
-  type CM = { openNotification: (t: Node, o: { bottom?: boolean; duration?: number }) => unknown };
+  type CM = { openNotification: (t: Node, o: { bottom?: boolean; duration?: number }) => unknown; cm6?: EditorView };
+  // :w = zapis z formatowaniem (to samo co Ctrl+S); edytor nasluchuje zdarzenia p03-save
+  const save = (cm: CM) => cm.cm6?.dom.dispatchEvent(new CustomEvent('p03-save', { bubbles: true }));
   const say = (cm: CM, t: string) => { cm.openNotification(document.createTextNode(t), { bottom: true, duration: 2500 }); };
-  Vim.defineEx('write', 'w', (cm: CM) => say(cm, '"plik" zapisany (zapis jest automatyczny)'));
-  Vim.defineEx('update', 'up', (cm: CM) => say(cm, '"plik" zapisany'));
+  Vim.defineEx('write', 'w', (cm: CM) => save(cm));
+  Vim.defineEx('update', 'up', (cm: CM) => save(cm));
   for (const [name, short] of [['quit', 'q'], ['wq', 'wq'], ['xit', 'x'], ['qall', 'qa'], ['wall', 'wa']] as const) {
-    try { Vim.defineEx(name, short, (cm: CM) => say(cm, name === 'wall' ? 'Wszystkie pliki zapisane' : 'Tu nie ma czego zamykać: pliki zapisują się same')); } catch (e) { console.warn(e); }
+    try { Vim.defineEx(name, short, (cm: CM) => { if (name === 'wq' || name === 'xit' || name === 'wall') save(cm); else say(cm, 'Tu nie ma czego zamykać: pliki zapisują się same'); }); } catch (e) { console.warn(e); }
   }
 }
 
