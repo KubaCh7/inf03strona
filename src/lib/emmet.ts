@@ -57,9 +57,18 @@ export function emmetSource(kind: 'markup' | 'stylesheet') {
       const lineBefore = ctx.state.doc.lineAt(ctx.pos).text.slice(0, ctx.pos - ctx.state.doc.lineAt(ctx.pos).from);
       if (lineBefore.includes(':')) return null; // juz piszemy wartosc
     }
-    const opts: Completion[] = names(kind).map((n) => ({ label: n, detail: 'Emmet Abbreviation', type: 'emmet', apply: applyAbbr(kind, n) }));
+    // w CSS prawdziwe wlasciwosci (color) maja pierwszenstwo przed skrotami Emmeta (colm…), jak w VS Code
+    const opts: Completion[] = names(kind).map((n) => ({ label: n, detail: 'Emmet Abbreviation', type: 'emmet', apply: applyAbbr(kind, n), ...(kind === 'stylesheet' ? { boost: -10 } : {}) }));
     if (COMPLEX.test(typed) || (typed && !names(kind).some((n) => n.startsWith(typed)))) {
-      opts.unshift({ label: typed, detail: 'Emmet Abbreviation', type: 'emmet', apply: applyAbbr(kind, typed), boost: 99 });
+      if (kind === 'stylesheet') {
+        // jak VS Code: nie podsuwaj „skrotu”, ktory Emmet tylko przepisuje (backgr -> "backgr: ;")
+        // ani pelnych nazw wlasciwosci z myslnikiem (background-color -> "background: color;")
+        let out = '';
+        try { out = expand(typed, STYLE); } catch { /* zly skrot */ }
+        const passthrough = !out || out.startsWith(typed + ':');
+        const propName = /^[a-z]+(-[a-z]+)+$/.test(typed);
+        if (!passthrough && !propName) opts.unshift({ label: typed, detail: 'Emmet Abbreviation', type: 'emmet', apply: applyAbbr(kind, typed), boost: /\d/.test(typed) ? 99 : 0 });
+      } else opts.unshift({ label: typed, detail: 'Emmet Abbreviation', type: 'emmet', apply: applyAbbr(kind, typed), boost: 99 });
     }
     return { from: word.from, options: opts, validFor: kind === 'markup' ? undefined : /^[\w:!@#.\-+%$]*$/ };
   };

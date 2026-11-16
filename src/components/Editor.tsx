@@ -12,6 +12,7 @@ import { indentLess, indentMore } from '@codemirror/commands';
 import { vimExtensions } from '../lib/vimMode';
 import { canFormat, formatCode } from '../lib/format';
 import { htmlAttrBehaviour } from '../lib/htmlAttrs';
+import { cssPropertyBehaviour, cssValueSource } from '../lib/cssAssist';
 import { emmetSource } from '../lib/emmet';
 import { editorTheme } from '../lib/themes';
 import { useStore } from '../lib/store';
@@ -23,7 +24,7 @@ const htmlEmmet = emmetSource('markup');
 const cssEmmet = emmetSource('stylesheet');
 
 function langFor(file: string, schema?: Record<string, string[]>, autoClose = true): Extension[] {
-  if (file.endsWith('.css')) return [css(), cssLanguage.data.of({ autocomplete: cssEmmet })];
+  if (file.endsWith('.css')) return [css(), cssLanguage.data.of({ autocomplete: cssValueSource }), cssLanguage.data.of({ autocomplete: cssEmmet }), cssPropertyBehaviour];
   if (file.endsWith('.js')) return [javascript(), javascriptLanguage.data.of({ autocomplete: listSource(JS_COMPLETIONS) })];
   if (file.endsWith('.sql') || file.endsWith('.txt')) {
     // kolumny z bazy podpowiadane takze bez prefiksu tabeli (np. idPac + Tab -> idPacjenta), bez backtickow
@@ -47,7 +48,9 @@ function langFor(file: string, schema?: Record<string, string[]>, autoClose = tr
     htmlLanguage.data.of({ autocomplete: htmlEmmet }),
     // JS wewnatrz <script> i CSS wewnatrz <style>
     javascriptLanguage.data.of({ autocomplete: listSource(JS_COMPLETIONS) }),
+    cssLanguage.data.of({ autocomplete: cssValueSource }),
     cssLanguage.data.of({ autocomplete: cssEmmet }),
+    cssPropertyBehaviour,
   ];
 }
 
