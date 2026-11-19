@@ -26,6 +26,7 @@ const router = createBrowserRouter([
       { path: 'arkusze/:code/rozwiazanie', element: L(() => import('./pages/Walkthrough')) },
       { path: 'warsztat', element: L(() => import('./pages/WorkshopPage')) },
       { path: 'warsztat/:code', element: L(() => import('./pages/WorkshopPage')) },
+      { path: 'pulpit/:code', element: L(() => import('./pages/PulpitPage')) },
       { path: 'sprawdzarka', element: L(() => import('./pages/CheckerPage')) },
       { path: 'proba', element: L(() => import('./pages/Exam')) },
       { path: 'sprint', element: L(() => import('./pages/Sprint')) },
