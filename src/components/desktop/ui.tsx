@@ -5,21 +5,43 @@ import { useVfs, base, parent, join, win as winPath, fmtDate, fmtSize, DESKTOP, 
 
 // ---------- menu kontekstowe Windows 11 ----------
 export type CItem = { label: string; icon?: React.ReactNode; run?: () => void; sub?: CItem[]; off?: boolean; key?: string } | '-';
-export function ContextMenu({ x, y, items, onClose }: { x: number; y: number; items: CItem[]; onClose: () => void }) {
-  useEffect(() => { const c = () => onClose(); setTimeout(() => window.addEventListener('pointerdown', c), 0); return () => window.removeEventListener('pointerdown', c); }, [onClose]);
-  const left = Math.min(x, window.innerWidth - 270), top = Math.min(y, window.innerHeight - 40 - items.length * 30);
-  return <div style={{ left, top }} className="fixed z-[200]" onPointerDown={(e) => e.stopPropagation()}><MenuList items={items} onClose={onClose} /></div>;
+export type CTop = { label: string; icon: React.ReactNode; run: () => void; off?: boolean };
+export function ContextMenu({ x, y, items, top, onClose }: { x: number; y: number; items: CItem[]; top?: CTop[]; onClose: () => void }) {
+  const [classic, setClassic] = useState(false);
+  useEffect(() => { const c = () => onClose(); setTimeout(() => window.addEventListener('pointerdown', c), 0); const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose(); window.addEventListener('keydown', k); return () => { window.removeEventListener('pointerdown', c); window.removeEventListener('keydown', k); }; }, [onClose]);
+  const all: CItem[] = classic ? [...(top ?? []).map((t) => ({ label: t.label, icon: t.icon, run: t.run, off: t.off })), '-', ...items] : [...items, ...(top ? ['-' as const, { label: 'Pokaż więcej opcji', key: 'Shift+F10', icon: <span className="text-[11px]">⋯</span>, run: () => setTimeout(() => setClassic(true), 0) }] : [])];
+  const h = 40 + all.length * 30 + (top && !classic ? 44 : 0);
+  const left = Math.min(x, window.innerWidth - 280), topY = Math.max(4, Math.min(y, window.innerHeight - 52 - h));
+  return <div style={{ left, top: topY }} className="fixed z-[200]" onPointerDown={(e) => e.stopPropagation()} onContextMenu={(e) => e.preventDefault()}>
+    {classic ? <ClassicList items={all} onClose={onClose} /> : <MenuList items={all} top={top} onClose={onClose} keepOpen={(it) => it !== '-' && it.label === 'Pokaż więcej opcji'} />}
+  </div>;
 }
-function MenuList({ items, onClose }: { items: CItem[]; onClose: () => void }) {
+function MenuList({ items, top, onClose, keepOpen }: { items: CItem[]; top?: CTop[]; onClose: () => void; keepOpen?: (i: CItem) => boolean }) {
   return (
-    <div className="min-w-[250px] rounded-[8px] border border-black/10 bg-[#f9f9f9]/95 p-1 text-[12.5px] text-[#1a1a1a] shadow-[0_8px_24px_rgba(0,0,0,.18)] backdrop-blur">
+    <div className="min-w-[260px] rounded-[8px] border border-black/10 bg-[#f9f9f9]/95 p-1 text-[12.5px] text-[#1a1a1a] shadow-[0_8px_24px_rgba(0,0,0,.18)] backdrop-blur">
+      {top && <div className="mb-1 flex gap-1 border-b border-black/[.06] px-1 pb-1">{top.map((t) => <button key={t.label} title={t.label} disabled={t.off} onClick={() => { onClose(); t.run(); }} className="grid h-9 w-9 place-items-center rounded-[4px] hover:bg-black/[.06] disabled:opacity-35">{t.icon}</button>)}</div>}
       {items.map((it, i) => it === '-' ? <div key={i} className="mx-1 my-1 h-px bg-black/10" /> : (
         <div key={i} className="group relative">
-          <button disabled={it.off} onClick={() => { if (!it.sub && it.run) { onClose(); it.run(); } }} className="flex h-[30px] w-full items-center gap-3 rounded-[4px] px-2 text-left hover:bg-black/[.05] disabled:opacity-40">
+          <button disabled={it.off} onClick={() => { if (!it.sub && it.run) { if (!keepOpen?.(it)) onClose(); it.run(); } }} className="flex h-[30px] w-full items-center gap-3 rounded-[4px] px-2 text-left hover:bg-black/[.05] disabled:opacity-40">
             <span className="grid w-4 place-items-center">{it.icon}</span><span className="flex-1">{it.label}</span>
             {it.key && <span className="text-[11px] text-[#666]">{it.key}</span>}{it.sub && <ChevronRight size={13} />}
           </button>
           {it.sub && !it.off && <div className="absolute left-full top-0 hidden group-hover:block"><MenuList items={it.sub} onClose={onClose} /></div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+/** Klasyczne menu (Windows 10), po „Pokaz wiecej opcji”. */
+function ClassicList({ items, onClose }: { items: CItem[]; onClose: () => void }) {
+  return (
+    <div className="min-w-[240px] border border-[#a0a0a0] bg-[#f0f0f0] py-0.5 text-[12px] text-black shadow-[2px_2px_4px_rgba(0,0,0,.3)]">
+      {items.map((it, i) => it === '-' ? <div key={i} className="mx-0.5 my-0.5 h-px bg-[#c8c8c8]" /> : (
+        <div key={i} className="group relative">
+          <button disabled={it.off} onClick={() => { if (!it.sub && it.run) { onClose(); it.run(); } }} className="flex h-[22px] w-full items-center gap-2 px-1 text-left hover:bg-[#91c9f7]/60 disabled:text-[#888]">
+            <span className="grid w-5 place-items-center">{it.icon}</span><span className="flex-1 pr-6">{it.label}</span>{it.sub && <ChevronRight size={11} />}
+          </button>
+          {it.sub && !it.off && <div className="absolute left-full top-0 hidden group-hover:block"><ClassicList items={it.sub} onClose={onClose} /></div>}
         </div>
       ))}
     </div>
@@ -117,3 +139,33 @@ export function FileDialog({ o, onDone }: { o: PickOpts; onDone: (p: string | nu
   );
 }
 export const pathLabel = (p: string) => winPath(p);
+
+// ---------- Wlasciwosci pliku / folderu ----------
+export function Properties({ path, onClose }: { path: string; onClose: () => void }) {
+  const os = useOS(); const vfs = useVfs(os.vfs); const n = vfs.get(path);
+  if (!n) return null;
+  const files = n.dir ? vfs.tree(path) : [];
+  const size = n.dir ? files.reduce((s, f) => s + vfs.size(f.path), 0) : vfs.size(path);
+  const folders = n.dir ? [...vfs.nodes.keys()].filter((k) => k.startsWith(path + '/') && vfs.isDir(k)).length : 0;
+  const row = (l: string, v: React.ReactNode) => <div className="grid grid-cols-[110px_1fr] py-1"><span>{l}</span><span className="break-all">{v}</span></div>;
+  return (
+    <div className="fixed inset-0 z-[260] grid place-items-center bg-black/5" onPointerDown={(e) => e.stopPropagation()}>
+      <div className="w-[380px] overflow-hidden rounded-[8px] border border-black/15 bg-[#f3f3f3] text-[12.5px] text-[#1a1a1a] shadow-[0_16px_48px_rgba(0,0,0,.35)]">
+        <div className="flex h-8 items-center pl-3 text-[12px]"><span className="flex-1">Właściwości: {base(path)}</span><button onClick={onClose} className="grid h-full w-[46px] place-items-center hover:bg-[#c42b1c] hover:text-white"><X size={14} /></button></div>
+        <div className="flex gap-4 border-b border-black/10 px-3 text-[12px]"><span className="border-b-2 border-[#0067c0] pb-1">Ogólne</span><span className="pb-1 text-[#666]">Zabezpieczenia</span><span className="pb-1 text-[#666]">Szczegóły</span></div>
+        <div className="space-y-1 bg-white p-4">
+          <div className="mb-3 flex items-center gap-3"><FileIcon path={path} dir={n.dir} size={36} /><input readOnly value={base(path)} className="flex-1 border border-black/20 px-2 py-1" /></div>
+          {row('Typ pliku:', typeName(path, n.dir))}
+          {row('Lokalizacja:', winPath(parent(path)))}
+          {row('Rozmiar:', `${fmtSize(size)} (${size.toLocaleString('pl-PL')} bajtów)`)}
+          {n.dir && row('Zawiera:', `Pliki: ${files.length}, Foldery: ${folders}`)}
+          <div className="my-2 h-px bg-black/10" />
+          {row('Utworzony:', fmtDate(n.mtime))}{row('Zmodyfikowany:', fmtDate(n.mtime))}
+          <div className="my-2 h-px bg-black/10" />
+          <div className="flex gap-4 py-1"><span className="w-[110px]">Atrybuty:</span><label><input type="checkbox" disabled /> Tylko do odczytu</label><label><input type="checkbox" disabled /> Ukryty</label></div>
+        </div>
+        <div className="flex justify-end gap-2 px-4 py-3"><button onClick={onClose} className="h-8 w-24 rounded-[4px] bg-[#0067c0] text-white">OK</button><button onClick={onClose} className="h-8 w-24 rounded-[4px] border border-black/15 bg-white">Anuluj</button></div>
+      </div>
+    </div>
+  );
+}

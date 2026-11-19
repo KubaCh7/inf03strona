@@ -1,21 +1,32 @@
 import { useRef } from 'react';
 import { Minus, Square, Copy, X } from 'lucide-react';
 import type { Win } from './os';
+export type Snap = 'max' | 'left' | 'right';
 import { APPS } from './os';
 
 /** Okno Windows 11: pasek tytulu, przeciaganie, zmiana rozmiaru, min/max/zamknij. */
-export default function Window({ win, active, onFocus, onChange, onClose, children, bar, dark }: {
+export default function Window({ win, active, onFocus, onChange, onClose, children, bar, dark, onSnapHint, onSnap }: {
   win: Win; active: boolean; onFocus: () => void; onChange: (p: Partial<Win>) => void; onClose: () => void; children: React.ReactNode; bar?: React.ReactNode; dark?: boolean;
+  onSnapHint?: (s: Snap | null) => void; onSnap?: (s: Snap) => void;
 }) {
   const drag = useRef<{ sx: number; sy: number; x: number; y: number; w: number; h: number; mode: string } | null>(null);
   const start = (e: React.PointerEvent, mode: string) => {
     if (e.button !== 0) return;
     e.stopPropagation(); onFocus();
-    if (win.max && mode === 'move') return;
-    drag.current = { sx: e.clientX, sy: e.clientY, x: win.x, y: win.y, w: win.w, h: win.h, mode };
+    let x0 = win.x, y0 = win.y;
+    // przeciagniecie zmaksymalizowanego okna przywraca je pod kursorem (jak w Windows)
+    if (win.max && mode === 'move') { x0 = Math.max(0, e.clientX - win.w / 2); y0 = 0; }
+    let hint: Snap | null = null; let moved = false;
+    drag.current = { sx: e.clientX, sy: e.clientY, x: x0, y: y0, w: win.w, h: win.h, mode };
     const mv = (ev: PointerEvent) => {
       const d = drag.current!; const dx = ev.clientX - d.sx, dy = ev.clientY - d.sy;
-      if (d.mode === 'move') onChange({ x: d.x + dx, y: Math.max(0, d.y + dy) });
+      if (d.mode === 'move') {
+        if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+        moved = true;
+        onChange({ x: d.x + dx, y: Math.max(0, d.y + dy), max: false });
+        const h2: Snap | null = ev.clientY <= 2 ? 'max' : ev.clientX <= 2 ? 'left' : ev.clientX >= window.innerWidth - 3 ? 'right' : null;
+        if (h2 !== hint) { hint = h2; onSnapHint?.(h2); }
+      }
       else {
         const p: Partial<Win> = {};
         if (d.mode.includes('e')) p.w = Math.max(320, d.w + dx);
@@ -25,7 +36,7 @@ export default function Window({ win, active, onFocus, onChange, onClose, childr
         onChange(p);
       }
     };
-    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); drag.current = null; };
+    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); drag.current = null; if (hint) { onSnap?.(hint); onSnapHint?.(null); } };
     window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
   };
   if (win.min) return null;

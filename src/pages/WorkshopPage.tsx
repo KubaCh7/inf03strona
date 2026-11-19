@@ -1,4 +1,7 @@
-import { Link, useParams } from 'react-router';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
+import EnvChoice from '../components/EnvChoice';
+import type { Sheet } from '../lib/types';
 import { ExternalLink, ShieldCheck, FileText } from 'lucide-react';
 import { useContent } from '../lib/data';
 import Workshop from '../components/Workshop';
@@ -9,6 +12,14 @@ export default function WorkshopPage() {
   const c = useContent();
   if (code && !c) return <Loading />;
   const sheet = code ? c?.sheets.find((s) => s.code === code) : undefined;
+  return <WorkshopFor sheet={sheet} />;
+}
+
+function WorkshopFor({ sheet }: { sheet?: Sheet }) {
+  const nav = useNavigate();
+  const key = sheet ? `p03:env:${sheet.code}` : '';
+  const [chosen, setChosen] = useState(() => { try { return !sheet || sessionStorage.getItem(key) === 'workshop'; } catch { return !sheet; } });
+  if (sheet && !chosen) return <EnvChoice title={`${sheet.code} · ${sheet.title}`} onDesktop={() => nav(`/pulpit/${encodeURIComponent(sheet.code)}`)} onWorkshop={() => { try { sessionStorage.setItem(key, 'workshop'); } catch { /* */ } setChosen(true); }} />;
   return (
     <div>
       <PageHeader eyebrow={sheet ? `Warsztat · ${sheet.code}` : 'Warsztat · wolny projekt'} title={sheet ? sheet.title : 'Warsztat'} right={sheet && (
