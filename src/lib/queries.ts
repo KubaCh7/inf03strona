@@ -86,21 +86,25 @@ export async function checkQuery(dump: string, task: QueryTask, userSql: string,
     return { ok, message: ok ? 'Składnia zgodna z rozwiązaniem.' : 'Polecenie różni się od rozwiązania. SQLite nie ma użytkowników, więc porównujemy tekst (bez spacji, wielkości liter i cudzysłowów).' };
   }
   let userRes: QueryResult | undefined, userSnap, skipped: string[] = [];
+  let db: Database | null = null;
   try {
-    const db = await freshFromDump(dump);
+    db = await freshFromDump(dump);
     const r = run(db, userSql);
     skipped = r.skipped;
     userRes = r.results[r.results.length - 1];
     userSnap = snapshot(db);
+    db.close();
   } catch (e) {
+    try { db?.close(); } catch { /* */ }
     return { ok: false, message: 'Błąd SQL: ' + (e as Error).message };
   }
   if (!solution) return { ok: false, message: 'Kwerenda działa, ale do tego zadania nie ma rozwiązania do porównania. Oceń wynik sam.', user: userRes, skipped };
   const db2 = await freshFromDump(dump);
   let expected: QueryResult | undefined;
-  try { const r2 = run(db2, solution); expected = r2.results[r2.results.length - 1]; } catch { return { ok: false, message: 'Nie udało się uruchomić rozwiązania wzorcowego w SQLite. Oceń wynik sam.', user: userRes }; }
+  try { const r2 = run(db2, solution); expected = r2.results[r2.results.length - 1]; } catch { db2.close(); return { ok: false, message: 'Nie udało się uruchomić rozwiązania wzorcowego w SQLite. Oceń wynik sam.', user: userRes }; }
+  const expSnap = snapshot(db2);
+  db2.close();
   if (task.kind === 'modify' && !/^\s*SELECT/i.test(solution)) {
-    const expSnap = snapshot(db2);
     const same = JSON.stringify(expSnap.map((x) => [x.t, x.cols, x.data?.values])) === JSON.stringify(userSnap!.map((x) => [x.t, x.cols, x.data?.values]));
     let changed: QueryResult | undefined;
     const tbl = /(?:UPDATE|INTO|FROM|TABLE)\s+[`"]?(\w+)/i.exec(solution)?.[1];

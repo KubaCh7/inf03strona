@@ -47,11 +47,11 @@ export async function runLessonChecks(checks: Check[], files: Record<string, str
 }
 
 // ---------- Sprawdzarka arkuszy (heurystyczna, treningowa) ----------
-type Rule = { label: string; points: number; test: (f: Record<string, string>, d: Document) => boolean };
+export type Rule = { label: string; points: number; test: (f: Record<string, string>, d: Document) => boolean };
 const all = (f: Record<string, string>, ext: string) => Object.entries(f).filter(([k]) => k.endsWith(ext)).map(([, v]) => v).join('\n');
 const has = (re: RegExp) => (s: string) => re.test(s);
 
-const TAG_RULES: { match: RegExp; rule: Rule }[] = [
+export const TAG_RULES: { match: RegExp; rule: Rule }[] = [
   { match: /HTML: formularz/, rule: { label: 'Jest formularz z polami', points: 2, test: (_f, d) => !!d.querySelector('form') && d.querySelectorAll('input, select, textarea').length > 0 } },
   { match: /rowspan|colspan/, rule: { label: 'Tabela z łączeniem komórek', points: 1, test: (_f, d) => !!d.querySelector('[rowspan],[colspan]') } },
   { match: /favicon/, rule: { label: 'Favicon dołączony', points: 1, test: (_f, d) => !!d.querySelector('link[rel~="icon"]') } },
@@ -95,7 +95,7 @@ const BASE_RULES: Rule[] = [
   { label: 'Wszystkie obrazy mają alt', points: 1, test: (_f, d) => Array.from(d.querySelectorAll('img')).every((i) => i.hasAttribute('alt')) },
 ];
 
-const PHP_RULES: Rule[] = [
+export const PHP_RULES: Rule[] = [
   { label: 'Połączenie mysqli_connect', points: 1, test: (f) => /mysqli_connect\s*\(|new\s+mysqli\s*\(/.test(all(f, '.php')) },
   { label: 'Zapytanie mysqli_query', points: 1, test: (f) => /mysqli_query\s*\(|->query\s*\(/.test(all(f, '.php')) },
   { label: 'Pobieranie wierszy (fetch)', points: 1, test: (f) => /mysqli_fetch_(assoc|row|array)|->fetch_/.test(all(f, '.php')) },
