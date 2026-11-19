@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Expand, Shrink, AArrowDown, AArrowUp, Copy, Check } from 'lucide-react';
+import { Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Expand, Shrink, AArrowDown, AArrowUp, Copy, Check, X } from 'lucide-react';
 import type { Sheet } from '../lib/types';
 import PdfViewer, { preloadPdf } from './PdfViewer';
 import type { Database as Db } from 'sql.js';
@@ -8,6 +8,7 @@ import { buildSrcDoc } from '../lib/preview';
 import { freshDb, getSql, run, withMissingTables, type QueryResult } from '../lib/sql';
 import { Loading } from './ui';
 import Split from './Split';
+import { inlineAssets, loadAssets, readAsDataUrl, saveAssets } from '../lib/assetsStore';
 import PhpMyAdmin from './PhpMyAdmin';
 
 const Editor = lazy(() => import('./Editor'));
@@ -105,7 +106,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
     const t = setTimeout(() => {
       if (empty || !entry) { setDoc(WELCOME); return; }
       let d = buildSrcDoc(files, entry, base).replace(/<\?php[\s\S]*?(\?>|$)/g, '<span style="background:#6B4E7133;font:12px monospace;padding:2px 4px;border-radius:4px">[PHP wykona się na serwerze]</span>');
-      for (const [name, url] of Object.entries(images)) d = d.split(`"${name}"`).join(`"${url}"`).split(`'${name}'`).join(`'${url}'`);
+      d = inlineAssets(d, images);
       setDoc(d);
       setLogs([]);
     }, 300);
@@ -193,16 +194,24 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
     }
     setBottom('sql'); setEdMax(false); setTab((x) => (x === 'kod' && !isDesktopNow() ? 'sql' : x));
   }
-  function addImages(list: FileList | null) {
+  async function addImages(list: FileList | null) {
     if (!list) return;
     const next: Record<string, string> = {};
+    const tooBig: string[] = [];
     for (const f of Array.from(list)) {
       if (f.name.endsWith('.sql')) { void loadSql(f); continue; }
-      if (f.type.startsWith('image/') || /\.(png|jpe?g|gif|svg|webp)$/i.test(f.name)) next[f.name] = URL.createObjectURL(f);
-      else if (/\.(html|css|js|php|txt)$/i.test(f.name)) void f.text().then((t) => setFiles((x) => ({ ...x, [f.name]: t })));
+      if (f.type.startsWith('image/') || f.type.startsWith('video/') || f.type.startsWith('audio/') || /\.(png|jpe?g|gif|svg|webp|bmp|ico|mp4|webm|ogg|mp3|wav)$/i.test(f.name)) {
+        if (f.size > 5 * 1024 * 1024) { tooBig.push(f.name); continue; }
+        // data: URL zamiast blob: (blob jest blokowany w sandboxowanym podgladzie)
+        next[f.name] = await readAsDataUrl(f);
+      } else if (/\.(html|css|js|php|txt)$/i.test(f.name)) void f.text().then((t) => setFiles((x) => ({ ...x, [f.name]: t })));
     }
-    setImages((i) => ({ ...i, ...next }));
+    if (tooBig.length) alert(`Za duże (max 5 MB): ${tooBig.join(', ')}`);
+    if (Object.keys(next).length) setImages((i) => { const n = { ...i, ...next }; void saveAssets(storageKey, n); return n; });
   }
+  const removeImage = (name: string) => setImages((i) => { const n = { ...i }; delete n[name]; void saveAssets(storageKey, n); return n; });
+  // grafiki dodane wczesniej w tym warsztacie
+  useEffect(() => { let on = true; void loadAssets(storageKey).then((a) => { if (on && Object.keys(a).length) setImages((i) => ({ ...a, ...i })); }); return () => { on = false; }; }, [storageKey]);
 
   // schemat wczytanej bazy do podpowiedzi w kwerendy.txt (tabele i kolumny, bez backtickow)
   const schemaRef = useRef<{ key: string; val: Record<string, string[]> } | null>(null);
@@ -361,7 +370,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
         {sheet && showPdf && <button className="btn btn-dark hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setSettings({ sheetSide: pdfSide === 'left' ? 'right' : 'left' })} title="Zamień strony"><ArrowLeftRight size={14} />Zamień strony</button>}
         <button className="btn btn-ghost px-2 py-1 text-xs" onClick={reset} title="Wyczyść warsztat"><RotateCcw size={14} /></button>
       </span>
-      <input ref={imgRef} type="file" multiple hidden onChange={(e) => addImages(e.target.files)} />
+      <input ref={imgRef} type="file" multiple hidden onChange={(e) => { void addImages(e.target.files); e.target.value = ""; }} />
       <input ref={sqlRef} type="file" accept=".sql,.txt" hidden onChange={(e) => e.target.files?.[0] && loadSql(e.target.files[0])} />
     </div>
   );
@@ -376,7 +385,18 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
       {edMax && <div className="fixed inset-0 z-[60] flex flex-col bg-bg p-3">{editorCard}</div>}
       {toolbar}
       {assetsCard}
-      {Object.keys(images).length > 0 && <p className="mb-2 text-xs text-muted">Grafiki w podglądzie: {Object.keys(images).join(', ')} (tylko w tej sesji).</p>}
+      {Object.keys(images).length > 0 && (
+        <div className="mb-2 flex flex-wrap items-center gap-1.5 text-xs">
+          <span className="text-muted">Twoje pliki (zapisane w tej przeglądarce):</span>
+          {Object.entries(images).map(([name, url]) => (
+            <span key={name} className="inline-flex items-center gap-1 rounded-md border border-line bg-surface py-0.5 pl-1 pr-0.5">
+              {url.startsWith('data:image') && <img src={url} alt="" className="h-5 w-5 rounded object-cover" />}
+              <span className="mono">{name}</span>
+              <button className="rounded p-0.5 text-muted hover:bg-danger-soft hover:text-danger" title={`Usuń ${name}`} onClick={() => removeImage(name)}><X size={12} /></button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Mobile: zakladki */}
       {!isDesktop && <div>
