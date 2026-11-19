@@ -214,6 +214,7 @@ for s in SHEETS:
             'colors': colors(css_section(txt)),
             'quotes': quotes(site),
             'author': bool(re.search(r'numer zdającego', site)),
+            'dbName': (m.group(1) if (m := re.search(r'baz[ęa] danych o nazwie\s+[„"]?([\w]+)', re.sub(r'\s+', ' ', txt))) else None),
             'looks': [],
         }
         if a.get('dir'):

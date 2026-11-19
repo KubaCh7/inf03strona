@@ -17,7 +17,7 @@ export type Item = {
 };
 type Shot = { name: string; ext: string; whole: boolean; import: boolean };
 type Gfx = { text: string; names: string[]; out: string | null; w: number | null; h: number | null; ratio: boolean; transparent: boolean; gif: boolean; delay: number | null; loop: boolean };
-export type Reqs = { shots: Shot[]; files: string[]; graphicsCount: number; graphics: Gfx[]; colors: string[]; quotes: string[]; author: boolean; looks: { file: string; caption: string }[] };
+export type Reqs = { dbName?: string | null; shots: Shot[]; files: string[]; graphicsCount: number; graphics: Gfx[]; colors: string[]; quotes: string[]; author: boolean; looks: { file: string; caption: string }[] };
 
 let reqsP: Promise<Record<string, Reqs>> | null = null;
 export const loadReqs = () => (reqsP ??= import('../data/sheet_reqs.json').then((m) => m.default as unknown as Record<string, Reqs>));

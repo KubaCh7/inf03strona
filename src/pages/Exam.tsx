@@ -214,7 +214,7 @@ export default function Exam() {
             <p className="eyebrow">Praktyka · {p.sheetCode}</p>
             <p className={`display text-4xl font-extrabold ${(p.score ?? 0) >= 75 ? 'text-success' : 'text-danger'}`}>{p.score ?? 0}%</p>
             <p className="text-sm text-muted">próg 75%</p>
-            <Link className="mt-3 inline-block text-sm text-accent underline" to={`/arkusze/${encodeURIComponent(p.sheetCode)}`}>Zobacz arkusz i rozwiązanie</Link>
+            <Link className="mt-3 inline-block text-sm text-accent underline" to={`/arkusze/${encodeURIComponent(p.sheetCode)}/rozwiazanie`}>Rozwiązanie krok po kroku</Link>
           </div>
         )}
       </div>

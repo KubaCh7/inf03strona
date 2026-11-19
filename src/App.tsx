@@ -23,6 +23,7 @@ const router = createBrowserRouter([
       { path: 'teoria', element: L(() => import('./pages/Theory')) },
       { path: 'arkusze', element: L(() => import('./pages/Sheets')) },
       { path: 'arkusze/:code', element: L(() => import('./pages/SheetDetail')) },
+      { path: 'arkusze/:code/rozwiazanie', element: L(() => import('./pages/Walkthrough')) },
       { path: 'warsztat', element: L(() => import('./pages/WorkshopPage')) },
       { path: 'warsztat/:code', element: L(() => import('./pages/WorkshopPage')) },
       { path: 'sprawdzarka', element: L(() => import('./pages/CheckerPage')) },
