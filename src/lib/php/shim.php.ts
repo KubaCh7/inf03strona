@@ -7,6 +7,7 @@ if (!function_exists('mysqli_connect')) {
     $d = json_decode($r, true);
     return is_array($d) ? $d : ['error' => 'Brak odpowiedzi bazy'];
   }
+  if (!class_exists('mysqli_sql_exception')) { class mysqli_sql_exception extends RuntimeException {} }
   class mysqli_result {
     public $num_rows = 0; public $field_count = 0; private $rows; private $cols; private $i = 0;
     function __construct($cols, $rows) { $this->cols = $cols; $this->rows = $rows; $this->num_rows = count($rows); $this->field_count = count($cols); }
@@ -25,12 +26,25 @@ if (!function_exists('mysqli_connect')) {
   }
   class mysqli {
     public $error = ''; public $errno = 0; public $connect_error = null; public $connect_errno = 0; public $affected_rows = 0; public $insert_id = 0;
-    function __construct($host = 'localhost', $user = 'root', $pass = '', $db = '') { }
-    function select_db($db) { return true; }
+    private $db = ''; private $strict = false;
+    function __construct($host = 'localhost', $user = 'root', $pass = '', $db = '') {
+      $this->db = (string)$db;
+      $d = __p03_sql('connect', ['db' => $this->db]);
+      $this->strict = !empty($d['strict']);
+      if (isset($d['error'])) {
+        $this->connect_error = $d['error']; $this->connect_errno = $d['errno'] ?? 2002;
+        if ($this->strict) throw new mysqli_sql_exception($d['error'], $this->connect_errno);
+      }
+    }
+    function select_db($db) {
+      $d = __p03_sql('connect', ['db' => (string)$db]);
+      if (isset($d['error'])) { $this->error = $d['error']; $this->errno = $d['errno'] ?? 1049; if ($this->strict) throw new mysqli_sql_exception($d['error'], $this->errno); return false; }
+      $this->db = (string)$db; return true;
+    }
     function set_charset($c) { return true; }
     function query($sql) {
-      $d = __p03_sql('query', ['sql' => $sql]);
-      if (isset($d['error'])) { $this->error = $d['error']; $this->errno = 1064; trigger_error('mysqli: ' . $d['error'], E_USER_WARNING); return false; }
+      $d = __p03_sql('query', ['sql' => $sql, 'db' => $this->db]);
+      if (isset($d['error'])) { $this->error = $d['error']; $this->errno = $d['errno'] ?? 1064; if ($this->strict) throw new mysqli_sql_exception($d['error'], $this->errno); trigger_error('mysqli: ' . $d['error'], E_USER_WARNING); return false; }
       $this->error = ''; $this->errno = 0; $this->affected_rows = $d['changes'] ?? 0; $this->insert_id = $d['lastId'] ?? 0;
       if (isset($d['cols'])) return new mysqli_result($d['cols'], $d['rows']);
       return true;
@@ -40,7 +54,7 @@ if (!function_exists('mysqli_connect')) {
     function close() { return true; }
   }
   function mysqli_connect($h = 'localhost', $u = 'root', $p = '', $db = '') { return new mysqli($h, $u, $p, $db); }
-  function mysqli_select_db($c, $db) { return true; }
+  function mysqli_select_db($c, $db) { return $c->select_db($db); }
   function mysqli_set_charset($c, $cs) { return true; }
   function mysqli_query($c, $sql) { return $c->query($sql); }
   function mysqli_fetch_row($r) { return $r ? $r->fetch_row() : null; }

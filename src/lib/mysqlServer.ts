@@ -58,3 +58,16 @@ export class MysqlServer {
   addLog(mod: string, msg: string) { const t = new Date(); this.log.push(`${t.toLocaleTimeString('pl-PL')}  [${mod.padEnd(6)}]  ${msg}`); this.bump(); }
 }
 export function useServer(s: MysqlServer) { useSyncExternalStore(s.subscribe, () => s.ver); return s; }
+
+/** Blad SQLite -> komunikat jak z MariaDB w XAMPP (kod, angielski dla PHP, polski dla phpMyAdmin). */
+export function mysqlError(msg: string, db = ''): { code: number; en: string; pl: string } {
+  let m: RegExpExecArray | null;
+  if ((m = /no such column: (\S+)/i.exec(msg))) return { code: 1054, en: `Unknown column '${m[1]}' in 'field list'`, pl: `Nieznana kolumna '${m[1]}' w field list` };
+  if ((m = /no such table: (\S+)/i.exec(msg))) return { code: 1146, en: `Table '${db}.${m[1]}' doesn't exist`, pl: `Tabela '${db}.${m[1]}' nie istnieje` };
+  if ((m = /ambiguous column name: (\S+)/i.exec(msg))) return { code: 1052, en: `Column '${m[1]}' in field list is ambiguous`, pl: `Kolumna '${m[1]}' w field list jest dwuznaczna` };
+  if ((m = /UNIQUE constraint failed: (\S+)/i.exec(msg))) return { code: 1062, en: `Duplicate entry for key 'PRIMARY'`, pl: `Zduplikowany wpis dla klucza 'PRIMARY'` };
+  if ((m = /table (\S+) already exists/i.exec(msg))) return { code: 1050, en: `Table '${m[1]}' already exists`, pl: `Tabela '${m[1]}' już istnieje` };
+  if ((m = /near "([^"]*)": syntax error/i.exec(msg)) || /incomplete input/i.test(msg)) { const at = m?.[1] ?? ''; return { code: 1064, en: `You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '${at}' at line 1`, pl: `Something is wrong in your syntax obok '${at}' w linii 1` }; }
+  if (/no tables specified/i.test(msg)) return { code: 1096, en: 'No tables used', pl: 'Nie użyto tabel' };
+  return { code: 1064, en: msg, pl: msg };
+}
