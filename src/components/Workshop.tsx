@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Expand, Shrink, AArrowDown, AArrowUp } from 'lucide-react';
+import { Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Expand, Shrink, AArrowDown, AArrowUp, Copy, Check } from 'lucide-react';
 import type { Sheet } from '../lib/types';
 import PdfViewer, { preloadPdf } from './PdfViewer';
 import type { Database as Db } from 'sql.js';
@@ -46,7 +46,9 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   const saved = useStore((s) => s.workspaces[storageKey]);
   const saveWorkspace = useStore((s) => s.saveWorkspace);
   const fontSize = useStore((s) => s.settings.editorFont);
-  const pdfSide = useStore((s) => s.settings.pdfSide ?? 'left');
+  // arkusz domyslnie po prawej (nowe ustawienie, zeby stary wybor „lewo” nie zostal)
+  const pdfSide = useStore((s) => s.settings.sheetSide ?? 'right');
+  const [copied, setCopied] = useState(false);
   const setSettings = useStore((s) => s.setSettings);
   const [showPdf, setShowPdf] = useState(true);
   const hideNav = useStore((s) => !!s.settings.hideNav);
@@ -348,9 +350,15 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
       <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => imgRef.current?.click()}><ImagePlus size={14} />Grafiki / pliki</button>
       {!sheet?.assets?.sql && <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => sqlRef.current?.click()}><Upload size={14} />Zrzut .sql</button>}
       <span className="ml-auto flex gap-1.5">
+        {sheet?.files.archivePassword && (
+          <button className="btn btn-ghost px-2 py-1 text-xs" title="Kliknij, żeby skopiować hasło do archiwum"
+            onClick={() => { void navigator.clipboard?.writeText(sheet.files.archivePassword!).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }); }}>
+            {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}<span className="text-muted">hasło:</span><span className="mono">{sheet.files.archivePassword}</span>
+          </button>
+        )}
         <button className="btn btn-ghost hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setSettings({ hideNav: !hideNav })} title="Ukryj/pokaż boczne menu strony">{hideNav ? <Minimize2 size={14} /> : <Maximize2 size={14} />}{hideNav ? 'Pokaż menu' : 'Pełny ekran'}</button>
         {sheet && <button className="btn btn-ghost hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setShowPdf((x) => !x)}>{showPdf ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}{showPdf ? 'Ukryj arkusz' : 'Pokaż arkusz'}</button>}
-        {sheet && showPdf && <button className="btn btn-dark hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setSettings({ pdfSide: pdfSide === 'left' ? 'right' : 'left' })} title="Zamień strony"><ArrowLeftRight size={14} />Zamień strony</button>}
+        {sheet && showPdf && <button className="btn btn-dark hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setSettings({ sheetSide: pdfSide === 'left' ? 'right' : 'left' })} title="Zamień strony"><ArrowLeftRight size={14} />Zamień strony</button>}
         <button className="btn btn-ghost px-2 py-1 text-xs" onClick={reset} title="Wyczyść warsztat"><RotateCcw size={14} /></button>
       </span>
       <input ref={imgRef} type="file" multiple hidden onChange={(e) => addImages(e.target.files)} />
