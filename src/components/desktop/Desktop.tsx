@@ -7,6 +7,7 @@ import { OSContext, APPS, FileIcon, SpecialIcon, defaultApp, OPEN_WITH, DND, dra
 import Window from './Window';
 import { ContextMenu, FileDialog, MsgBox, Properties, type CItem, type CTop } from './ui';
 import { StartSvg } from './icons';
+import SnipApp, { SnipOverlay, SnipToast, SHOTS_DIR, shotName, type Frozen } from './Snip';
 import Explorer from './apps/Explorer';
 import Notepad from './apps/Notepad';
 import SevenZip from './apps/SevenZip';
@@ -20,7 +21,7 @@ const Graphics = lazy(() => import('./apps/Graphics'));
 const PdfApp = lazy(() => import('./apps/PdfApp'));
 
 const DARK: AppId[] = ['vscode', 'gimp', 'photoshop'];
-const PINNED: AppId[] = ['explorer', 'browser', 'xampp', 'notepadpp', 'vscode', 'gimp', 'photoshop', 'paint', 'notepad'];
+const PINNED: AppId[] = ['explorer', 'browser', 'xampp', 'notepadpp', 'vscode', 'gimp', 'photoshop', 'paint', 'notepad', 'snip'];
 const SHORTCUTS: AppId[] = ['xampp', 'notepadpp', 'vscode', 'gimp', 'photoshop', 'browser'];
 
 export type DesktopProps = { sheet: Sheet; attempt: string; candidate: string; endsAt: number; onFinish: () => void; onAbort: () => void };
@@ -38,7 +39,9 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
   const [pick, setPick] = useState<{ o: PickOpts; res: (p: string | null) => void } | null>(null);
   const [msg, setMsg] = useState<{ title: string; text: string; kind?: 'error' | 'info' | 'warn'; confirm?: boolean; res: (ok: boolean) => void } | null>(null);
   const [clip, setClip] = useState<OS['clip']>({});
-  const [toast, setToast] = useState<string | null>(null);
+  const [frozen, setFrozen] = useState<Frozen | null>(null);
+  const [snipToast, setSnipToast] = useState<string | null>(null);
+  const toastT = useRef<number | undefined>(undefined);
   const [sel, setSel] = useState<string[]>([]);
   const [ren, setRen] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -79,19 +82,25 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
     open(defaultApp(p), { path: p });
   }, [vfs, open]);
 
+  /** PrtSc: zamrozenie ekranu i nakladka Narzedzia Wycinanie (jak w Windows 11). */
   async function screenshot() {
+    if (frozen) return;
     const html2canvas = (await import('html2canvas-pro')).default;
     const el = root.current!;
-    setToast(null);
+    setSnipToast(null); setStart(false); setMenu(null);
     const scale = 1920 / el.clientWidth;
     const c = await html2canvas(el, { scale, backgroundColor: '#1e3a5f', logging: false, useCORS: true, ignoreElements: (n) => (n as HTMLElement).dataset?.noshot === '1' });
-    // ekran 1920 x 1080 jak monitor na stanowisku
-    const out = document.createElement('canvas'); out.width = 1920; out.height = 1080;
-    out.getContext('2d')!.drawImage(c, 0, 0, 1920, Math.round((c.height * 1920) / c.width));
-    setClip((cl) => ({ ...cl, image: out.toDataURL('image/png') }));
-    setToast('Zrzut ekranu skopiowano do schowka. Wklej go (Ctrl+V) np. w programie Paint i zapisz.');
-    setTimeout(() => setToast(null), 5000);
+    const wr = [...el.querySelectorAll<HTMLElement>('[data-win]')].map((w) => { const r = w.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, title: w.innerText.split('\n')[0] }; });
+    setFrozen({ img: c.toDataURL('image/png'), scale, wins: wr });
   }
+  const snipDone = (url: string) => {
+    setFrozen(null);
+    setClip((cl) => ({ ...cl, image: url }));
+    // Windows 11 zapisuje kazdy zrzut takze w Obrazy\Zrzuty ekranu
+    try { vfs.write(join(SHOTS_DIR, shotName()), url, true); } catch { /* */ }
+    setSnipToast(url);
+    clearTimeout(toastT.current); toastT.current = window.setTimeout(() => setSnipToast(null), 9000);
+  };
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       if (e.key === 'PrintScreen' || ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 's')) { e.preventDefault(); void screenshot(); }
@@ -235,6 +244,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
       case 'paint': return <Paint win={w} />;
       case 'gimp': case 'photoshop': return <Graphics win={w} />;
       case 'pdf': return <PdfApp win={w} />;
+      case 'snip': return <SnipApp win={w} />;
     }
   };
   const finish = () => void os.confirm('Zakończ egzamin', 'Zakończyć egzamin i oddać pracę do oceny?\nSprawdzony zostanie folder z numerem zdającego na pulpicie.').then((ok) => ok && onFinish());
@@ -343,20 +353,15 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
             })}
           </div>
           <div className="ml-auto flex items-center gap-1 text-[12px] text-[#1a1a1a]">
-            <button data-noshot="1" onClick={() => void screenshot()} title="Zrzut ekranu (PrtSc / Win+Shift+S)" className="flex items-center gap-1 rounded-[4px] px-2 py-1.5 hover:bg-white/70"><Camera size={15} />PrtSc</button>
+            <button data-noshot="1" onClick={() => void screenshot()} title="Zrzut ekranu (PrtSc / Win+Shift+S)" className="flex items-center gap-1.5 rounded-[4px] border border-black/10 bg-white/80 px-2.5 py-1.5 font-semibold hover:bg-white"><Camera size={15} className="text-[#0067c0]" />Zrzut ekranu</button>
             <ChevronUp size={14} className="mx-1" /><span className="px-1">POL</span><Wifi size={15} className="mx-1" /><Volume2 size={15} className="mx-1" />
             <button onClick={() => setCal((v) => !v)} className="ml-1 rounded-[4px] px-2 py-0.5 text-right leading-tight hover:bg-white/70">{d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}<br />{d.toLocaleDateString('pl-PL')}</button>
             <button title="Pokaż pulpit" onClick={() => { setWins((ws) => ws.map((w) => ({ ...w, min: true }))); setActive(null); }} className="ml-1 h-10 w-1.5 border-l border-black/20 hover:bg-white/70" />
           </div>
         </div>
 
-        {toast && (
-          <div data-noshot="1" className="absolute bottom-16 right-3 z-[160] w-[360px] rounded-[8px] border border-black/10 bg-[#f9f9f9] p-3 text-[12.5px] text-[#1a1a1a] shadow-2xl">
-            <div className="mb-1 flex items-center gap-2 text-[12px] text-[#555]"><Scissors size={13} />Narzędzie Wycinanie<button onClick={() => setToast(null)} className="ml-auto"><X size={13} /></button></div>
-            <p className="font-semibold">Zrzut ekranu skopiowany do schowka</p><p className="text-[#555]">{toast}</p>
-            {clip.image && <img src={clip.image} alt="" className="mt-2 w-full rounded border border-black/10" />}
-          </div>
-        )}
+        {snipToast && <SnipToast img={snipToast} onOpen={() => { setSnipToast(null); open('snip', { img: snipToast }); }} onClose={() => setSnipToast(null)} />}
+        {frozen && <SnipOverlay frozen={frozen} onDone={snipDone} onCancel={() => setFrozen(null)} />}
         {menu && <ContextMenu {...menu} onClose={() => setMenu(null)} />}
         {props && <Properties path={props} onClose={() => setProps(null)} />}
         {pick && <FileDialog o={pick.o} onDone={(p) => { pick.res(p); setPick(null); }} />}

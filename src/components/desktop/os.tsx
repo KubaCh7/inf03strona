@@ -1,12 +1,13 @@
 // „System” pulpitu egzaminacyjnego: okna, skojarzenia plikow, schowek, okna Otworz/Zapisz jako.
 import { createContext, useContext, useEffect, useRef } from 'react';
 import { AppSvg, FolderSvg, FileSvg, PcSvg, BinSvg } from './icons';
+import { SnipIcon } from './Snip';
 import type { Sheet } from '../../lib/types';
 import type { Vfs } from '../../lib/vfs';
 import { ext } from '../../lib/vfs';
 import type { MysqlServer } from '../../lib/mysqlServer';
 
-export type AppId = 'explorer' | 'notepad' | 'notepadpp' | 'vscode' | 'browser' | 'xampp' | 'paint' | 'gimp' | 'photoshop' | 'pdf' | 'sevenzip';
+export type AppId = 'explorer' | 'notepad' | 'notepadpp' | 'vscode' | 'browser' | 'xampp' | 'paint' | 'gimp' | 'photoshop' | 'pdf' | 'sevenzip' | 'snip';
 export type Win = { id: number; app: AppId; title: string; args: Record<string, unknown>; x: number; y: number; w: number; h: number; min: boolean; max: boolean; z: number };
 export type PickOpts = { mode: 'open' | 'save'; title?: string; dir?: string; name?: string; filters?: { label: string; exts: string[] }[]; dirOnly?: boolean };
 
@@ -39,6 +40,7 @@ export const APPS: Record<AppId, { name: string; w: number; h: number; icon: (s?
   photoshop: { name: 'Photoshop', w: 1280, h: 780, icon: (s = 20) => AppSvg.photoshop(s) },
   pdf: { name: 'Arkusz egzaminacyjny', w: 900, h: 760, icon: (s = 20) => AppSvg.pdf(s) },
   sevenzip: { name: '7-Zip', w: 720, h: 460, icon: (s = 20) => AppSvg.sevenzip(s) },
+  snip: { name: 'Narzędzie Wycinanie', w: 980, h: 660, icon: (s = 20) => <SnipIcon size={s} /> },
 };
 
 /** Ikona pliku / folderu jak w Eksploratorze Windows 11. */
