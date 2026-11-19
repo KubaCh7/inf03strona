@@ -50,9 +50,9 @@ export default function Xampp({ win }: { win: Win }) {
               return (
                 <tr key={m} className="h-[30px]">
                   <td><span className="grid h-[18px] w-[18px] place-items-center border border-[#bbb] bg-white text-[#c42b1c]"><X size={13} strokeWidth={3} /></span></td>
-                  <td><span className={`inline-block w-[68px] px-1.5 py-0.5 ${on ? 'bg-[#a3e3a3]' : ''}`}>{m}</span></td>
-                  <td className={on ? 'bg-[#a3e3a3]' : ''}>{on ? pidOf(m) + (m === 'Apache' ? `\n${pidOf(m) + 412}` : '') : ''}</td>
-                  <td className={on ? 'bg-[#a3e3a3]' : ''}>{on ? ports : ''}</td>
+                  <td><span className={`inline-block w-[68px] px-1.5 py-0.5 ${on ? 'bg-[#c8ffc8]' : ''}`}>{m}</span></td>
+                  <td className={on ? 'bg-[#c8ffc8]' : ''}>{on ? pidOf(m) + (m === 'Apache' ? `\n${pidOf(m) + 412}` : '') : ''}</td>
+                  <td className={on ? 'bg-[#c8ffc8]' : ''}>{on ? ports : ''}</td>
                   <td className="space-x-1 whitespace-nowrap pl-2">
                     <button disabled={busy === m} onClick={() => toggle(m)} className={btn}>{on ? 'Stop' : 'Start'}</button>
                     <button disabled={!on} onClick={() => os.open('browser', { url: m === 'MySQL' ? 'localhost/phpmyadmin/' : 'localhost/' })} className={btn}>Admin</button>
@@ -69,9 +69,9 @@ export default function Xampp({ win }: { win: Win }) {
           <button className={side}><HelpCircle size={13} />Help</button><button className={side} onClick={() => os.close(win.id)}><Power size={13} />Quit</button>
         </div>
       </div>
-      <div ref={logRef} className="mt-2 min-h-0 flex-1 overflow-auto border border-[#828790] bg-white p-1 font-['Consolas',monospace] text-[12px] leading-[1.45]">
+      <div ref={logRef} className="mt-2 min-h-0 flex-1 overflow-auto border border-[#828790] bg-white p-1 font-['Arial',sans-serif] text-[13px] leading-[1.4]">
         {srv.log.map((l, i) => { const m = /^(\S+)\s+\[(.+?)\]\s+(.*)$/.exec(l); const tag = m?.[2].trim() ?? ''; return (
-          <div key={i} className="whitespace-pre"><span className="text-[#555]">{m?.[1]}</span>  <span className={tag === 'main' ? 'text-[#1a1a1a]' : tag === 'Apache' ? 'text-[#c42b1c]' : tag === 'mysql' ? 'text-[#0050a0]' : 'text-[#7a5b00]'}>[{m?.[2]}]</span>  <span className={/running/.test(l) ? 'text-[#107c10]' : /stopped|Attempting to stop/.test(l) ? 'text-[#c42b1c]' : ''}>{m?.[3] ?? l}</span></div>); })}
+          <div key={i} className="whitespace-pre"><span className="text-[#555]">{m?.[1]}</span>  <span>[</span><span className="text-[#0000ff]">{m?.[2]}</span><span>]</span>  <span className={/error|shutdown unexpectedly|Problem|blocked/i.test(l) ? 'text-[#ff0000]' : ''}>{m?.[3] ?? l}</span></div>); })}
       </div>
     </div>
   );

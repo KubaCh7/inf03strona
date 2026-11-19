@@ -52,17 +52,17 @@ export default function VSCode({ win }: { win: Win }) {
     Zaznaczenie: [], Widok: [], Przejdź: [], Uruchom: [['Otwórz w przeglądarce', '', () => { const p = D.d.path; if (p) os.open('browser', { url: p.startsWith(HTDOCS + '/') ? 'localhost/' + p.slice(HTDOCS.length + 1) : 'file:///' + p }); }]], Terminal: [], Pomoc: [],
   };
   return (
-    <div ref={kroot} className="flex h-full flex-col bg-[#1e1e1e] text-[13px] text-[#cccccc]">
+    <div ref={kroot} className="flex h-full flex-col bg-[#1f1f1f] text-[13px] text-[#cccccc]">
       <div className="flex h-[30px] items-center bg-[#323233] px-1 text-[12.5px]">
         {Object.keys(M).map((m) => <div key={m} className="relative"><button onClick={() => setMenu(menu === m ? null : m)} onMouseEnter={() => menu && setMenu(m)} className={`rounded px-2 py-0.5 ${menu === m ? 'bg-[#505050]' : 'hover:bg-[#505050]'}`}>{m}</button>
-          {menu === m && M[m].length > 0 && <div className="absolute left-0 top-full z-30 min-w-[280px] rounded-[5px] border border-[#454545] bg-[#252526] py-1 shadow-xl" onMouseLeave={() => setMenu(null)}>{M[m].map(([l, k, f]) => <button key={l} onClick={() => { setMenu(null); f(); }} className="flex w-full justify-between gap-6 px-6 py-1 text-left hover:bg-[#04395e]"><span>{l}</span><span className="text-[#999]">{k}</span></button>)}</div>}</div>)}
+          {menu === m && M[m].length > 0 && <div className="absolute left-0 top-full z-30 min-w-[280px] rounded-[5px] border border-[#454545] bg-[#181818] py-1 shadow-xl" onMouseLeave={() => setMenu(null)}>{M[m].map(([l, k, f]) => <button key={l} onClick={() => { setMenu(null); f(); }} className="flex w-full justify-between gap-6 px-6 py-1 text-left hover:bg-[#04395e]"><span>{l}</span><span className="text-[#999]">{k}</span></button>)}</div>}</div>)}
       </div>
       <div className="flex min-h-0 flex-1">
-        <div className="flex w-12 flex-col items-center gap-4 bg-[#333333] py-3 text-[#858585]">
+        <div className="flex w-12 flex-col items-center gap-4 bg-[#181818] py-3 text-[#858585]">
           <Files size={24} className="text-white" /><Search size={22} /><GitBranch size={22} /><Play size={22} /><Blocks size={22} />
           <span className="flex-1" /><UserCircle size={22} /><Settings size={22} />
         </div>
-        <div className="flex w-[240px] flex-col bg-[#252526]">
+        <div className="flex w-[240px] flex-col bg-[#181818]">
           <p className="px-5 py-2.5 text-[11px] tracking-wide">EKSPLORATOR</p>
           {folder ? (<>
             <div className="group flex items-center gap-1 px-1 py-0.5 text-[11px] font-bold uppercase"><ChevronDown size={14} /><span className="flex-1 truncate">{base(folder) || 'C:'}</span>
@@ -75,8 +75,8 @@ export default function VSCode({ win }: { win: Win }) {
           )}
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
-          {!welcome && <div className="flex h-[35px] bg-[#252526]">
-            {D.docs.map((d, i) => <div key={d.id} onClick={() => D.setCur(i)} className={`group flex items-center gap-1.5 border-r border-[#252526] px-3 ${i === D.cur ? 'border-t border-t-[#007acc] bg-[#1e1e1e] text-white' : 'bg-[#2d2d2d] text-[#969696]'}`}>
+          {!welcome && <div className="flex h-[35px] bg-[#181818]">
+            {D.docs.map((d, i) => <div key={d.id} onClick={() => D.setCur(i)} className={`group flex items-center gap-1.5 border-r border-[#181818] px-3 ${i === D.cur ? 'border-t border-t-[#0078d4] bg-[#1f1f1f] text-white' : 'bg-[#2d2d2d] text-[#969696]'}`}>
               <FileIcon path={d.name} size={14} />{d.name}<button onClick={(e) => { e.stopPropagation(); void D.closeDoc(i); }} className="ml-1 grid h-4 w-4 place-items-center rounded hover:bg-[#444]">{d.text !== d.saved ? <span className="text-[16px] leading-none group-hover:hidden">●</span> : null}<X size={13} className={d.text !== d.saved ? 'hidden group-hover:block' : ''} /></button></div>)}
           </div>}
           {!welcome && D.d.path && <div className="px-4 py-0.5 text-[12px] text-[#999]">{D.d.path.replace(/\//g, ' › ')}</div>}
@@ -91,7 +91,7 @@ export default function VSCode({ win }: { win: Win }) {
           </div>
         </div>
       </div>
-      <div className="flex h-[22px] items-center gap-4 bg-[#007acc] px-2 text-[12px] text-white">
+      <div className="flex h-[22px] items-center gap-4 border-t border-[#2b2b2b] bg-[#181818] px-2 text-[12px] text-[#cccccc]">
         <span>⊗ 0  ⚠ 0</span><span className="flex-1" /><span>Spacje: 2</span><span>UTF-8</span><span>CRLF</span><span>{LANG[ext(D.d.name)] ?? 'Plain Text'}</span><Bell size={13} />
       </div>
     </div>

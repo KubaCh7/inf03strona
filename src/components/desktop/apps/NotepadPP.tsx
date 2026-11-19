@@ -68,7 +68,7 @@ export default function NotepadPP({ win }: { win: Win }) {
         <span className="mx-1 h-4 w-px bg-[#ccc]" />{I(Search, 'Znajdź')}{I(ZoomIn, 'Powiększ', () => setZoom((z) => z + 1))}{I(ZoomOut, 'Pomniejsz', () => setZoom((z) => Math.max(8, z - 1)))}<span className="mx-1 h-4 w-px bg-[#ccc]" />{I(Globe, 'Launch in Edge', launch)}
       </div>
       <div className="flex items-end gap-0.5 bg-[#f0f0f0] px-1 pt-1">
-        {D.docs.map((d, i) => <div key={d.id} onClick={() => D.setCur(i)} className={`flex items-center gap-1.5 border border-b-0 px-2 py-[3px] ${i === D.cur ? 'border-[#aaa] border-t-2 border-t-[#f9a600] bg-white' : 'border-[#ccc] bg-[#e6e6e6] text-[#555]'}`}>
+        {D.docs.map((d, i) => <div key={d.id} onClick={() => D.setCur(i)} className={`flex items-center gap-1.5 border border-b-0 px-2 py-[3px] ${i === D.cur ? 'border-[#aaa] border-t-2 border-t-[#faaa3c] bg-white' : 'border-[#ccc] bg-[#e6e6e6] text-[#555]'}`}>
           <Save size={12} className={d.text !== d.saved ? 'text-[#d00]' : 'text-[#2a62c9]'} />{d.name}<button onClick={(e) => { e.stopPropagation(); void D.closeDoc(i); }} className="ml-1 opacity-60 hover:text-[#d00] hover:opacity-100"><X size={11} /></button></div>)}
       </div>
       <div className="min-h-0 flex-1 overflow-hidden border-t border-[#aaa]">
@@ -79,8 +79,8 @@ export default function NotepadPP({ win }: { win: Win }) {
       </div>
       <div className="flex h-[22px] items-center border-t border-[#ccc] bg-[#f0f0f0] text-[11.5px]">
         <span className="w-[230px] truncate border-r border-[#ccc] px-2">{LANGS[ext(D.d.name)]?.[1] ?? (lang === 'Normal text' ? 'Normal text file' : lang)}</span>
-        <span className="w-[230px] border-r border-[#ccc] px-2">length : {D.d.text.length.toLocaleString('en-US')}    lines : {D.d.text.split('\n').length}</span>
-        <span className="flex-1 border-r border-[#ccc] px-2">Ln : {pos.ln}    Col : {pos.col}    Pos : {pos.p}</span>
+        <span className="w-[230px] border-r border-[#ccc] px-2">Długość: {D.d.text.length.toLocaleString('pl-PL')}    Linie: {D.d.text.split('\n').length}</span>
+        <span className="flex-1 border-r border-[#ccc] px-2">Linia: {pos.ln}    Kolumna: {pos.col}    Pozycja: {pos.p}</span>
         <span className="border-r border-[#ccc] px-2">Windows (CR LF)</span><span className="border-r border-[#ccc] px-2">UTF-8</span><span className="px-2">INS</span>
       </div>
     </div>

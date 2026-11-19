@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import {
   BookOpen, CalendarCheck, Coins, ShoppingBag, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info, UserRound, Trophy, Crown,
+  Compass,
 } from 'lucide-react';
 import { levelInfo, liveStreak, useStore, weekMinutes } from '../lib/store';
 import { isDue } from '../lib/fsrs';
@@ -25,6 +26,7 @@ const NAV = [
     { to: '/nauka', label: 'Nauka', icon: GraduationCap },
     { to: '/kwerendy', label: 'Kwerendy', icon: Database },
     { to: '/arkusze', label: 'Arkusze', icon: FileText },
+    { to: '/poradnik', label: 'Jak rozwiązać arkusz', icon: Compass },
     { to: '/teoria', label: 'Teoria', icon: BookOpen },
     { to: '/fiszki', label: 'Fiszki', icon: Layers },
     { to: '/sprint', label: 'Sprint', icon: Zap },
@@ -120,7 +122,7 @@ export function RightPanel() {
           <Layers size={16} className="text-muted" />
         </div>
         <p className="display mt-1 text-3xl font-bold tabular">{due}<span className="ml-1 text-base font-normal text-muted">fiszek czeka</span></p>
-        <p className="text-xs text-muted">+ {Math.min(newLeft, settings.newCardsPerDay)} nowych dostępnych</p>
+        <p className="text-xs text-muted">+ {Math.min(newLeft, settings.newCardsPerDay ?? 15) || 0} nowych dostępnych</p>
         <NavLink to="/fiszki" className="btn btn-primary mt-3 w-full">Powtórz teraz</NavLink>
       </div>
       <div className="card p-4">

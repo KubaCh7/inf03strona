@@ -12,8 +12,9 @@ function T({ s }: { s: string }) {
 
 type Step = { title: string; time: string; items: string[]; extra?: React.ReactNode };
 
-export default function ExamFlow() {
-  const { code = '' } = useParams();
+export default function ExamFlow({ code: fixed, embedded }: { code?: string; embedded?: boolean } = {}) {
+  const params = useParams();
+  const code = fixed ?? params.code ?? '';
   const c = useContent();
   const [reqs, setReqs] = useState<Reqs | null | undefined>(undefined);
   const [showPass, setShowPass] = useState(false);
@@ -96,9 +97,9 @@ export default function ExamFlow() {
   const toggle = (i: number) => setDone((d) => (d.includes(i) ? d.filter((x) => x !== i) : [...d, i]));
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <Link to={`/arkusze/${encodeURIComponent(code)}`} className="inline-flex items-center gap-1 text-sm text-muted hover:underline"><ArrowLeft size={14} />{code}</Link>
-      <p className="eyebrow mt-3">Jak rozwiązać egzamin krok po kroku</p>
+    <div className={embedded ? '' : 'mx-auto max-w-3xl'}>
+      {!embedded && <Link to={`/arkusze/${encodeURIComponent(code)}`} className="inline-flex items-center gap-1 text-sm text-muted hover:underline"><ArrowLeft size={14} />{code}</Link>}
+      <p className="eyebrow mt-3">{embedded ? `${code} · krok po kroku` : 'Jak rozwiązać egzamin krok po kroku'}</p>
       <h1 className="display text-2xl font-extrabold md:text-3xl">{sheet.title}</h1>
       <p className="mt-1 text-muted">Kolejność pracy na stanowisku egzaminacyjnym dla tego arkusza. Odhaczaj kroki, zapamiętujemy postęp.</p>
       <div className="mt-4 flex flex-wrap gap-2">

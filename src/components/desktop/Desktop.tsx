@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, Power, Wifi, Volume2, ChevronUp, Camera, Scissors, Copy, ClipboardPaste, PenLine, Trash2, Plus, RotateCw, LayoutList, ArrowUpDown, Monitor, X, Brush } from 'lucide-react';
+import { Search, Power, Wifi, Volume2, ChevronUp, Camera, Scissors, Copy, ClipboardPaste, PenLine, Trash2, Plus, RotateCw, LayoutList, ArrowUpDown, Monitor, X, Brush, Maximize, Minimize } from 'lucide-react';
 import type { Sheet } from '../../lib/types';
-import { Vfs, useVfs, DESKTOP, RECYCLE, base, isImage, isText, join } from '../../lib/vfs';
+import { Vfs, useVfs, DESKTOP, RECYCLE, base, parent, isImage, isText, join, win as winPath } from '../../lib/vfs';
 import { MysqlServer } from '../../lib/mysqlServer';
 import { OSContext, APPS, FileIcon, SpecialIcon, defaultApp, OPEN_WITH, DND, dragStart, dropTo, isFileDrag, type AppId, type Win, type OS, type PickOpts } from './os';
 import Window from './Window';
@@ -88,7 +88,12 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
     setWins((ws) => [...ws, { id, app, title: A.name, args, x: Math.max(10, (W - w) / 2 - 60 + n * 28), y: Math.max(6, (H - h) / 2 - 30 + n * 24), w, h, min: false, max: w >= W - 60, z: ++zTop.current }]);
     setActive(id);
   }, [wins.length]);
-  const close = useCallback((id: number) => setWins((ws) => ws.filter((w) => w.id !== id)), []);
+  // zamkniecie z animacja (okno znika po 150 ms, jak w Windows)
+  const [closing, setClosing] = useState<number[]>([]);
+  const close = useCallback((id: number) => {
+    setClosing((c) => [...c, id]);
+    setTimeout(() => { setWins((ws) => ws.filter((w) => w.id !== id)); setClosing((c) => c.filter((x) => x !== id)); }, 150);
+  }, []);
   const openPath = useCallback((p: string) => {
     if (vfs.isDir(p)) return open('explorer', { path: p });
     open(defaultApp(p), { path: p });
@@ -225,11 +230,30 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
       else if (e.metaKey && aw && e.key === 'ArrowDown') { e.preventDefault(); patch(aw.id, aw.max ? { max: false } : { min: true }); }
       else if (e.metaKey && aw && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); snapTo(aw.id, e.key === 'ArrowLeft' ? 'left' : 'right'); }
       else if (e.altKey && e.key === 'F4' && aw) { e.preventDefault(); close(aw.id); }
+      // Ctrl+W zamyka okno w maszynie (aplikacje z kartami obsluguja to same), F5/Ctrl+R nie przeladowuje strony
+      else if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'w') { e.preventDefault(); if (aw && !['notepad', 'notepadpp', 'vscode', 'paint'].includes(aw.app)) close(aw.id); }
+      else if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r')) { e.preventDefault(); }
+      else if (e.key === 'F11') { e.preventDefault(); void toggleFull(); }
     };
     const up = (e: KeyboardEvent) => { if ((e.key === 'Meta' || e.key === 'OS') && winKey.current) { winKey.current = false; setStart((s) => !s); } };
     window.addEventListener('keydown', down); window.addEventListener('keyup', up);
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
   });
+  /** Pelny ekran z blokada klawiatury (Chrome/Edge): Ctrl+W, Ctrl+N, Win itp. trafiaja do maszyny, nie do przegladarki. */
+  const [full, setFull] = useState(false);
+  const [fullTip, setFullTip] = useState(false);
+  useEffect(() => {
+    const ch = () => { const on = !!document.fullscreenElement; setFull(on); if (!on) { try { (navigator as unknown as { keyboard?: { unlock: () => void } }).keyboard?.unlock(); } catch { /* */ } } };
+    document.addEventListener('fullscreenchange', ch); return () => document.removeEventListener('fullscreenchange', ch);
+  }, []);
+  const toggleFull = async () => {
+    try {
+      if (document.fullscreenElement) { await document.exitFullscreen(); return; }
+      await root.current?.requestFullscreen({ navigationUI: 'hide' });
+      await (navigator as unknown as { keyboard?: { lock: (k?: string[]) => Promise<void> } }).keyboard?.lock();
+      setFullTip(true); setTimeout(() => setFullTip(false), 6000);
+    } catch { void os.alert('Pełny ekran', 'Ta przeglądarka nie pozwoliła włączyć pełnego ekranu.', 'warn'); }
+  };
   const patch = (id: number, p: Partial<Win>) => setWins((ws) => ws.map((x) => (x.id === id ? { ...x, ...p } : x)));
   const [snapHint, setSnapHint] = useState<'max' | 'left' | 'right' | null>(null);
   const snapTo = (id: number, side: 'max' | 'left' | 'right') => {
@@ -262,6 +286,11 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
   const finish = () => void os.confirm('Zakończ egzamin', 'Zakończyć egzamin i oddać pracę do oceny?\nSprawdzony zostanie folder z numerem zdającego na pulpicie.').then((ok) => ok && onFinish());
   const apps: AppId[] = [...PINNED, 'pdf'];
   const found = apps.filter((a) => APPS[a].name.toLowerCase().includes(q.toLowerCase()));
+  // wyszukiwanie w calym dysku jak w Windows: foldery i pliki (bez ukrytych, Kosza i AppData)
+  const ql = q.trim().toLowerCase();
+  const hits = !ql ? [] : [...vfs.nodes.keys()].filter((k) => !/\/\.|\$Recycle\.Bin|\/AppData(\/|$)/i.test(k) && base(k).toLowerCase().includes(ql))
+    .sort((x, y) => Number(base(y).toLowerCase() === ql) - Number(base(x).toLowerCase() === ql) || Number(base(y).toLowerCase().startsWith(ql)) - Number(base(x).toLowerCase().startsWith(ql)) || Number(vfs.isDir(y)) - Number(vfs.isDir(x)) || x.length - y.length).slice(0, 8);
+  const openHit = (p: string) => { openPath(p); setQ(''); setStart(false); };
 
   return (
     <OSContext.Provider value={os}>
@@ -300,7 +329,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
 
         {/* okna */}
         {wins.map((w) => (
-          <Window key={w.id} win={w} ghost={w.app === 'sevenzip' && !!w.args.extract} active={active === w.id} dark={DARK.includes(w.app)} onFocus={() => active !== w.id && focus(w.id)} onClose={() => close(w.id)}
+          <Window key={w.id} win={w} closing={closing.includes(w.id)} ghost={w.app === 'sevenzip' && !!w.args.extract} active={active === w.id} dark={DARK.includes(w.app)} onFocus={() => active !== w.id && focus(w.id)} onClose={() => close(w.id)}
             onChange={(p) => patch(w.id, p)} onSnapHint={setSnapHint} onSnap={(side) => snapTo(w.id, side)}
             bar={w.app === 'explorer' ? <span className="flex h-full flex-1 items-end gap-1 pl-1"><span className="mb-[-1px] flex h-[30px] w-[230px] items-center gap-2 rounded-t-[8px] bg-[#f9f9f9] px-3 text-[12px] shadow-[0_-1px_2px_rgba(0,0,0,.05)]">{APPS.explorer.icon(16)}<span className="flex-1 truncate">{w.title}</span><button onPointerDown={(e) => e.stopPropagation()} onClick={() => close(w.id)} className="rounded p-0.5 hover:bg-black/10"><X size={12} /></button></span><button onPointerDown={(e) => e.stopPropagation()} onClick={() => open('explorer')} className="mb-1 rounded p-1 hover:bg-black/[.06]" title="Nowa karta"><Plus size={14} /></button><span className="flex-1" /></span> : undefined}>
             <Suspense fallback={<div className="grid h-full place-items-center bg-white text-[#666]">Uruchamianie…</div>}>{renderApp(w)}</Suspense>
@@ -308,16 +337,40 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
         ))}
         {snapHint && <div className="pointer-events-none absolute z-[130] rounded-[8px] border border-white/60 bg-white/25 backdrop-blur-sm transition-all" style={snapHint === 'max' ? { left: 6, top: 6, right: 6, bottom: 54 } : snapHint === 'left' ? { left: 6, top: 6, width: 'calc(50% - 9px)', bottom: 54 } : { right: 6, top: 6, width: 'calc(50% - 9px)', bottom: 54 }} />}
 
+        {fullTip && <div data-noshot="1" className="pointer-events-none absolute left-1/2 top-4 z-[300] -translate-x-1/2 rounded-[8px] bg-black/75 px-4 py-2 text-[13px] text-white shadow-lg">Pełny ekran: skróty klawiszowe działają w maszynie. Aby wyjść, przytrzymaj Esc.</div>}
         {/* menu Start */}
         {start && (
-          <div onPointerDown={(e) => e.stopPropagation()} className="absolute bottom-[56px] left-1/2 z-[150] w-[640px] -translate-x-1/2 overflow-hidden rounded-[8px] border border-black/10 bg-[#f3f3f3]/95 shadow-[0_16px_48px_rgba(0,0,0,.35)] backdrop-blur-xl">
+          <div onPointerDown={(e) => e.stopPropagation()} className="p03-start absolute bottom-[56px] left-1/2 z-[150] w-[640px] -translate-x-1/2 overflow-hidden rounded-[8px] border border-black/10 bg-[#f3f3f3]/95 shadow-[0_16px_48px_rgba(0,0,0,.35)] backdrop-blur-xl">
             <div className="p-6 pb-4">
-              <label className="mb-5 flex items-center gap-2 rounded-full border border-black/10 border-b-[#0067c0] bg-white px-4 py-2"><Search size={15} className="text-[#666]" /><input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && found[0]) { found[0] === 'pdf' ? open('pdf') : open(found[0]); setQ(''); } if (e.key === 'Escape') setStart(false); }} placeholder="Wpisz tutaj, aby wyszukać" className="flex-1 bg-transparent outline-none" /></label>
-              <div className="mb-3 flex items-center justify-between"><p className="font-semibold">{q ? 'Najlepsze dopasowanie' : 'Przypięte'}</p>{!q && <span className="rounded-[4px] bg-white px-2 py-0.5 text-[12px]">Wszystkie aplikacje ›</span>}</div>
-              <div className="grid min-h-[150px] grid-cols-6 content-start gap-1">
-                {found.map((a) => <button key={a} onClick={() => { open(a); setQ(''); }} className="flex flex-col items-center gap-1.5 rounded-[4px] p-2 text-[11.5px] hover:bg-black/[.05]">{APPS[a].icon(32)}<span className="line-clamp-2 text-center leading-tight">{a === 'pdf' ? 'Arkusz' : APPS[a].name}</span></button>)}
-                {!found.length && <p className="col-span-6 py-6 text-center text-[#666]">Brak wyników dla „{q}”.</p>}
-              </div>
+              <label className="mb-5 flex items-center gap-2 rounded-full border border-black/10 border-b-[#0067c0] bg-white px-4 py-2"><Search size={15} className="text-[#666]" /><input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { if (found[0]) { open(found[0]); setQ(''); setStart(false); } else if (hits[0]) openHit(hits[0]); } if (e.key === 'Escape') setStart(false); }} placeholder="Wpisz tutaj, aby wyszukać" className="flex-1 bg-transparent outline-none" /></label>
+              {!q ? <>
+                <div className="mb-3 flex items-center justify-between"><p className="font-semibold">Przypięte</p><span className="rounded-[4px] bg-white px-2 py-0.5 text-[12px]">Wszystkie aplikacje ›</span></div>
+                <div className="grid min-h-[150px] grid-cols-6 content-start gap-1">
+                  {found.map((a) => <button key={a} onClick={() => { open(a); setQ(''); }} className="flex flex-col items-center gap-1.5 rounded-[4px] p-2 text-[11.5px] hover:bg-black/[.05]">{APPS[a].icon(32)}<span className="line-clamp-2 text-center leading-tight">{a === 'pdf' ? 'Arkusz' : APPS[a].name}</span></button>)}
+                </div>
+              </> : (() => {
+                // wyniki jak w wyszukiwarce Windows: najlepsze dopasowanie, potem aplikacje i pliki
+                type R = { key: string; icon: React.ReactNode; name: string; sub: string; run: () => void };
+                const ra: R[] = found.map((a) => ({ key: a, icon: APPS[a].icon(24), name: a === 'pdf' ? 'Arkusz' : APPS[a].name, sub: 'Aplikacja', run: () => { open(a); setQ(''); setStart(false); } }));
+                const rf: R[] = hits.map((h) => ({ key: h, icon: <FileIcon path={h} dir={vfs.isDir(h)} size={24} />, name: base(h), sub: vfs.isDir(h) ? `Folder plików · ${winPath(parent(h))}` : winPath(parent(h)), run: () => openHit(h) }));
+                const all = [...ra, ...rf]; const best = all[0];
+                if (!best) return <p className="py-10 text-center text-[#666]">Brak wyników dla „{q}”.</p>;
+                const row = (r: R) => <button key={r.key} onClick={r.run} className="flex w-full items-center gap-3 rounded-[4px] px-2 py-1.5 text-left hover:bg-black/[.05]">{r.icon}<span className="min-w-0 flex-1"><span className="block truncate text-[12.5px]">{r.name}</span><span className="block truncate text-[11px] text-[#666]">{r.sub}</span></span></button>;
+                const restA = ra.filter((r) => r !== best), restF = rf.filter((r) => r !== best);
+                return <div className="grid min-h-[260px] grid-cols-[1fr_250px] gap-4">
+                  <div className="min-w-0 space-y-3">
+                    {restA.length > 0 && <div><p className="mb-1 font-semibold">Aplikacje</p>{restA.map(row)}</div>}
+                    {restF.length > 0 && <div><p className="mb-1 font-semibold">{restF.every((r) => vfs.isDir(r.key)) ? 'Foldery' : restF.some((r) => vfs.isDir(r.key)) ? 'Foldery i dokumenty' : 'Dokumenty'}</p><div className="max-h-[230px] overflow-auto">{restF.map(row)}</div></div>}
+                    {!restA.length && !restF.length && <p className="text-[12px] text-[#666]">Brak innych wyników.</p>}
+                  </div>
+                  <div className="flex flex-col items-center rounded-[8px] bg-white/70 p-5 text-center">
+                    <p className="mb-3 self-start font-semibold">Najlepsze dopasowanie</p>
+                    <span className="scale-[1.6] py-3">{best.icon}</span>
+                    <p className="mt-3 w-full truncate font-semibold">{best.name}</p><p className="w-full truncate text-[12px] text-[#666]">{best.sub}</p>
+                    <button onClick={best.run} className="mt-4 rounded-[4px] border border-black/10 bg-white px-4 py-1 text-[12px] hover:bg-[#f5f5f5]">Otwórz</button>
+                  </div>
+                </div>;
+              })()}
               {!q && <><p className="mb-2 mt-4 font-semibold">Polecane</p><div className="grid grid-cols-2 gap-1">{vfs.list(DESKTOP).filter((p) => !base(p).startsWith('.')).slice(0, 4).map((p) => <button key={p} onClick={() => { openPath(p); setStart(false); }} className="flex items-center gap-3 rounded-[4px] p-2 text-left hover:bg-black/[.05]"><FileIcon path={p} dir={vfs.isDir(p)} size={28} /><span className="truncate text-[12px]">{base(p)}<br /><span className="text-[#666]">Pulpit</span></span></button>)}</div></>}
             </div>
             <div className="flex items-center justify-between border-t border-black/[.06] bg-black/[.03] px-8 py-3">
@@ -327,7 +380,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
           </div>
         )}
         {cal && (
-          <div onPointerDown={(e) => e.stopPropagation()} className="absolute bottom-[56px] right-2 z-[150] w-[330px] rounded-[8px] border border-black/10 bg-[#f3f3f3]/95 p-4 text-[#1a1a1a] shadow-2xl backdrop-blur-xl">
+          <div onPointerDown={(e) => e.stopPropagation()} className="p03-start absolute bottom-[56px] right-2 z-[150] w-[330px] rounded-[8px] border border-black/10 bg-[#f3f3f3]/95 p-4 text-[#1a1a1a] shadow-2xl backdrop-blur-xl">
             <p className="mb-3 font-semibold">{d.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
             <p className="mb-2 text-[13px] capitalize">{d.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' })}</p>
             <div className="grid grid-cols-7 gap-1 text-center text-[12px]">{['pn', 'wt', 'śr', 'cz', 'pt', 'so', 'nd'].map((x) => <span key={x} className="text-[#666]">{x}</span>)}
@@ -335,7 +388,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
           </div>
         )}
         {taskMenu && (
-          <div onPointerDown={(e) => e.stopPropagation()} style={{ left: Math.max(4, taskMenu.x - 120) }} className="absolute bottom-[54px] z-[150] w-[240px] rounded-[8px] border border-black/10 bg-[#f9f9f9]/95 p-1 text-[12.5px] shadow-2xl backdrop-blur">
+          <div onPointerDown={(e) => e.stopPropagation()} style={{ left: Math.max(4, taskMenu.x - 120) }} className="p03-pop-up absolute bottom-[54px] z-[150] w-[240px] rounded-[8px] border border-black/10 bg-[#f9f9f9]/95 p-1 text-[12.5px] shadow-2xl backdrop-blur">
             <p className="flex items-center gap-2 px-2 py-1.5 font-semibold">{APPS[taskMenu.app].icon(16)}{APPS[taskMenu.app].name}</p>
             <button onClick={() => { open(taskMenu.app); setTaskMenu(null); }} className="block w-full rounded px-3 py-1.5 text-left hover:bg-black/[.05]">Otwórz nowe okno</button>
             {wins.some((w) => w.app === taskMenu.app) && <button onClick={() => { setWins((ws) => ws.filter((w) => w.app !== taskMenu.app)); setTaskMenu(null); }} className="block w-full rounded px-3 py-1.5 text-left hover:bg-black/[.05]">{wins.filter((w) => w.app === taskMenu.app).length > 1 ? 'Zamknij wszystkie okna' : 'Zamknij okno'}</button>}
@@ -359,12 +412,13 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
                   onClick={() => { if (!ws.length) open(a); else { const w = ws[ws.length - 1]; if (act) patch(w.id, { min: true }); else focus(w.id); } }}
                   className={`relative grid h-10 w-10 place-items-center rounded-[4px] ${act ? 'bg-white/80' : 'hover:bg-white/60'}`}>
                   {APPS[a].icon(24)}
-                  {ws.length > 0 && <span className={`absolute bottom-0.5 h-[3px] rounded-full ${act ? 'w-4 bg-[#0067c0]' : 'w-1.5 bg-[#777]'}`} />}
+                  {ws.length > 0 && <span className={`absolute bottom-0.5 h-[3px] rounded-full transition-all duration-200 ${act ? 'w-4 bg-[#0067c0]' : 'w-1.5 bg-[#777]'}`} />}
                 </button>
               );
             })}
           </div>
           <div className="ml-auto flex items-center gap-1 text-[12px] text-[#1a1a1a]">
+            <button data-noshot="1" onClick={() => void toggleFull()} title={full ? 'Wyjdź z pełnego ekranu (przytrzymaj Esc albo F11)' : 'Pełny ekran: skróty (Ctrl+W, Win, Alt+Tab) działają w maszynie, a nie w przeglądarce'} className="flex items-center gap-1.5 rounded-[4px] border border-black/10 bg-white/80 px-2 py-1.5 hover:bg-white">{full ? <Minimize size={15} /> : <Maximize size={15} />}</button>
             <button data-noshot="1" onClick={() => void screenshot()} title="Zrzut ekranu (PrtSc / Win+Shift+S)" className="flex items-center gap-1.5 rounded-[4px] border border-black/10 bg-white/80 px-2.5 py-1.5 font-semibold hover:bg-white"><Camera size={15} className="text-[#0067c0]" />Zrzut ekranu</button>
             <ChevronUp size={14} className="mx-1" /><span className="px-1">POL</span><Wifi size={15} className="mx-1" /><Volume2 size={15} className="mx-1" />
             <button onClick={() => setCal((v) => !v)} className="ml-1 rounded-[4px] px-2 py-0.5 text-right leading-tight hover:bg-white/70">{d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}<br />{d.toLocaleDateString('pl-PL')}</button>

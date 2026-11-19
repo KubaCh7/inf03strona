@@ -241,9 +241,11 @@ export async function examine({ sheet, files, images: imgs0, candidate, folder, 
     if (reqs.files.some((f) => /^przegl/i.test(f))) items.push({ group: 'Pliki i folder', label: 'przeglądarka.txt z nazwą przeglądarki', points: 1, ok: !!txt && files[txt].trim().length > 2, note: txt ? undefined : 'Utwórz plik przeglądarka.txt i wpisz nazwę przeglądarki (np. Google Chrome).' });
   }
   const cand = candidate.trim();
-  const folderOk = folder != null ? !!cand && folder === cand : !!cand;
+  // folder z samych cyfr liczy sie jako folder z numerem (PESEL nie musi byc prawdziwy)
+  const digits = (x: string) => /^\d+$/.test(x.trim());
+  const folderOk = folder != null ? digits(folder) || (!!cand && folder === cand) : !!cand;
   items.push({ group: 'Pliki i folder', label: 'Folder nazwany numerem zdającego', points: 1, ok: folderOk,
-    note: !cand ? 'Wpisz numer zdającego (PESEL) powyżej: pod tą nazwą pobierzesz folder ZIP.' : folder != null && folder !== cand ? `Wgrany folder nazywa się „${folder}”, a numer zdającego to „${cand}”.` : undefined });
+    note: folderOk ? undefined : folder != null ? `Folder nazywa się „${folder}”. Nazwij go samymi cyframi (numer PESEL albo numer zdającego).` : 'Wpisz numer zdającego (PESEL) powyżej: pod tą nazwą pobierzesz folder ZIP.' });
 
   // --- KWERENDY ---
   step('Kwerendy');

@@ -116,7 +116,7 @@ export async function readCandidateFolder(attempt: string, candidate: string) {
   const v = new Vfs(`vfs:${attempt}`); await v.load();
   const dirs = v.list(DESKTOP).filter((p) => v.isDir(p));
   const exact = dirs.find((p) => base(p) === candidate);
-  const folder = exact ?? dirs.find((p) => /^\d{6,}$/.test(base(p))) ?? null;
+  const folder = exact ?? dirs.find((p) => /^\d+$/.test(base(p).trim())) ?? null;
   const files: Record<string, string> = {}, images: Record<string, string> = {};
   if (folder) for (const f of v.tree(folder)) {
     if (f.node.bin) { if (isImage(f.path)) images[base(f.path)] = f.node.data ?? ''; }
