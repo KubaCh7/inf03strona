@@ -41,7 +41,18 @@ function insideTag(ctx: CompletionContext) {
 export function emmetSource(kind: 'markup' | 'stylesheet') {
   return (ctx: CompletionContext): CompletionResult | null => {
     if (kind === 'markup' && insideTag(ctx)) return null;
-    const word = ctx.matchBefore(kind === 'markup' ? /[\w:!.#>*+\-$@^[\]{}()=%]+$/ : /[\w:!@#.\-+%$]+$/);
+    let word = ctx.matchBefore(kind === 'markup' ? /[\w:!.#>*+\-$@^[\]{}()=%]+$/ : /[\w:!@#.\-+%$]+$/);
+    // „<header>h1”: dopasowanie zlapaloby „header>h1”; skrot zaczyna sie dopiero za znacznikiem
+    if (word && kind === 'markup') {
+      const lineStart = ctx.state.doc.lineAt(ctx.pos).from;
+      const lead = ctx.state.sliceDoc(lineStart, word.from);
+      const lastLt = lead.lastIndexOf('<'), lastGt = lead.lastIndexOf('>');
+      if (lastLt > lastGt) {
+        const cut = word.text.indexOf('>');
+        if (cut === -1) return null;
+        word = { from: word.from + cut + 1, to: word.to, text: word.text.slice(cut + 1) };
+      }
+    }
     if (!word || (word.from === word.to && !ctx.explicit)) return null;
     const typed = word.text;
     if (kind === 'markup') {
