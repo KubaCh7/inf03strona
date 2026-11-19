@@ -53,3 +53,13 @@ export function inlineAssets(doc: string, assets: Record<string, string>) {
   }
   return d;
 }
+
+/** Grafiki z archiwum leza w jednym katalogu: "img/foto.jpg" / "./obrazy/foto.jpg" -> "foto.jpg", jesli taki plik jest w archiwum. */
+export function flattenPaths(doc: string, names: string[]) {
+  let d = doc;
+  for (const n of names) {
+    const esc = n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    d = d.replace(new RegExp(`(["'(=]\\s*)(?:\\./)?(?:[\\w\\-]+/)+${esc}(?=["')\\s>])`, 'g'), `$1${n}`);
+  }
+  return d;
+}

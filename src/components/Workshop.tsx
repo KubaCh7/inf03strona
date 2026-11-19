@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Expand, Shrink, AArrowDown, AArrowUp, Copy, Check, X } from 'lucide-react';
+import { Brush, Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Expand, Shrink, AArrowDown, AArrowUp, Copy, Check, X } from 'lucide-react';
 import type { Sheet } from '../lib/types';
 import PdfViewer, { preloadPdf } from './PdfViewer';
 import type { Database as Db } from 'sql.js';
@@ -8,8 +8,10 @@ import { buildSrcDoc } from '../lib/preview';
 import { freshDb, getSql, run, withMissingTables, type QueryResult } from '../lib/sql';
 import { Loading } from './ui';
 import Split from './Split';
-import { inlineAssets, loadAssets, readAsDataUrl, saveAssets } from '../lib/assetsStore';
+import { flattenPaths, inlineAssets, loadAssets, readAsDataUrl, saveAssets } from '../lib/assetsStore';
 import PhpMyAdmin from './PhpMyAdmin';
+import type { Reqs } from '../lib/examiner';
+const ImageEditor = lazy(() => import('./ImageEditor'));
 
 const Editor = lazy(() => import('./Editor'));
 
@@ -64,6 +66,25 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   const [edMax, setEdMax] = useState(false);
   const [dbVer, setDbVer] = useState(0);
   const [images, setImages] = useState<Record<string, string>>({});
+  const [editor, setEditor] = useState(false);
+  const [reqs, setReqs] = useState<Reqs | null>(null);
+  const edMode = useStore((s) => s.settings.imageEditor ?? 'gimp');
+  useEffect(() => { if (sheet) void import('../lib/examiner').then((m) => m.loadReqs()).then((r) => setReqs(r[sheet.code] ?? null)); }, [sheet]);
+  /** Zrzuty kwN / import robia sie same po wykonaniu kwerend (jak PrtSc na egzaminie). */
+  const shotsBusy = useRef(false);
+  const refreshShots = useCallback(async (fs: Record<string, string>) => {
+    const a = sheet?.assets;
+    if (!sheet || !a?.sql || shotsBusy.current) return;
+    shotsBusy.current = true;
+    try {
+      const dump = await fetch(`${a.dir}/${a.sql}`).then((r) => (r.ok ? r.text() : null));
+      const { ensureShots } = await import('../lib/autoShots');
+      const cur = await loadAssets(storageKey);
+      const next = await ensureShots({ code: sheet.code, storageKey, files: fs, dump, dumpFile: a.sql, images: cur });
+      if (Object.keys(next).length !== Object.keys(cur).length || Object.keys(next).some((k) => next[k] !== cur[k])) setImages((i) => ({ ...i, ...next }));
+    } catch { /* zrzuty sa dodatkiem */ } finally { shotsBusy.current = false; }
+  }, [sheet, storageKey]);
+  const saveImage = (name: string, url: string) => setImages((i) => { const n = { ...i, [name]: url }; void saveAssets(storageKey, n); return n; });
   const [db, setDb] = useState<Db | null>(null);
   const [dbInfo, setDbInfo] = useState<string>('Brak bazy. Wczytaj plik .sql albo utwórz tabele kwerendą.');
   const [dbName, setDbName] = useState('baza');
@@ -122,7 +143,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
           const d0 = db ?? (dbReady.current ? await dbReady.current : null);
           const r = await runPhp({ files, entry, db: d0, method: phpReq?.method ?? 'GET', query: phpReq?.query ?? '', post: phpReq?.method === 'POST' ? phpReq.post : undefined });
           if (id !== phpRun.current) return;
-          setDoc(inlineAssets(buildSrcDoc({ ...files, [entry]: r.html }, entry, base), images));
+          setDoc(inlineAssets(flattenPaths(buildSrcDoc({ ...files, [entry]: r.html }, entry, base), sheet?.assets?.files ?? []), images));
           setLogs(r.errors.map((e) => ({ type: /Fatal|Parse/.test(e) ? 'error' : 'warn', text: 'PHP: ' + e })));
           if (phpReq?.method === 'POST' || /^\s*(INSERT|UPDATE|DELETE)/im.test(files[entry])) setDbVer((v) => v + 1);
         } catch (e) {
@@ -131,7 +152,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
         } finally { if (id === phpRun.current) setPhpBusy(false); }
         return;
       }
-      setDoc(inlineAssets(buildSrcDoc(files, entry, base), images));
+      setDoc(inlineAssets(flattenPaths(buildSrcDoc(files, entry, base), sheet?.assets?.files ?? []), images));
       setLogs([]);
     }, /\.php$/i.test(entry) ? 600 : 300);
     return () => clearTimeout(t);
@@ -217,7 +238,8 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
       const loaded = db ?? (dbReady.current ? await dbReady.current : null);
       const d = loaded ?? (await freshDb());
       if (d !== db) setDb(d);
-      const r = run(d, text);
+      const { cleanKwerendy } = await import('../lib/examiner');
+      const r = run(d, /\.txt$/i.test(active) ? cleanKwerendy(text) : text);
       setSqlOut(r);
       setDbVer((v) => v + 1);
       const t = d.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")[0];
@@ -225,6 +247,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
     } catch (e) {
       setSqlOut({ results: [], skipped: [], error: (e as Error).message });
     }
+    if (/kwerendy\.txt$/i.test(active)) void refreshShots(files);
     setBottom('sql'); setEdMax(false); setTab((x) => (x === 'kod' && !isDesktopNow() ? 'sql' : x));
   }
   async function addImages(list: FileList | null) {
@@ -390,6 +413,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
       ))}
       <button className="btn btn-ghost px-2 py-1 text-xs" onClick={addFile}><Plus size={14} />Plik</button>
       <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => imgRef.current?.click()}><ImagePlus size={14} />Grafiki / pliki</button>
+      <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => setEditor(true)} title="Edytor grafiki w układzie GIMP albo Photoshop"><Brush size={14} />Edytor grafiki</button>
       {!sheet?.assets?.sql && <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => sqlRef.current?.click()}><Upload size={14} />Zrzut .sql</button>}
       <span className="ml-auto flex gap-1.5">
         {sheet?.files.archivePassword && (
@@ -467,6 +491,18 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
           </div>
         );
       })()}
+      {editor && (
+        <Suspense fallback={null}>
+          <ImageEditor
+            mode={edMode} onMode={(m) => setSettings({ imageEditor: m })}
+            sources={[...(sheet?.assets?.files ?? []).filter((f) => /\.(png|jpe?g|gif|bmp|webp)$/i.test(f) && !f.startsWith('_')).map((f) => ({ name: f, url: `${sheet!.assets!.dir}/${f}` })),
+              ...Object.entries(images).filter(([n]) => /\.(png|jpe?g|gif|bmp|webp)$/i.test(n) && !/^(kw\d|kwerenda\d|import)/i.test(n)).map(([name, url]) => ({ name: `${name} (twoja)`, url }))]}
+            hints={reqs?.graphics.map((g) => g.text) ?? []}
+            defaultName={reqs?.graphics.find((g) => g.out && !images[g.out])?.out ?? reqs?.graphics[0]?.out ?? undefined}
+            paramShot={reqs?.shots.find((x) => !x.import && !/^(kw|kwerenda)\d/i.test(x.name)) ?? null}
+            onSave={saveImage} onClose={() => setEditor(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }

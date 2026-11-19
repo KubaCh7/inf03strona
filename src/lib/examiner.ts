@@ -5,13 +5,13 @@ import type { Sheet } from './types';
 import type { QueryResult } from './sql';
 import { TAG_RULES, PHP_RULES } from './checker';
 import { buildSrcDoc } from './preview';
-import { inlineAssets } from './assetsStore';
+import { flattenPaths, inlineAssets } from './assetsStore';
 import { loadQueries, checkQuery, getSolutions, freshFromDump } from './queries';
 
 export type Group = 'Pliki i folder' | 'Kwerendy' | 'Zrzuty ekranu' | 'Grafika' | 'Strona' | 'Wygląd';
 export type Item = {
   group: Group; label: string; points: number;
-  ok: boolean | null; // null = do sprawdzenia recznie
+  ok: boolean; got?: number; // got: punkty czesciowe (np. wyglad)
   note?: string; thumb?: string; user?: QueryResult; expected?: QueryResult;
   compare?: { mine: string; sheet: string; pct: number; caption: string };
 };
@@ -86,8 +86,10 @@ function cssColors(css: string) {
 }
 
 // ---------- kwerendy z pliku ----------
+/** Usuwa komentarze i numerki typu „1.” / „Zapytanie 2:” z pliku kwerend (zostaje czysty SQL). */
+export const cleanKwerendy = (txt: string) => txt.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/^\s*(--|#).*$/, '').replace(/^\s*(?:zapytanie|kwerenda)\s*\d+\s*[:.)-]?\s*/i, '').replace(/^\s*\d+\s*[.)]\s+/, '')).join('\n');
 export function splitQueries(txt: string): string[] {
-  const clean = txt.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/^\s*(--|#).*$/, '').replace(/^\s*(?:zapytanie|kwerenda)\s*\d+\s*[:.)-]?\s*/i, '').replace(/^\s*\d+\s*[.)]\s+/, '')).join('\n');
+  const clean = cleanKwerendy(txt);
   const out: string[] = []; let cur = '', q: string | null = null;
   for (const ch of clean) {
     if (q) { cur += ch; if (ch === q) q = null; continue; }
@@ -132,12 +134,12 @@ const textOf = (d: Document) => [d.title, d.body?.textContent ?? '', ...Array.fr
 const squash = (s: string) => s.replace(/\s+/g, ' ').replace(/\s*([:,.;!?])/g, '$1').trim().toLowerCase();
 
 // ---------- wyglad ----------
-async function snapshot(files: Record<string, string>, entryHtml: string, entry: string, base: string | undefined, images: Record<string, string>, w: number, h: number): Promise<string | null> {
+async function snapshot(files: Record<string, string>, entryHtml: string, entry: string, base: string | undefined, images: Record<string, string>, w: number, h: number, archive: string[] = []): Promise<string | null> {
   const html2canvas = (await import('html2canvas')).default;
   const iframe = document.createElement('iframe');
   iframe.setAttribute('sandbox', 'allow-same-origin');
   iframe.style.cssText = `position:fixed;left:-10000px;top:0;width:${w}px;height:${h}px;border:0;background:#fff`;
-  iframe.srcdoc = inlineAssets(buildSrcDoc({ ...files, [entry]: entryHtml }, entry, base), images);
+  iframe.srcdoc = inlineAssets(flattenPaths(buildSrcDoc({ ...files, [entry]: entryHtml }, entry, base), archive), images);
   document.body.appendChild(iframe);
   try {
     await new Promise<void>((res) => { iframe.onload = () => res(); setTimeout(res, 4000); });
@@ -169,9 +171,10 @@ async function similarity(a: string, b: string) {
 }
 
 // ---------- glowna funkcja ----------
-export type ExamInput = { sheet: Sheet; files: Record<string, string>; images: Record<string, string>; candidate: string; folder?: string | null; onStep?: (s: string) => void };
+export type ExamInput = { sheet: Sheet; files: Record<string, string>; images: Record<string, string>; candidate: string; folder?: string | null; onStep?: (s: string) => void; storageKey?: string };
 
-export async function examine({ sheet, files, images, candidate, folder, onStep }: ExamInput): Promise<{ items: Item[]; reqs: Reqs | null }> {
+export async function examine({ sheet, files, images: imgs0, candidate, folder, onStep, storageKey }: ExamInput): Promise<{ items: Item[]; reqs: Reqs | null; images: Record<string, string> }> {
+  let images = imgs0;
   const reqs = (await loadReqs())[sheet.code] ?? null;
   const items: Item[] = [];
   const archive = sheet.assets?.files ?? [];
@@ -182,6 +185,13 @@ export async function examine({ sheet, files, images, candidate, folder, onStep 
   // --- baza z arkusza ---
   let dump: string | null = null;
   if (sheet.assets?.sql) dump = await fetch(`${sheet.assets.dir}/${sheet.assets.sql}`).then((r) => (r.ok ? r.text() : null)).catch(() => null);
+  // zrzuty ekranu (kwN, import) robia sie same z kwerend warsztatu
+  if (storageKey) {
+    step('Zrzuty ekranu');
+    const { ensureShots } = await import('./autoShots');
+    images = await ensureShots({ code: sheet.code, storageKey, files, dump, dumpFile: sheet.assets?.sql, images }).catch(() => images);
+    for (const n of Object.keys(images)) have.set(lower(n), n);
+  }
 
   // --- PLIKI I FOLDER ---
   step('Pliki i folder');
@@ -209,16 +219,20 @@ export async function examine({ sheet, files, images, candidate, folder, onStep 
   const sq = (await loadQueries()).find((q) => q.code === sheet.code);
   const kw = Object.keys(files).find((n) => /^kwerendy\.txt$/i.test(n));
   const results: (QueryResult | undefined)[] = [];
+  const qOk: Record<number, boolean> = {};
   if (sq?.tasks.length && dump) {
     const userQs = kw ? splitQueries(files[kw]) : [];
     const sols = await getSolutions(sq.solutionPath);
     for (const t of sq.tasks) {
       const mine = userQs[t.n - 1] ?? '';
-      if (!mine) { items.push({ group: 'Kwerendy', label: `Zapytanie ${t.n}`, points: 1, ok: false, note: kw ? 'Brak tej kwerendy w kwerendy.txt.' : 'Brak pliku kwerendy.txt.' }); continue; }
+      if (!mine) { qOk[t.n] = false; items.push({ group: 'Kwerendy', label: `Zapytanie ${t.n}`, points: 1, ok: false, note: kw ? 'Brak tej kwerendy w kwerendy.txt.' : 'Brak pliku kwerendy.txt.' }); continue; }
       const r = await checkQuery(dump, t, mine, sols[t.n]);
       results[t.n] = r.expected;
-      const noSol = !sols[t.n] && !r.ok && !/Błąd/.test(r.message);
-      items.push({ group: 'Kwerendy', label: `Zapytanie ${t.n}`, points: 1, ok: noSol ? null : r.ok, note: noSol ? 'Brak rozwiązania wzorcowego: porównaj wynik z treścią zadania.' : r.ok ? undefined : r.message, user: r.user, expected: r.expected });
+      const noSol = !sols[t.n] && !/Błąd/.test(r.message);
+      // bez wzorca: liczy sie, ze kwerenda dziala i (dla SELECT) cos zwraca
+      const ok = noSol ? (t.kind === 'select' ? !!r.user?.values.length : true) : r.ok;
+      qOk[t.n] = ok;
+      items.push({ group: 'Kwerendy', label: `Zapytanie ${t.n}`, points: 1, ok, note: noSol ? 'Brak rozwiązania wzorcowego: oceniono po tym, czy kwerenda działa i zwraca dane.' : r.ok ? undefined : r.message, user: r.user, expected: r.expected });
     }
   }
 
@@ -233,11 +247,11 @@ export async function examine({ sheet, files, images, candidate, folder, onStep 
     const exp = kwN ? results[+kwN] : undefined;
     if (!hit) {
       const sameBase = Object.keys(images).find((n) => lower(n.replace(/\.\w+$/, '')) === lower(s.name));
-      items.push({ group: 'Zrzuty ekranu', label, points: 1, ok: false, note: sameBase ? `Jest ${sameBase}, a ma być ${want} (nazwa/format jak w arkuszu).` : `Brak pliku ${want}. Dodaj zrzut w „Grafiki / pliki”.`, thumb: sameBase ? images[sameBase] : undefined, expected: exp });
+      items.push({ group: 'Zrzuty ekranu', label, points: 1, ok: false, note: sameBase ? `Jest ${sameBase}, a ma być ${want} (nazwa/format jak w arkuszu).` : kwN && !qOk[+kwN] && qOk[+kwN] !== undefined ? `Brak ${want}: zrzut powstaje sam, gdy w kwerendy.txt jest zapytanie ${kwN}.` : `Brak pliku ${want}. Zrzut powstaje sam po wykonaniu kwerend w warsztacie.`, thumb: sameBase ? images[sameBase] : undefined, expected: exp });
       continue;
     }
-    const data = images[hit]
-    const fmt = realFormat(bytesOf(data))
+    const data = images[hit];
+    const fmt = realFormat(bytesOf(data));
     const notes: string[] = [];
     let ok = true;
     if (fmt !== s.ext && !(fmt === 'jpg' && s.ext === 'jpg')) { ok = false; notes.push(`Plik ma rozszerzenie .${s.ext}, ale w środku to ${fmt.toUpperCase()} (zmiana nazwy nie zmienia formatu, zapisz jako ${s.ext.toUpperCase()}).`); }
@@ -245,9 +259,9 @@ export async function examine({ sheet, files, images, candidate, folder, onStep 
       const img = await loadImg(data);
       if (s.whole && (img.naturalWidth < 1000 || img.naturalHeight < 560)) { ok = false; notes.push(`Ma ${img.naturalWidth}×${img.naturalHeight} px: wygląda na wykadrowany. Arkusz każe zrobić zrzut całego ekranu z paskiem zadań.`); }
     } catch { ok = false; notes.push('Nie da się otworzyć obrazu.'); }
+    if (kwN && qOk[+kwN] === false) { ok = false; notes.push(`Na zrzucie jest wynik zapytania ${kwN}, które nie jest poprawne.`); }
     items.push({ group: 'Zrzuty ekranu', label, points: 1, ok, note: notes.join(' ') || undefined, thumb: data, expected: exp });
   }
-  if (reqs?.shots.some((s) => !s.import)) items.push({ group: 'Zrzuty ekranu', label: 'Na zrzutach widać wyniki kwerend (porównaj z oczekiwanym wynikiem obok)', points: 1, ok: null });
 
   // --- GRAFIKA ---
   step('Grafika');
@@ -255,7 +269,7 @@ export async function examine({ sheet, files, images, candidate, folder, onStep 
     const cands = [...new Set([g.out, ...g.names].filter((x): x is string => !!x))];
     const name = cands.find((c) => images[c]) ?? Object.keys(images).find((n) => cands.some((c) => lower(c) === lower(n)));
     const label = `Grafika ${g.out ?? cands[0] ?? ''}`.trim();
-    if (!name) { items.push({ group: 'Grafika', label, points: 2, ok: false, note: `Nie dodano przygotowanej grafiki (${cands.join(' / ') || 'patrz arkusz'}). Wymagania: ${g.text.slice(0, 300)}` }); continue; }
+    if (!name) { items.push({ group: 'Grafika', label, points: 2, ok: false, note: `Brak gotowej grafiki ${cands[0] ?? ''}. Zrób ją w warsztacie: przycisk „Edytor grafiki” (tryb GIMP lub Photoshop), eksport pod nazwą z arkusza. Wymagania: ${g.text.slice(0, 300)}` }); continue; }
     const data = images[name];
     const u = bytesOf(data);
     const fmt = realFormat(u);
@@ -282,7 +296,6 @@ export async function examine({ sheet, files, images, candidate, folder, onStep 
     }
     items.push({ group: 'Grafika', label, points: 2, ok, note: notes.join(' '), thumb: data });
   }
-  if (reqs?.graphics.length) items.push({ group: 'Grafika', label: 'Grafika zgodna z opisem w arkuszu (kadr, treść)', points: 1, ok: null, note: reqs.graphics.map((g) => g.text).join(' ').slice(0, 400) });
 
   // --- STRONA ---
   step('Strona (wykonanie PHP)');
@@ -310,7 +323,7 @@ export async function examine({ sheet, files, images, candidate, folder, onStep 
       const got = reqs.quotes.length - miss.length;
       items.push({ group: 'Strona', label: `Treści z arkusza na stronie (${got}/${reqs.quotes.length})`, points: 3, ok: got / reqs.quotes.length >= 0.9, note: miss.length ? `Nie znaleziono: ${miss.slice(0, 10).map((q) => `„${q}”`).join(', ')}${miss.length > 10 ? '…' : ''}` : undefined });
     }
-    if (reqs?.author) items.push({ group: 'Strona', label: 'Numer zdającego na stronie (autor)', points: 1, ok: cand ? all.includes(lower(cand)) : null, note: cand ? (all.includes(lower(cand)) ? undefined : `Nie ma „${cand}” w treści strony.`) : 'Wpisz numer zdającego, żeby to sprawdzić.' });
+    if (reqs?.author) items.push({ group: 'Strona', label: 'Numer zdającego na stronie (autor)', points: 1, ok: !!cand && all.includes(lower(cand)), note: cand ? (all.includes(lower(cand)) ? undefined : `Nie ma „${cand}” w treści strony.`) : 'Wpisz numer zdającego, żeby to sprawdzić.' });
 
     // reguly z tagow arkusza (formularz, $_GET, transition…) na wykonanym HTML
     const merged = parse(docs.map(({ p }) => p.html).join('\n'));
@@ -341,21 +354,21 @@ export async function examine({ sheet, files, images, candidate, folder, onStep 
     try {
       const ref = await loadImg(sheetImg);
       const W = 1280, H = Math.round((W * ref.naturalHeight) / ref.naturalWidth);
-      const mine = await snapshot(files, entryPage.html, entryPage.name, sheet.assets.dir + '/', images, W, H);
+      const mine = await snapshot(files, entryPage.html, entryPage.name, sheet.assets.dir + '/', images, W, H, archive);
       if (mine) {
         const pct = await similarity(mine, sheetImg);
-        items.push({ group: 'Wygląd', label: `Wygląd ${entryPage.name} zgodny z ilustracją z arkusza`, points: 4, ok: null, note: `Podobieństwo do ilustracji ${pct}%: ${pct >= 50 ? 'układ i kolory wyglądają podobnie' : pct >= 30 ? 'częściowo podobne, sprawdź bloki i kolory' : 'wygląda inaczej niż w arkuszu'}. Liczone z układu i kolorów (np. poprawne rozwiązanie ~55–70%, strona bez CSS ~20%). Porównaj sam i zaznacz.`, compare: { mine, sheet: sheetImg, pct, caption: look.caption } });
+        const got = pct >= 50 ? 4 : pct >= 30 ? 2 : 0;
+        items.push({ group: 'Wygląd', label: `Wygląd ${entryPage.name} zgodny z ilustracją z arkusza`, points: 4, ok: got === 4, got, note: `Podobieństwo do ilustracji ${pct}%: ${pct >= 50 ? 'układ i kolory wyglądają podobnie (4/4)' : pct >= 30 ? 'częściowo podobne, popraw bloki i kolory (2/4)' : 'wygląda inaczej niż w arkuszu (0/4)'}. Liczone z układu i kolorów: poprawne rozwiązanie daje zwykle 55–70%, strona bez CSS około 20%.`, compare: { mine, sheet: sheetImg, pct, caption: look.caption } });
       }
     } catch { /* brak ilustracji */ }
   }
-  if (!items.some((i) => i.group === 'Wygląd')) items.push({ group: 'Wygląd', label: 'Wygląd zgodny z ilustracją w arkuszu (kolory, układ, rozmiary)', points: 4, ok: null });
   step('');
-  return { items, reqs };
+  return { items, reqs, images };
 }
 
-export function scoreItems(items: Item[], manual: Record<string, boolean>) {
+export function scoreItems(items: Item[]) {
   let got = 0, total = 0;
-  for (const i of items) { total += i.points; const ok = i.ok ?? manual[i.label] ?? false; if (ok) got += i.points; }
+  for (const i of items) { total += i.points; got += i.got ?? (i.ok ? i.points : 0); }
   return { got, total, pct: total ? Math.round((got / total) * 100) : 0 };
 }
 
