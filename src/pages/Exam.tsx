@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { BookOpen, MonitorSmartphone, Trophy, ArrowRight, RotateCcw } from 'lucide-react';
+import { BookOpen, MonitorSmartphone, Trophy, ArrowRight, RotateCcw, OctagonX } from 'lucide-react';
 import { useContent } from '../lib/data';
 import { useStore, type ActiveExam } from '../lib/store';
 import { newTheory, PRACTICE_MS, PRACTICE_PASS, THEORY_PASS } from '../lib/exam';
@@ -14,7 +14,7 @@ import WrongAnswers from '../components/WrongAnswers';
 
 const uid = () => crypto.randomUUID?.() ?? String(Date.now());
 
-function Practice({ exam, onDone, onRestart }: { exam: ActiveExam; onDone: (pct: number) => void; onRestart: () => void }) {
+function Practice({ exam, onDone, onRestart, onAbort }: { exam: ActiveExam; onDone: (pct: number) => void; onRestart: () => void; onAbort: () => void }) {
   const c = useContent();
   const p = exam.practice!;
   const left = useCountdown(p.startedAt, p.durationMs, !!p.finishedAt);
@@ -35,6 +35,7 @@ function Practice({ exam, onDone, onRestart }: { exam: ActiveExam; onDone: (pct:
         <div className="flex gap-1.5">
           {(['kod', 'ocena'] as const).map((k) => <button key={k} className="chip" aria-pressed={view === k} onClick={() => setView(k)}>{k === 'kod' ? 'Arkusz + warsztat' : 'Oddaję pracę'}</button>)}
           <button className="chip" title="Wyczyść pliki, bazę i zegar" onClick={() => { if (confirm('Wyczyścić wszystko i zacząć ten arkusz od nowa?')) onRestart(); }}><RotateCcw size={13} />Od zera</button>
+          <button className="chip !border-danger/40 !text-danger" title="Przerwij bez oceny" onClick={onAbort}><OctagonX size={13} />Przerwij</button>
         </div>
       </div>
       {timeUp && view !== 'ocena' && <p className="mb-4 rounded-xl bg-danger-soft p-3 text-sm font-bold text-danger">Czas minął. Przejdź do „Oddaję” i oceń pracę.</p>}
@@ -69,6 +70,13 @@ export default function Exam() {
     if (exam.mode === 'full') setActiveExam({ id, mode: 'full', stage: 'theory', theory: newTheory(c.questions), nextSheet: exam.practice?.sheetCode });
     else if (exam.mode === 'practice') setActiveExam({ id, mode: 'practice', stage: 'practice', practice });
     else setActiveExam({ id, mode: 'theory', stage: 'theory', theory: newTheory(c.questions) });
+  };
+
+  /** Przerwanie: bez wyniku, bez XP, bez wpisu do historii; praca z tej proby jest kasowana. */
+  const abort = () => {
+    if (!confirm('Przerwać egzamin?\n\nNie dostaniesz wyniku ani XP, a Twoja praca z tej próby zostanie usunięta. Jeśli chcesz ocenę, wybierz „Oddaję pracę”.')) return;
+    useStore.getState().dropWorkspaces('exam:');
+    setActiveExam(null);
   };
 
   const finishTheory = (t: TheoryState) => {
@@ -163,7 +171,7 @@ export default function Exam() {
     return (
       <div>
         <PageHeader eyebrow={exam.mode === 'full' ? 'Etap 1 z 2' : 'Test teorii'} title={done ? `Wynik: ${t.score}/${t.questionIds.length}` : 'Część pisemna'}
-          right={done && (exam.mode === 'full' && !exam.practice ? (
+          right={!done ? <button className="btn btn-ghost text-danger" onClick={abort}><OctagonX size={16} />Przerwij egzamin</button> : (exam.mode === 'full' && !exam.practice ? (
             <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'practice', practice: { sheetCode: exam.nextSheet ?? randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS } })}>Przejdź do praktyki <ArrowRight size={16} /></button>
           ) : (
             <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'done' })}>Podsumowanie <ArrowRight size={16} /></button>
@@ -175,7 +183,7 @@ export default function Exam() {
   }
 
   // ---- Praktyka ----
-  if (exam.stage === 'practice' && exam.practice) return <Practice key={exam.id} exam={exam} onDone={finishPractice} onRestart={restartSame} />;
+  if (exam.stage === 'practice' && exam.practice) return <Practice key={exam.id} exam={exam} onDone={finishPractice} onRestart={restartSame} onAbort={abort} />;
 
   // ---- Podsumowanie ----
   const t = exam.theory;
