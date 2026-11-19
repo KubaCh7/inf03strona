@@ -17,7 +17,7 @@ export default function About() {
         <h2 className="mt-6 text-xl font-bold">Sprawdzarka i trudność</h2>
         <p>Sprawdzarka daje wynik treningowy: szuka w Twoim kodzie elementów, których wymaga dane zadanie, plus samoocena. Ocenę egzaminacyjną daje egzaminator według zasad oceniania CKE. Trudność 2–10 jest względna: liczona z tagów zadania (SQL, skrypty, CSS, grafika, liczba wymagań) i porównana z resztą puli.</p>
         <h2 className="mt-6 text-xl font-bold">Ograniczenia</h2>
-        <p>SQL działa w SQLite w przeglądarce. Typowe konstrukcje MySQL są przepisywane automatycznie, ale CREATE USER/GRANT tylko sprawdzamy tekstowo. PHP nie wykonuje się w przeglądarce. Kod PHP sprawdzamy statycznie, a uruchamiasz go w XAMPP.</p>
+        <p>SQL działa w SQLite w przeglądarce. Typowe konstrukcje MySQL są przepisywane automatycznie, ale CREATE USER/GRANT tylko sprawdzamy tekstowo. PHP 8.2 działa w przeglądarce (WebAssembly), a mysqli_* korzysta z tej samej bazy SQLite co kwerendy – to emulacja MySQL, więc rzadkie funkcje mogą działać inaczej niż w XAMPP.</p>
         <h2 className="mt-6 text-xl font-bold">Biblioteki</h2>
         <p className="text-sm">React, React Router, Zustand, Tailwind CSS, CodeMirror, sql.js (MIT), ts-fsrs (MIT), Supabase JS, lucide-react. Fonty: Bricolage Grotesque, Atkinson Hyperlegible, JetBrains Mono (OFL).</p>
       </div>

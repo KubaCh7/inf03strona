@@ -101,17 +101,41 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   const htmlFiles = Object.keys(files).filter((f) => /\.(html?|php)$/i.test(f));
   const entry = (page && files[page] !== undefined ? page : null) ?? (/\.(html?|php)$/i.test(active) ? active : null) ?? (files['index.html'] !== undefined ? 'index.html' : htmlFiles[0]) ?? '';
   const empty = Object.values(files).every((v) => !v.trim());
+  const entryRef = useRef(entry);
+  entryRef.current = entry;
   const base = sheet?.assets ? `${window.location.origin}${sheet.assets.dir}/` : undefined;
+  // zadanie PHP z podgladu: formularz (POST/GET) albo link z ?parametrami
+  const [phpReq, setPhpReq] = useState<{ method: 'GET' | 'POST'; query: string; post: string } | null>(null);
+  const [phpBusy, setPhpBusy] = useState(false);
+  const phpRun = useRef(0);
+  // edycja kodu albo zmiana pliku: zwykle wejscie GET (zeby nie wysylac formularza ponownie przy kazdej literze)
+  useEffect(() => { setPhpReq(null); }, [files, active]);
   useEffect(() => {
-    const t = setTimeout(() => {
+    const t = setTimeout(async () => {
       if (empty || !entry) { setDoc(WELCOME); return; }
-      let d = buildSrcDoc(files, entry, base).replace(/<\?php[\s\S]*?(\?>|$)/g, '<span style="background:#6B4E7133;font:12px monospace;padding:2px 4px;border-radius:4px">[PHP wykona się na serwerze]</span>');
-      d = inlineAssets(d, images);
-      setDoc(d);
+      if (/\.php$/i.test(entry)) {
+        // prawdziwe PHP 8.2 w przegladarce, mysqli na bazie warsztatu
+        const id = ++phpRun.current;
+        setPhpBusy(true);
+        try {
+          const { runPhp } = await import('../lib/php/runtime');
+          const d0 = db ?? (dbReady.current ? await dbReady.current : null);
+          const r = await runPhp({ files, entry, db: d0, method: phpReq?.method ?? 'GET', query: phpReq?.query ?? '', post: phpReq?.method === 'POST' ? phpReq.post : undefined });
+          if (id !== phpRun.current) return;
+          setDoc(inlineAssets(buildSrcDoc({ ...files, [entry]: r.html }, entry, base), images));
+          setLogs(r.errors.map((e) => ({ type: /Fatal|Parse/.test(e) ? 'error' : 'warn', text: 'PHP: ' + e })));
+          if (phpReq?.method === 'POST' || /^\s*(INSERT|UPDATE|DELETE)/im.test(files[entry])) setDbVer((v) => v + 1);
+        } catch (e) {
+          if (id !== phpRun.current) return;
+          setDoc(`<pre style="color:#b91c1c;padding:12px;font:13px monospace;white-space:pre-wrap">Nie udało się uruchomić PHP w przeglądarce:\n${String((e as Error).message).replace(/</g, '&lt;')}</pre>`);
+        } finally { if (id === phpRun.current) setPhpBusy(false); }
+        return;
+      }
+      setDoc(inlineAssets(buildSrcDoc(files, entry, base), images));
       setLogs([]);
-    }, 300);
+    }, /\.php$/i.test(entry) ? 600 : 300);
     return () => clearTimeout(t);
-  }, [files, images, entry, empty, base]);
+  }, [files, images, entry, empty, base, phpReq]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Baza z archiwum arkusza wczytuje sie sama od razu; kwerendy czekaja na nia (dbReady)
   const dbReady = useRef<Promise<Db | null> | null>(null);
@@ -138,10 +162,19 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   useEffect(() => {
     const h = (e: MessageEvent) => {
       if (!e.data?.__p03) return;
-      if (e.data.type === 'nav') {
-        // link do innej strony projektu (np. galeria.html): pokaz ja w podgladzie
-        const target = String(e.data.args[0] ?? '').replace(/^\.\//, '').split(/[?#]/)[0];
-        setFiles((f) => { if (f[target] !== undefined) setPage(target); else setLogs((l) => [...l, { type: 'warn', text: `Link do „${target}”: nie ma takiego pliku w projekcie.` }]); return f; });
+      if (e.data.type === 'nav' || e.data.type === 'form') {
+        // link albo formularz: przejdz do strony projektu (np. galeria.html, wynik.php?id=3)
+        const [href, method = 'GET', data = ''] = (e.data.args as string[]).map(String);
+        const [pathPart, rest = ''] = href.replace(/^\.\//, '').split('?');
+        const query = rest.split('#')[0];
+        setFiles((f) => {
+          const target = pathPart || entryRef.current;
+          if (f[target] === undefined) { setLogs((l) => [...l, { type: 'warn', text: `${e.data.type === 'form' ? 'Formularz wysyła do' : 'Link do'} „${target}”: nie ma takiego pliku w projekcie.` }]); return f; }
+          setPage(target);
+          if (/\.php$/i.test(target)) setPhpReq(e.data.type === 'form' ? (method === 'POST' ? { method: 'POST', query, post: data } : { method: 'GET', query: data, post: '' }) : { method: 'GET', query, post: '' });
+          else if (e.data.type === 'form') setLogs((l) => [...l, { type: 'info', text: 'Formularz wysłany do pliku HTML – dane obsłuży dopiero skrypt PHP.' }]);
+          return f;
+        });
         return;
       }
       setLogs((l) => [...l.slice(-200), { type: e.data.type, text: e.data.args.join(' ') }]);
@@ -258,7 +291,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
         <button className="rounded p-1 hover:bg-surface-2" title="Większa czcionka" onClick={() => setSettings({ editorFont: Math.min(28, fontSize + 1) })}><AArrowUp size={15} /></button>
         <button className="ml-1 inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs font-bold hover:bg-surface-2" title={edMax ? 'Zmniejsz edytor' : 'Powiększ edytor na cały ekran'} onClick={() => setEdMax((x) => !x)}>{edMax ? <Shrink size={14} /> : <Expand size={14} />}{edMax ? 'Zmniejsz' : 'Powiększ'}</button>
       </div>
-      {isPhp && <p className="border-b border-line bg-info-soft px-3 py-1.5 text-xs">PHP nie wykonuje się w przeglądarce. Sprawdzarka czyta kod, a w podglądzie bloki PHP są oznaczone. Uruchomisz go w XAMPP.</p>}
+      {isPhp && <p className="border-b border-line bg-info-soft px-3 py-1.5 text-xs">PHP 8.2 działa w przeglądarce: podgląd wykonuje skrypt, formularze i linki z ?parametrami też. <code>mysqli_*</code> łączy się z bazą arkusza (ta sama co w phpMyAdmin). Błędy PHP lądują w Konsoli.{phpBusy ? ' Uruchamiam…' : ''}</p>}
       <div className="min-h-0 flex-1">
         {active && files[active] !== undefined ? (
           <Suspense fallback={<Loading label="Ładuję edytor…" />}>
@@ -291,7 +324,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
           <select className="mono ml-1 rounded border border-line bg-surface px-1 py-0.5 text-xs" value={entry} onChange={(e) => setPage(e.target.value)}>{htmlFiles.map((f) => <option key={f}>{f}</option>)}</select>
         ) : <span className="mono text-xs text-muted">· {entry || '—'}</span>}
       </div>
-      <iframe title="Podgląd" sandbox="allow-scripts allow-modals" srcDoc={doc} className="min-h-0 w-full flex-1 bg-white" />
+      <iframe title="Podgląd" sandbox="allow-scripts allow-modals allow-forms" srcDoc={doc} className="min-h-0 w-full flex-1 bg-white" />
     </div>
   );
   const sqlCard = (

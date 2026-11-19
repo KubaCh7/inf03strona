@@ -99,7 +99,7 @@ export default function Lesson() {
             {t.mode === 'web' && (
               <div className="card h-[420px] overflow-hidden">
                 <p className="mono border-b border-line px-3 py-2 text-xs text-muted">podgląd</p>
-                <iframe title="Podgląd" sandbox="allow-scripts allow-modals" srcDoc={buildSrcDoc(files)} className="h-[calc(100%-33px)] w-full bg-white" />
+                <iframe title="Podgląd" sandbox="allow-scripts allow-modals allow-forms" srcDoc={buildSrcDoc(files)} className="h-[calc(100%-33px)] w-full bg-white" />
               </div>
             )}
             {t.mode === 'sql' && (
