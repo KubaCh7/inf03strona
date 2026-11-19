@@ -110,3 +110,18 @@ export function useVfs(v: Vfs) { useSyncExternalStore(v.subscribe, () => v.ver);
 export const fmtSize = (b: number) => (b < 1024 ? `${b} B` : `${Math.max(1, Math.round(b / 1024)).toLocaleString('pl-PL')} KB`);
 export const fmtDate = (t: number) => new Date(t).toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 export const dataUrlToText = (d: string) => { try { const b = atob(d.slice(d.indexOf(',') + 1)); return decodeURIComponent(escape(b)); } catch { return ''; } };
+
+/** Pliki z folderu zdajacego na pulpicie dla sprawdzarki: tekst -> files, obrazy -> images. */
+export async function readCandidateFolder(attempt: string, candidate: string) {
+  const v = new Vfs(`vfs:${attempt}`); await v.load();
+  const dirs = v.list(DESKTOP).filter((p) => v.isDir(p));
+  const exact = dirs.find((p) => base(p) === candidate);
+  const folder = exact ?? dirs.find((p) => /^\d{6,}$/.test(base(p))) ?? null;
+  const files: Record<string, string> = {}, images: Record<string, string> = {};
+  if (folder) for (const f of v.tree(folder)) {
+    if (f.node.bin) { if (isImage(f.path)) images[base(f.path)] = f.node.data ?? ''; }
+    else files[f.rel] = f.node.data ?? '';
+  }
+  return { folder: folder ? base(folder) : null, files, images, desktop: v.list(DESKTOP).map(base).filter((n) => !n.startsWith('.')) };
+}
+export async function dropAttempt(attempt: string) { await kvSet(`vfs:${attempt}`, undefined); await kvSet(`mysql:${attempt}`, undefined); }

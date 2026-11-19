@@ -9,12 +9,16 @@ import { Loading, PageHeader } from '../components/ui';
 import TheoryTest, { scoreTheory, TimerBadge, useCountdown, type TheoryState } from '../components/TheoryTest';
 import Workshop from '../components/Workshop';
 import SheetChecker from '../components/SheetChecker';
+import { lazy, Suspense } from 'react';
+import { dropAttempt } from '../lib/vfs';
+const Desktop = lazy(() => import('../components/desktop/Desktop'));
+const Login = lazy(() => import('../components/desktop/Login'));
 import { CATEGORY_LABEL } from '../lib/data';
 import WrongAnswers from '../components/WrongAnswers';
 
 const uid = () => crypto.randomUUID?.() ?? String(Date.now());
 
-function Practice({ exam, onDone, onRestart, onAbort }: { exam: ActiveExam; onDone: (pct: number) => void; onRestart: () => void; onAbort: () => void }) {
+function Practice({ exam, onDone, onRestart, onAbort, onAbortNow, onLogin }: { exam: ActiveExam; onDone: (pct: number) => void; onRestart: () => void; onAbort: () => void; onAbortNow: () => void; onLogin: (candidate: string) => void }) {
   const c = useContent();
   const p = exam.practice!;
   const left = useCountdown(p.startedAt, p.durationMs, !!p.finishedAt);
@@ -24,6 +28,19 @@ function Practice({ exam, onDone, onRestart, onAbort }: { exam: ActiveExam; onDo
   if (!sheet) return <div className="card p-6">Nie znaleziono arkusza {p.sheetCode}.</div>;
   const timeUp = left === 0;
   const wsKey = `exam:${exam.id}:${sheet.code}`;
+  // pulpit jak na egzaminie: logowanie, Windows + XAMPP, oddanie folderu z numerem
+  if (p.desktop && !p.candidate) return <Suspense fallback={<Loading />}><Login onLogin={onLogin} /></Suspense>;
+  if (p.desktop && view === 'kod') return <Suspense fallback={<Loading />}><Desktop sheet={sheet} attempt={`exam:${exam.id}`} candidate={p.candidate!} endsAt={p.startedAt + p.durationMs} onFinish={() => setView('ocena')} onAbort={onAbortNow} /></Suspense>;
+  if (p.desktop) return (
+    <div>
+      <div className="card mb-4 flex flex-wrap items-center justify-between gap-3 p-4">
+        <div className="min-w-0"><p className="eyebrow">Oddanie pracy · {sheet.code}</p><p className="display truncate text-xl font-bold">{sheet.title}</p></div>
+        <TimerBadge left={left} total={p.durationMs} />
+        {!timeUp && <button className="chip" onClick={() => setView('kod')}>Wróć do pulpitu</button>}
+      </div>
+      <SheetChecker sheet={sheet} desktop={{ attempt: `exam:${exam.id}`, candidate: p.candidate! }} autoRun onScore={onDone} />
+    </div>
+  );
   return (
     <div>
       <div className="card sticky top-[60px] z-10 mb-4 flex flex-wrap items-center justify-between gap-3 p-4 md:top-4">
@@ -49,6 +66,8 @@ function Practice({ exam, onDone, onRestart, onAbort }: { exam: ActiveExam; onDo
 export default function Exam() {
   const c = useContent();
   const { activeExam: exam, setActiveExam, addTest, addXp, setSheet } = useStore();
+  const env = useStore((s) => s.settings.examEnv ?? 'desktop');
+  const setSettings = useStore((s) => s.setSettings);
   const byId = useMemo(() => new Map((c?.questions ?? []).map((q) => [q.id, q])), [c]);
   if (!c) return <Loading />;
 
@@ -57,7 +76,7 @@ export default function Exam() {
   const start = (mode: ActiveExam['mode']) => {
     if (exam && exam.stage !== 'done' && !confirm('Porzucić rozpoczętą próbę?')) return;
     useStore.getState().dropWorkspaces('exam:');
-    if (mode === 'practice') setActiveExam({ id: uid(), mode, stage: 'practice', practice: { sheetCode: randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS } });
+    if (mode === 'practice') setActiveExam({ id: uid(), mode, stage: 'practice', practice: { sheetCode: randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS, desktop: env === 'desktop' } });
     else setActiveExam({ id: uid(), mode, stage: 'theory', theory: newTheory(c.questions) });
   };
 
@@ -66,17 +85,22 @@ export default function Exam() {
     if (!exam) return;
     const id = uid();
     useStore.getState().dropWorkspaces('exam:');
-    const practice = exam.practice ? { sheetCode: exam.practice.sheetCode, startedAt: Date.now(), durationMs: PRACTICE_MS } : undefined;
+    void dropAttempt(`exam:${exam.id}`);
+    const practice = exam.practice ? { sheetCode: exam.practice.sheetCode, startedAt: Date.now(), durationMs: PRACTICE_MS, desktop: exam.practice.desktop } : undefined;
     if (exam.mode === 'full') setActiveExam({ id, mode: 'full', stage: 'theory', theory: newTheory(c.questions), nextSheet: exam.practice?.sheetCode });
     else if (exam.mode === 'practice') setActiveExam({ id, mode: 'practice', stage: 'practice', practice });
     else setActiveExam({ id, mode: 'theory', stage: 'theory', theory: newTheory(c.questions) });
   };
 
   /** Przerwanie: bez wyniku, bez XP, bez wpisu do historii; praca z tej proby jest kasowana. */
+  const abortNow = () => {
+    useStore.getState().dropWorkspaces('exam:');
+    if (exam) void dropAttempt(`exam:${exam.id}`);
+    setActiveExam(null);
+  };
   const abort = () => {
     if (!confirm('Przerwać egzamin?\n\nNie dostaniesz wyniku ani XP, a Twoja praca z tej próby zostanie usunięta. Jeśli chcesz ocenę, wybierz „Oddaję pracę”.')) return;
-    useStore.getState().dropWorkspaces('exam:');
-    setActiveExam(null);
+    abortNow();
   };
 
   const finishTheory = (t: TheoryState) => {
@@ -126,6 +150,12 @@ export default function Exam() {
             </div>
           </div>
         </section>
+        <div className="card mb-4 flex flex-wrap items-center gap-3 p-4">
+          <span className="text-sm font-bold">Część praktyczna na:</span>
+          {([['desktop', 'Pulpicie jak na egzaminie (Windows, XAMPP, phpMyAdmin, Notepad++, VS Code, GIMP/Photoshop, Paint)'], ['workshop', 'Warsztacie (edytor z podpowiedziami, zrzuty same)']] as const).map(([k, l]) => (
+            <label key={k} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${env === k ? 'border-accent bg-accent-soft' : 'border-line'}`}><input type="radio" checked={env === k} onChange={() => setSettings({ examEnv: k })} className="accent-[var(--accent)]" />{l}</label>
+          ))}
+        </div>
         <div className="grid gap-4 md:grid-cols-3">
           <button className="gold-frame card-hover p-6 text-left" onClick={() => start('theory')}>
             <span className="grid h-12 w-12 place-items-center rounded-xl gold-chip"><BookOpen size={22} /></span>
@@ -172,7 +202,7 @@ export default function Exam() {
       <div>
         <PageHeader eyebrow={exam.mode === 'full' ? 'Etap 1 z 2' : 'Test teorii'} title={done ? `Wynik: ${t.score}/${t.questionIds.length}` : 'Część pisemna'}
           right={!done ? <button className="btn btn-ghost text-danger" onClick={abort}><OctagonX size={16} />Przerwij egzamin</button> : (exam.mode === 'full' && !exam.practice ? (
-            <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'practice', practice: { sheetCode: exam.nextSheet ?? randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS } })}>Przejdź do praktyki <ArrowRight size={16} /></button>
+            <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'practice', practice: { sheetCode: exam.nextSheet ?? randomSheet().code, startedAt: Date.now(), durationMs: PRACTICE_MS, desktop: env === 'desktop' } })}>Przejdź do praktyki <ArrowRight size={16} /></button>
           ) : (
             <button className="btn btn-gold" onClick={() => setActiveExam({ ...exam, stage: 'done' })}>Podsumowanie <ArrowRight size={16} /></button>
           ))} />
@@ -183,7 +213,7 @@ export default function Exam() {
   }
 
   // ---- Praktyka ----
-  if (exam.stage === 'practice' && exam.practice) return <Practice key={exam.id} exam={exam} onDone={finishPractice} onRestart={restartSame} onAbort={abort} />;
+  if (exam.stage === 'practice' && exam.practice) return <Practice key={exam.id} exam={exam} onDone={finishPractice} onRestart={restartSame} onAbort={abort} onAbortNow={abortNow} onLogin={(cand) => setActiveExam({ ...exam, practice: { ...exam.practice!, candidate: cand, startedAt: Date.now() } })} />;
 
   // ---- Podsumowanie ----
   const t = exam.theory;

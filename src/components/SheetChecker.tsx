@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, X, Play, Download, Loader2 } from 'lucide-react';
 import { Link } from 'react-router';
 import type { Sheet } from '../lib/types';
@@ -33,20 +33,21 @@ function Mini({ r, title }: { r?: QueryResult; title: string }) {
   );
 }
 
-export default function SheetChecker({ sheet, onScore, autoRun, storageKey }: { sheet: Sheet; onScore?: (pct: number) => void; autoRun?: boolean; storageKey?: string }) {
+export default function SheetChecker({ sheet, onScore, autoRun, storageKey, desktop }: { sheet: Sheet; onScore?: (pct: number) => void; autoRun?: boolean; storageKey?: string; desktop?: { attempt: string; candidate: string } }) {
   const key = storageKey ?? `sheet:${sheet.code}`;
   const ws = useStore((s) => s.workspaces[key]);
-  const files = ws ?? null;
+  const [deskInfo, setDeskInfo] = useState<{ folder: string | null; desktop: string[]; n: number } | null>(null);
+  const files = desktop ? {} : ws ?? null;
   const [images, setImages] = useState<Record<string, string>>({});
   const [cand, setCand] = useState(getCand);
   const [items, setItems] = useState<Item[] | null>(null);
   const [busy, setBusy] = useState('');
   const [open, setOpen] = useState<string | null>(null);
   const [zoom, setZoom] = useState<string | null>(null);
-  const number = cand.trim() || '00000000000';
+  const number = desktop?.candidate || cand.trim() || '00000000000';
 
   useEffect(() => { setItems(null); void loadAssets(key).then(setImages); }, [sheet.code, key]);
-  useEffect(() => { if (autoRun && ws) void go(); }, [autoRun]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (autoRun && (ws || desktop)) void go(); }, [autoRun]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { try { localStorage.setItem(CAND_KEY, cand); } catch { /* */ } }, [cand]);
 
   /** Wszystko z warsztatu: pliki ze store, grafiki/zrzuty z IndexedDB, brakujace zrzuty robia sie same. */
@@ -54,12 +55,22 @@ export default function SheetChecker({ sheet, onScore, autoRun, storageKey }: { 
     if (!files) return;
     setBusy('Sprawdzam…');
     try {
+      if (desktop) {
+        // pulpit egzaminacyjny: oceniany jest tylko folder z numerem zdajacego (jak u egzaminatora)
+        const { readCandidateFolder } = await import('../lib/vfs');
+        const f = await readCandidateFolder(desktop.attempt, desktop.candidate);
+        setDeskInfo({ folder: f.folder, desktop: f.desktop, n: Object.keys(f.files).length + Object.keys(f.images).length });
+        const r = await examine({ sheet, files: f.files, images: f.images, candidate: number, folder: f.folder ?? '', onStep: (st) => st && setBusy(`Sprawdzam: ${st}…`) });
+        setImages(r.images); setItems(r.items); deskFiles.current = f.files;
+        return;
+      }
       const im = await loadAssets(key);
       const r = await examine({ sheet, files, images: im, candidate: number, storageKey: key, onStep: (s) => s && setBusy(`Sprawdzam: ${s}…`) });
       setImages(r.images);
       setItems(r.items);
     } finally { setBusy(''); }
   }
+  const deskFiles = useRef<Record<string, string>>({});
   const s = items ? scoreItems(items) : null;
   const grouped = useMemo(() => GROUPS.map((g) => [g, items?.filter((i) => i.group === g) ?? []] as const).filter(([, l]) => l.length), [items]);
 
@@ -68,12 +79,14 @@ export default function SheetChecker({ sheet, onScore, autoRun, storageKey }: { 
       <div className="card p-5">
         <div className="flex flex-wrap items-end gap-3">
           <button className="btn btn-primary text-base" disabled={!files || !!busy} onClick={() => go()}>{busy ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} />}{busy || 'Sprawdź'}</button>
-          <label className="text-sm">Numer zdającego (nazwa folderu, stopka)<br />
+          {!desktop && <label className="text-sm">Numer zdającego (nazwa folderu, stopka)<br />
             <input className="input mono mt-1 w-56" value={cand} onChange={(e) => setCand(e.target.value.replace(/\s/g, ''))} placeholder="00000000000" />
-          </label>
-          <button className="btn btn-ghost" disabled={!files} onClick={() => files && zipFolder(number, files, images, sheet.assets)}><Download size={16} />Pobierz folder {number}.zip</button>
+          </label>}
+          <button className="btn btn-ghost" disabled={!files || (!!desktop && !deskInfo?.folder)} onClick={() => files && zipFolder(deskInfo?.folder || number, desktop ? deskFiles.current : files, images, desktop ? undefined : sheet.assets)}><Download size={16} />Pobierz folder {deskInfo?.folder || number}.zip</button>
         </div>
-        <p className="mt-3 text-sm text-muted">{files
+        <p className="mt-3 text-sm text-muted">{desktop
+          ? (deskInfo ? (deskInfo.folder ? <>Oceniam folder <b className="mono">Pulpit\{deskInfo.folder}</b> ({deskInfo.n} plików), tak jak egzaminator. Pliki poza nim (np. tylko w htdocs) się nie liczą.</> : <span className="text-danger">Na pulpicie nie ma folderu z numerem zdającego ({desktop.candidate}). Egzaminator nie znalazłby Twojej pracy. Na pulpicie są: {deskInfo.desktop.join(', ') || 'brak plików'}.</span>) : <>Oceniam folder z numerem zdającego na pulpicie egzaminacyjnym.</>)
+          : files
           ? <>Sprawdzam wszystko z warsztatu tego arkusza: pliki ({Object.keys(files).length}), grafiki z edytora i zrzuty ekranu (robią się same z kwerend). Nic nie trzeba wgrywać.</>
           : <>Ten arkusz nie ma jeszcze plików w warsztacie. <Link className="text-accent underline" to={`/warsztat/${encodeURIComponent(sheet.code)}`}>Otwórz warsztat</Link> i rozwiąż zadanie, potem kliknij „Sprawdź”.</>}</p>
       </div>

@@ -13,13 +13,13 @@ export type ActiveExam = {
   stage: 'theory' | 'practice' | 'done';
   mode: 'full' | 'theory' | 'practice';
   theory?: { questionIds: string[]; order: number[][]; answers: (number | null)[]; startedAt: number; durationMs: number; finishedAt?: number; score?: number };
-  practice?: { sheetCode: string; startedAt: number; durationMs: number; finishedAt?: number; score?: number };
+  practice?: { sheetCode: string; startedAt: number; durationMs: number; finishedAt?: number; score?: number; desktop?: boolean; candidate?: string };
   /** arkusz do czesci praktycznej po teorii (restart „od zera” tego samego arkusza) */
   nextSheet?: string;
   /** XP zdobyte w tej probie (pokazywane w podsumowaniu) */
   xp?: number;
 };
-export type Settings = { theme: 'system' | 'light' | 'dark'; editorFont: number; unlockAll: boolean; dailyGoalMin: number; newCardsPerDay: number; pdfSide?: 'left' | 'right'; sheetSide?: 'left' | 'right'; sheetPos?: 'left' | 'right'; pdfWidth?: number; tourDone?: boolean; flashIntroSeen?: boolean; vim?: boolean; vimrc?: string; hideNav?: boolean; imageEditor?: 'gimp' | 'photoshop' };
+export type Settings = { theme: 'system' | 'light' | 'dark'; editorFont: number; unlockAll: boolean; dailyGoalMin: number; newCardsPerDay: number; pdfSide?: 'left' | 'right'; sheetSide?: 'left' | 'right'; sheetPos?: 'left' | 'right'; pdfWidth?: number; tourDone?: boolean; flashIntroSeen?: boolean; vim?: boolean; vimrc?: string; hideNav?: boolean; imageEditor?: 'gimp' | 'photoshop'; examEnv?: 'desktop' | 'workshop' };
 
 type State = {
   xp: number;
