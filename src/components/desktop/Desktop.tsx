@@ -10,7 +10,7 @@ import { StartSvg } from './icons';
 import SnipApp, { SnipOverlay, SnipToast, SHOTS_DIR, shotName, type Frozen } from './Snip';
 import Explorer from './apps/Explorer';
 import Notepad from './apps/Notepad';
-import SevenZip from './apps/SevenZip';
+import SevenZip, { archiveItems } from './apps/SevenZip';
 
 const Xampp = lazy(() => import('./apps/Xampp'));
 const Browser = lazy(() => import('./apps/Browser'));
@@ -56,7 +56,9 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
       await Promise.all([vfs.load(), server.load()]);
       const arch = (sheet.files.archiveUrl ?? 'pliki1.7z').split('/').pop() ?? 'pliki1.7z';
       if (!vfs.exists(join(DESKTOP, arch)) && !vfs.get(DESKTOP + '/.init')) {
-        vfs.write(join(DESKTOP, arch), 'data:application/x-7z-compressed;base64,', true);
+        // prawdziwe archiwum z arkusza (spakowane), żeby rozmiar i właściwości się zgadzały
+        const data = sheet.files.archiveUrl ? await fetch(sheet.files.archiveUrl).then((r) => (r.ok ? r.blob() : null)).then((bl) => bl && new Promise<string>((res) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result)); fr.readAsDataURL(bl); })).catch(() => null) : null;
+        vfs.write(join(DESKTOP, arch), data ?? 'data:application/x-7z-compressed;base64,', true);
         vfs.write(DESKTOP + '/.init', '1');
       }
       if (on) setReady(true);
@@ -64,6 +66,16 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
     return () => { on = false; };
   }, [vfs, server, sheet]);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  // przycisk „Wstecz” przegladarki nie wychodzi z maszyny: cofa w aktywnym oknie (Eksplorator, Edge)
+  useEffect(() => {
+    history.pushState({ p03vm: 1 }, '');
+    const back = () => window.dispatchEvent(new Event('p03-vm-back'));
+    const pop = () => { history.pushState({ p03vm: 1 }, ''); back(); };
+    const mouse = (e: PointerEvent) => { if (e.button === 3) { e.preventDefault(); back(); } };
+    const key = (e: KeyboardEvent) => { if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); back(); } };
+    window.addEventListener('popstate', pop); window.addEventListener('pointerdown', mouse); window.addEventListener('keydown', key);
+    return () => { window.removeEventListener('popstate', pop); window.removeEventListener('pointerdown', mouse); window.removeEventListener('keydown', key); };
+  }, []);
 
   const focus = useCallback((id: number) => { setActive(id); setWins((ws) => ws.map((w) => (w.id === id ? { ...w, z: ++zTop.current, min: false } : w))); }, []);
   const open = useCallback((app: AppId, args: Record<string, unknown> = {}) => {
@@ -175,7 +187,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
       items: [
         { label: 'Otwórz', icon: p ? <FileIcon path={p} dir={vfs.isDir(p)} size={16} /> : ic.key === 'pc' ? SpecialIcon.pc(16) : ic.key === 'trash' ? SpecialIcon.trash(16) : ic.key === 'pdf' ? APPS.pdf.icon(16) : APPS[ic.key as AppId]?.icon(16), run: ic.open, key: 'Enter' },
         ...(withApps.length ? [{ label: 'Otwórz za pomocą', sub: withApps.map((a) => ({ label: APPS[a].name, icon: APPS[a].icon(16), run: () => open(a, { path: p }) })) }] : []),
-        ...(p && /\.(7z|zip)$/i.test(p) ? [{ label: '7-Zip', icon: APPS.sevenzip.icon(15), sub: [{ label: 'Otwórz archiwum', run: () => open('sevenzip', { path: p }) }, { label: 'Wypakuj pliki…', run: () => open('sevenzip', { path: p, extract: 'ask' }) }, { label: 'Wypakuj tutaj', run: () => open('sevenzip', { path: p, extract: 'here' }) }, { label: `Wypakuj do "${base(p).replace(/\.\w+$/, '')}\\"`, run: () => open('sevenzip', { path: p, extract: 'folder' }) }] }] : []),
+        ...(p && /\.(7z|zip)$/i.test(p) ? archiveItems(os, p) : []),
         ...(p && vfs.isDir(p) && clip.files ? [{ label: 'Wklej', icon: <ClipboardPaste size={14} />, run: () => paste(p) }] : []),
         ...(ic.key === 'trash' ? [{ label: 'Opróżnij Kosz', run: () => void os.confirm('Usuwanie wielu elementów', `Czy na pewno chcesz trwale usunąć te elementy (${vfs.list(RECYCLE).length})?`).then((ok) => ok && vfs.list(RECYCLE).forEach((x) => vfs.remove(x))), off: !binFull }] : []),
         ...(p ? [{ label: 'Kopiuj jako ścieżkę', key: 'Ctrl+Shift+C', run: () => void navigator.clipboard?.writeText(p.replace(/\//g, '\\')) }, { label: 'Właściwości', key: 'Alt+Enter', run: () => setProps(p) }] : []),
@@ -253,7 +265,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
 
   return (
     <OSContext.Provider value={os}>
-      <div ref={root} className="fixed inset-0 z-[80] select-none overflow-hidden font-['Segoe_UI_Variable','Segoe_UI',system-ui,sans-serif] text-[13px]"
+      <div ref={root} data-vm className="fixed inset-0 z-[80] select-none overflow-hidden font-['Segoe_UI_Variable','Segoe_UI',system-ui,sans-serif] text-[13px]"
         style={{ background: 'radial-gradient(ellipse at 30% 110%, #4d8fd9 0%, transparent 55%), radial-gradient(ellipse at 80% -10%, #7aa8e6 0%, transparent 50%), linear-gradient(135deg,#0f2f63 0%,#1b4f9c 45%,#2a6fd0 70%,#173f7a 100%)' }}
         onContextMenu={bgMenu}
         onPointerDown={(e) => { setStart(false); setCal(false); setTaskMenu(null); if (e.button === 0 && e.target === e.currentTarget) { setSel([]); setActive(null); setBand({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY }); } }}
@@ -288,7 +300,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
 
         {/* okna */}
         {wins.map((w) => (
-          <Window key={w.id} win={w} active={active === w.id} dark={DARK.includes(w.app)} onFocus={() => active !== w.id && focus(w.id)} onClose={() => close(w.id)}
+          <Window key={w.id} win={w} ghost={w.app === 'sevenzip' && !!w.args.extract} active={active === w.id} dark={DARK.includes(w.app)} onFocus={() => active !== w.id && focus(w.id)} onClose={() => close(w.id)}
             onChange={(p) => patch(w.id, p)} onSnapHint={setSnapHint} onSnap={(side) => snapTo(w.id, side)}
             bar={w.app === 'explorer' ? <span className="flex h-full flex-1 items-end gap-1 pl-1"><span className="mb-[-1px] flex h-[30px] w-[230px] items-center gap-2 rounded-t-[8px] bg-[#f9f9f9] px-3 text-[12px] shadow-[0_-1px_2px_rgba(0,0,0,.05)]">{APPS.explorer.icon(16)}<span className="flex-1 truncate">{w.title}</span><button onPointerDown={(e) => e.stopPropagation()} onClick={() => close(w.id)} className="rounded p-0.5 hover:bg-black/10"><X size={12} /></button></span><button onPointerDown={(e) => e.stopPropagation()} onClick={() => open('explorer')} className="mb-1 rounded p-1 hover:bg-black/[.06]" title="Nowa karta"><Plus size={14} /></button><span className="flex-1" /></span> : undefined}>
             <Suspense fallback={<div className="grid h-full place-items-center bg-white text-[#666]">Uruchamianie…</div>}>{renderApp(w)}</Suspense>

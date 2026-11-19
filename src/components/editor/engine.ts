@@ -8,7 +8,7 @@ export type Tool = 'move' | 'rect' | 'wand' | 'crop' | 'picker' | 'bucket' | 'te
 export type Frame = { layerId: number; delay: number };
 export type Src = { name: string; url: string };
 
-export function useEditor(o: { onSave: (name: string, url: string) => void; paramShot?: { name: string; ext: string } | null }) {
+export function useEditor(o: { onSave: (name: string, url: string) => void; paramShot?: { name: string; ext: string } | null; pickOpen?: (asLayer: boolean) => Promise<Src | null>; pickSave?: (name: string) => Promise<string | null> }) {
   const [layers, setLayers] = useState<ELayer[]>([]);
   const [act, setAct] = useState(0);
   const [docName, setDocName] = useState('');
@@ -93,6 +93,7 @@ export function useEditor(o: { onSave: (name: string, url: string) => void; para
   }
 
   return {
+    pickOpen: o.pickOpen, pickSave: o.pickSave,
     layers, setLayers, act, setAct, L, W, H, docName, hist, redo, sel, setSel, tool, setTool, fg, setFg, bg, setBg, tol, setTol, contiguous, setContiguous,
     crop, setCrop, applyCrop: () => { if (crop && crop.w > 0 && crop.h > 0) { all('Kadrowanie', (c) => op.canvasSize(c, crop.w, crop.h, crop.x, crop.y)); setCrop(null); } },
     brush, setBrush, font, setFont, fontSize, setFontSize, zoom, setZoom, frames, setFrames, loop, setLoop, toast, flash,

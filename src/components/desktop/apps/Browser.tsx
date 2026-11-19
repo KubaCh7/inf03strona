@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, RotateCw, Home, Plus, X, Lock, Info, Star, MoreHorizontal, Globe, Search, FileWarning } from 'lucide-react';
-import { useOS, type Win } from '../os';
+import { useOS, useVmBack, type Win } from '../os';
 import { useVfs, HTDOCS, join, parent, isImage, isText, ext, base, dataUrlToText } from '../../../lib/vfs';
 import { useServer } from '../../../lib/mysqlServer';
 import { buildSrcDoc } from '../../../lib/preview';
@@ -105,10 +105,12 @@ export default function Browser({ win }: { win: Win }) {
   });
 
   const go = (d: -1 | 1) => { const i = t.idx + d; if (i < 0 || i >= t.hist.length) return; setTabs((ts) => ts.map((x, k) => (k === cur ? { ...x, idx: i } : x))); void navigate(t.hist[i], { push: false }); };
+  const rootRef = useRef<HTMLDivElement>(null);
+  useVmBack(rootRef, () => go(-1));
   const secure = /^(localhost|127\.)/.test(t.url.replace(/^https?:\/\//, ''));
 
   return (
-    <div className="flex h-full flex-col bg-[#f7f7f7] text-[12.5px] text-[#1a1a1a]">
+    <div ref={rootRef} className="flex h-full flex-col bg-[#f7f7f7] text-[12.5px] text-[#1a1a1a]">
       <div className="flex items-end gap-1 bg-[#e8ebee] px-2 pt-1.5">
         {tabs.map((x, i) => (
           <div key={x.id} onClick={() => setCur(i)} className={`group flex h-[32px] w-[220px] items-center gap-2 rounded-t-[8px] px-3 ${i === cur ? 'bg-[#f7f7f7] shadow-[0_-1px_2px_rgba(0,0,0,.06)]' : 'hover:bg-white/50'}`}>

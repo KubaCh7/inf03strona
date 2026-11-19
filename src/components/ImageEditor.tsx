@@ -6,14 +6,15 @@ import { useEditor, type Src } from './editor/engine';
 export type EditorMode = 'gimp' | 'photoshop';
 
 /** Edytor grafiki w wygladzie GIMP 2.10 albo Photoshop CC (polskie wersje). Wspolny silnik, eksport do grafik warsztatu. */
-export default function ImageEditor({ mode, onMode, sources, hints, defaultName, paramShot, onSave, onClose, embedded, onTitle, initial, onDoc }: {
+export default function ImageEditor({ mode, onMode, sources, hints, defaultName, paramShot, onSave, onClose, embedded, onTitle, initial, onDoc, pickOpen, pickSave }: {
   mode: EditorMode; onMode: (m: EditorMode) => void;
   sources: Src[]; hints: string[]; defaultName?: string;
   paramShot?: { name: string; ext: string } | null;
   onSave: (name: string, dataUrl: string) => void; onClose: () => void;
   embedded?: boolean; onTitle?: (t: string) => void; initial?: Src | null; onDoc?: (name: string) => void;
+  pickOpen?: (asLayer: boolean) => Promise<Src | null>; pickSave?: (name: string) => Promise<string | null>;
 }) {
-  const ed = useEditor({ onSave, paramShot });
+  const ed = useEditor({ onSave, paramShot, pickOpen, pickSave });
   useEffect(() => { if (initial) void ed.open(initial, false); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (ed.docName) onDoc?.(ed.docName); }, [ed.docName]); // eslint-disable-line react-hooks/exhaustive-deps
   const modeSwitch = (

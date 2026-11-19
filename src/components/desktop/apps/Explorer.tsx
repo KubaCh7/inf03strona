@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUp, RotateCw, Search, Plus, Scissors, Copy, ClipboardPaste, PenLine, Trash2, ArrowUpDown, LayoutList, LayoutGrid, FolderPlus, FileText, ChevronDown, ChevronRight, Share, MoreHorizontal, PanelRight } from 'lucide-react';
-import { useOS, FileIcon, typeName, APPS, OPEN_WITH, dragStart, dropTo, isFileDrag, type Win, type AppId } from '../os';
+import { useOS, FileIcon, typeName, APPS, OPEN_WITH, dragStart, dropTo, isFileDrag, useVmBack, type Win, type AppId } from '../os';
 import { FolderSvg, NavSvg } from '../icons';
 import { ContextMenu, type CItem, type CTop } from '../ui';
+import { archiveItems } from './SevenZip';
 import { useVfs, base, parent, join, fmtDate, fmtSize, DESKTOP, DOCS, DOWNLOADS, HTDOCS, isImage, isText, RECYCLE } from '../../../lib/vfs';
 const PICS = 'C:/Users/Egzamin/Pictures', MUSIC = 'C:/Users/Egzamin/Music', VIDEOS = 'C:/Users/Egzamin/Videos';
 
@@ -27,6 +28,8 @@ export default function Explorer({ win }: { win: Win }) {
   useEffect(() => { os.setTitle(win.id, dir === 'HOME' ? 'Strona główna' : dir === 'PC' ? 'Ten komputer' : dir === 'NET' ? 'Sieć' : dir === 'C:' ? 'Dysk lokalny (C:)' : dir === RECYCLE ? 'Kosz' : base(dir)); }, [dir]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!['HOME', 'PC', 'NET'].includes(dir) && !vfs.isDir(dir)) setDir('HOME'); }, [vfs.ver]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const goBack = () => { if (!back.length) return; setFwd((f) => [dir, ...f]); setDir(back[back.length - 1]); setBack(back.slice(0, -1)); setSel([]); };
+  useVmBack(box, goBack);
   const go = (p: string) => { if (p === dir) return; setBack((b) => [...b, dir]); setFwd([]); setDir(p); setSel([]); setQ(''); };
   const items = (['HOME', 'PC', 'NET'].includes(dir) ? [] : vfs.list(dir)).filter((p) => base(p).toLowerCase().includes(q.toLowerCase())).sort((a, b) => {
     const da = vfs.isDir(a), db = vfs.isDir(b);
@@ -65,7 +68,7 @@ export default function Explorer({ win }: { win: Win }) {
     const items: CItem[] = [
       { label: 'Otwórz', icon: <FileIcon path={p} dir={isDir} size={15} />, run: () => open(p), key: 'Enter' },
       ...(withApps.length ? [{ label: 'Otwórz za pomocą', sub: withApps.map((a) => ({ label: APPS[a].name, icon: APPS[a].icon(15), run: () => os.open(a, { path: p }) })) }] : []),
-      ...(/\.(7z|zip)$/i.test(p) ? [{ label: '7-Zip', sub: [{ label: 'Otwórz archiwum', run: () => os.open('sevenzip', { path: p }) }, { label: 'Wypakuj pliki…', run: () => os.open('sevenzip', { path: p, extract: 'ask' }) }, { label: 'Wypakuj tutaj', run: () => os.open('sevenzip', { path: p, extract: 'here' }) }, { label: `Wypakuj do "${base(p).replace(/\.\w+$/, '')}\\"`, run: () => os.open('sevenzip', { path: p, extract: 'folder' }) }] }] : []),
+      ...(/\.(7z|zip)$/i.test(p) ? archiveItems(os, p) : []),
       ...(isDir && os.clip.files ? [{ label: 'Wklej', icon: <ClipboardPaste size={14} />, run: () => { const c = os.clip.files!; c.paths.forEach((x) => vfs.copy(x, p, c.mode === 'cut')); } }] : []),
       ...(isDir ? [{ label: 'Otwórz w nowym oknie', run: () => os.open('explorer', { path: p }) }] : []),
       ...(dir === RECYCLE ? [{ label: 'Przywróć', run: () => ps.forEach((x) => vfs.copy(x, DESKTOP, true)) }] : []),
@@ -121,7 +124,7 @@ export default function Explorer({ win }: { win: Win }) {
     <div ref={box} tabIndex={0} onKeyDown={keys} onPointerDown={() => { setNewOpen(false); setViewMenu(null); }} className="flex h-full flex-col bg-[#f3f3f3] font-['Segoe_UI_Variable','Segoe_UI',sans-serif] text-[12.5px] text-[#1a1a1a] outline-none">
       {/* pasek adresu */}
       <div className="flex items-center gap-1 bg-[#f9f9f9] px-2 py-1.5">
-        <button disabled={!back.length} title="Wstecz (Alt+strzałka w lewo)" onClick={() => { setFwd((f) => [dir, ...f]); setDir(back[back.length - 1]); setBack(back.slice(0, -1)); }} className="rounded-[4px] p-1.5 hover:bg-black/[.05] disabled:opacity-30"><ArrowLeft size={16} strokeWidth={1.6} /></button>
+        <button disabled={!back.length} title="Wstecz (Alt+strzałka w lewo)" onClick={goBack} className="rounded-[4px] p-1.5 hover:bg-black/[.05] disabled:opacity-30"><ArrowLeft size={16} strokeWidth={1.6} /></button>
         <button disabled={!fwd.length} title="Dalej" onClick={() => { setBack((bb) => [...bb, dir]); setDir(fwd[0]); setFwd(fwd.slice(1)); }} className="rounded-[4px] p-1.5 hover:bg-black/[.05] disabled:opacity-30"><ArrowRight size={16} strokeWidth={1.6} /></button>
         <button disabled={virt} title="W górę" onClick={() => go(dir === 'C:' ? 'PC' : parent(dir))} className="rounded-[4px] p-1.5 hover:bg-black/[.05] disabled:opacity-30"><ArrowUp size={16} strokeWidth={1.6} /></button>
         <button title="Odśwież" className="rounded-[4px] p-1.5 hover:bg-black/[.05]"><RotateCw size={15} strokeWidth={1.6} /></button>

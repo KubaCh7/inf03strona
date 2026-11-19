@@ -85,7 +85,7 @@ export function FileDialog({ o, onDone }: { o: PickOpts; onDone: (p: string | nu
   const [dir, setDir] = useState(o.dir && vfs.isDir(o.dir) ? o.dir : DESKTOP);
   const [hist, setHist] = useState<string[]>([]);
   const [name, setName] = useState(o.name ?? '');
-  const [filter, setFilter] = useState(0);
+  const [filter, setFilter] = useState(() => { const e = ext(o.name ?? ''); const i = o.filters?.findIndex((f) => f.exts.includes(e)) ?? -1; return i >= 0 ? i : 0; });
   const [q, setQ] = useState('');
   const flt = o.filters?.[filter];
   const go = (p: string) => { setHist((h) => [...h, dir]); setDir(p); };
@@ -93,7 +93,8 @@ export function FileDialog({ o, onDone }: { o: PickOpts; onDone: (p: string | nu
   const finish = () => {
     if (o.dirOnly) return onDone(dir);
     let n = name.trim(); if (!n) return;
-    if (o.mode === 'save' && flt && !flt.exts.includes('*') && !flt.exts.includes(ext(n))) n += '.' + flt.exts[0];
+    // znane rozszerzenie wpisane w nazwie wybiera typ (jak w Paint/Notatniku); inaczej dopisz rozszerzenie wybranego typu
+    if (o.mode === 'save' && flt && !flt.exts.includes('*') && !flt.exts.includes(ext(n)) && !o.filters?.some((f) => f.exts.includes(ext(n)))) n += '.' + flt.exts[0];
     const p = /^[a-z]:/i.test(n) ? n : join(dir, n);
     if (o.mode === 'open') { if (vfs.exists(p) && !vfs.isDir(p)) onDone(p); else if (vfs.isDir(p)) { go(p); setName(''); } else void os.alert(o.title ?? 'Otwieranie', `${base(p)}\nNie można odnaleźć pliku.\nSprawdź nazwę pliku i spróbuj ponownie.`, 'warn'); return; }
     if (vfs.exists(p) && !vfs.isDir(p)) { void os.confirm('Potwierdzanie zapisywania jako', `${base(p)} już istnieje.\nCzy chcesz go zamienić?`).then((ok) => ok && onDone(p)); return; }

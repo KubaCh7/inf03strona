@@ -114,3 +114,12 @@ export async function dropTo(os: OS, e: React.DragEvent, dir: string) {
 }
 const parentOf = (p: string) => p.slice(0, p.lastIndexOf('/'));
 const RECYCLE_PATH = 'C:/$Recycle.Bin';
+
+/** „Wstecz” (przycisk przegladarki, boczny przycisk myszy, Alt+strzalka) trafia do aktywnego okna VM. */
+export function useVmBack(ref: React.RefObject<HTMLElement | null>, fn: () => void) {
+  const f = useRef(fn); f.current = fn;
+  useEffect(() => {
+    const h = () => { if (ref.current?.closest('[data-win]')?.getAttribute('data-active') === '1') f.current(); };
+    window.addEventListener('p03-vm-back', h); return () => window.removeEventListener('p03-vm-back', h);
+  }, [ref]);
+}

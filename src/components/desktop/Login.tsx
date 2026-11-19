@@ -11,7 +11,7 @@ export default function Login({ onLogin }: { onLogin: (candidate: string) => voi
   const ok = /^\d{11}$/.test(num) || /^[A-Z0-9]{6,}$/i.test(num);
   const go = () => { if (!ok) return; try { localStorage.setItem('p03:candidate', num); } catch { /* */ } onLogin(num); };
   return (
-    <div className="fixed inset-0 z-[85] select-none overflow-hidden font-['Segoe_UI_Variable','Segoe_UI',system-ui,sans-serif] text-white" onClick={() => stage === 'lock' && setStage('login')}
+    <div data-vm className="fixed inset-0 z-[85] select-none overflow-hidden font-['Segoe_UI_Variable','Segoe_UI',system-ui,sans-serif] text-white" onClick={() => stage === 'lock' && setStage('login')}
       style={{ background: 'radial-gradient(ellipse at 30% 110%, #4d8fd9 0%, transparent 55%), radial-gradient(ellipse at 80% -10%, #7aa8e6 0%, transparent 50%), linear-gradient(135deg,#0f2f63 0%,#1b4f9c 45%,#2a6fd0 70%,#173f7a 100%)' }}>
       {stage === 'lock' ? (
         <div className="flex h-full flex-col items-center pt-[14vh] [text-shadow:0_2px_8px_rgba(0,0,0,.35)]">

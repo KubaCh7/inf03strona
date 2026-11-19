@@ -24,7 +24,7 @@ function GDialog({ title, head, sub, children, buttons, onClose, wide }: { title
 }
 
 export default function GimpUI({ ed, sources, hints, defaultName, hasParamShot, onClose, modeSwitch, embedded, onTitle }: { ed: Ed; sources: Src[]; hints: string[]; defaultName?: string; hasParamShot: boolean; onClose: () => void; modeSwitch: React.ReactNode; embedded?: boolean; onTitle?: (t: string) => void }) {
-  const [dlg, setDlg] = useState<Dlg>(ed.L ? null : 'open');
+  const [dlg, setDlg] = useState<Dlg>(ed.L || ed.pickOpen ? null : 'open');
   const hadDoc = useRef(!!ed.L);
   useEffect(() => { if (ed.L && !hadDoc.current) { hadDoc.current = true; setDlg((d) => (d === 'open' ? null : d)); } }, [ed.L]);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -46,6 +46,9 @@ export default function GimpUI({ ed, sources, hints, defaultName, hasParamShot, 
   const [anim, setAnim] = useState(true); const [gloop, setGloop] = useState(true); const [delay, setDelay] = useState(100); const [mode, setMode] = useState<'r' | 'c' | 'u'>('u'); const [useAll, setUseAll] = useState(false);
   const [lname, setLname] = useState('Warstwa');
   const show = (d: Dlg) => {
+    // pulpit egzaminacyjny: pliki z wirtualnego dysku (okna Windows)
+    if (ed.pickOpen && (d === 'open' || d === 'layers')) { void ed.pickOpen(d === 'layers').then((src) => { if (src) void ed.open(src, d === 'layers'); }); return; }
+    if (ed.pickSave && d === 'export') { void ed.pickSave(ed.docName ? ed.docName.replace(/\.\w+$/, '') + '.' + ((/\.(\w+)$/.exec(defaultName ?? '')?.[1]) ?? 'png') : name).then((pth) => { if (pth) { setName(pth); setDlg('exportType'); } }); return; }
     if (d === 'scale') { setSw(W); setSh(H); setChain(true); }
     if (d === 'canvas') { setCw(W); setCh(H); setOx(0); setOy(0); }
     if (d === 'export') setName((n) => (n === 'Bez nazwy.png' && defaultName ? defaultName : n));

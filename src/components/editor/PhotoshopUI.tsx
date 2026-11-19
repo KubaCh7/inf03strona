@@ -24,7 +24,7 @@ function PDialog({ title, children, buttons, onClose, w = 520 }: { title: string
 }
 
 export default function PhotoshopUI({ ed, sources, hints, defaultName, hasParamShot, onClose, modeSwitch, embedded, onTitle }: { ed: Ed; sources: Src[]; hints: string[]; defaultName?: string; hasParamShot: boolean; onClose: () => void; modeSwitch: React.ReactNode; embedded?: boolean; onTitle?: (t: string) => void }) {
-  const [dlg, setDlg] = useState<Dlg>(ed.L ? null : 'open');
+  const [dlg, setDlg] = useState<Dlg>(ed.L || ed.pickOpen ? null : 'open');
   const hadDoc = useRef(!!ed.L);
   useEffect(() => { if (ed.L && !hadDoc.current) { hadDoc.current = true; setDlg((d) => (d === 'open' ? null : d)); } }, [ed.L]);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -46,6 +46,7 @@ export default function PhotoshopUI({ ed, sources, hints, defaultName, hasParamS
   const [name, setName] = useState(defaultName ?? 'Bez tytułu-1.png');
   const [lname, setLname] = useState('Warstwa 1');
   const show = (d: Dlg) => {
+    if (ed.pickOpen && (d === 'open' || d === 'place')) { void ed.pickOpen(d === 'place').then((src) => { if (src) { void ed.open(src, d === 'place'); if (d === 'place') ed.flash(`Umieszczono ${src.name} jako nową warstwę`); } }); return; }
     if (d === 'size') { setSw(W); setSh(H); setChain(true); }
     if (d === 'canvas') { setCw(W); setCh(H); setAnchor(4); }
     if (d === 'sfw' || d === 'exportAs') { const e = (/\.(\w+)$/.exec(defaultName ?? '')?.[1] ?? '').toLowerCase(); setFmt(e === 'gif' || frames.length ? 'GIF' : e === 'jpg' || e === 'jpeg' ? 'JPEG' : 'PNG-24'); }
@@ -63,6 +64,11 @@ export default function PhotoshopUI({ ed, sources, hints, defaultName, hasParamS
   const setDelay = (k: number | 'all', d: number) => ed.setFrames(frames.map((f, i) => (k === 'all' || i === k ? { ...f, delay: d } : f)));
 
   const saveExt = fmt === 'GIF' ? 'gif' : fmt === 'JPEG' ? 'jpg' : 'png';
+  const goSave = () => {
+    if (!ed.pickSave) { setDlg('save'); return; }
+    setDlg(null);
+    void ed.pickSave((ed.docName || name).replace(/\.\w+$/, '') + '.' + saveExt).then((pth) => { if (pth) void ed.exportAs(pth, { quality: quality / 100, anim: /\.gif$/i.test(pth) && frames.length > 1, loop: ed.loop, replace: true, shotEl: root.current }); });
+  };
   const doSave = async () => {
     const nm = name.replace(/\.\w+$/, '') + '.' + saveExt;
     const ok = await ed.exportAs(nm, { quality: quality / 100, anim: saveExt === 'gif' && frames.length > 1, loop: ed.loop, replace: true, shotEl: root.current });
@@ -79,7 +85,7 @@ export default function PhotoshopUI({ ed, sources, hints, defaultName, hasParamS
   const MENUS: [string, MItem[]][] = [
     ['Plik', [{ label: 'Nowy…', key: 'Ctrl+N', run: () => show('new') }, { label: 'Otwórz…', key: 'Ctrl+O', run: () => show('open') }, { label: 'Przeglądaj w programie Bridge…', off: true }, { label: 'Otwórz jako…', key: 'Alt+Shift+Ctrl+O', run: () => show('open') }, { label: 'Ostatnio otwierane', sub: [], off: true }, '-',
       { label: 'Zamknij', key: 'Ctrl+W', run: onClose }, { label: 'Zamknij wszystko', key: 'Alt+Ctrl+W', run: onClose }, { label: 'Zapisz', key: 'Ctrl+S', off: true }, { label: 'Zapisz jako…', key: 'Shift+Ctrl+S', off: true }, { label: 'Przywróć', key: 'F12', off: true }, '-',
-      { label: 'Eksportuj', sub: [{ label: 'Szybki eksport jako PNG', run: () => { setFmt('PNG-24'); setDlg('save'); } }, { label: 'Eksportuj jako…', key: 'Alt+Shift+Ctrl+W', run: () => show('exportAs') }, '-', { label: 'Warstwy do plików…', off: true }, '-', { label: 'Zapisz dla Internetu (starsza wersja)…', key: 'Alt+Shift+Ctrl+S', run: () => show('sfw') }], ...off() },
+      { label: 'Eksportuj', sub: [{ label: 'Szybki eksport jako PNG', run: () => { setFmt('PNG-24'); goSave(); } }, { label: 'Eksportuj jako…', key: 'Alt+Shift+Ctrl+W', run: () => show('exportAs') }, '-', { label: 'Warstwy do plików…', off: true }, '-', { label: 'Zapisz dla Internetu (starsza wersja)…', key: 'Alt+Shift+Ctrl+S', run: () => show('sfw') }], ...off() },
       { label: 'Umieść osadzone…', run: () => show('place'), ...off() }, { label: 'Umieść połączone…', off: true }, '-', { label: 'Automatyzuj', sub: [], off: true }, { label: 'Skrypty', sub: [{ label: 'Wczytaj pliki do stosu…', run: () => show('place') }], ...off() }, { label: 'Importuj', sub: [], off: true }, '-', { label: 'Drukuj…', key: 'Ctrl+P', off: true }, '-', { label: 'Zakończ', key: 'Ctrl+Q', run: onClose }]],
     ['Edycja', [{ label: `Cofnij${ed.hist.length ? ' ' + ed.hist[ed.hist.length - 1].label : ''}`, key: 'Ctrl+Z', run: ed.undo, off: !ed.hist.length }, { label: 'Ponów', key: 'Shift+Ctrl+Z', run: ed.redoAct, off: !ed.redo.length }, { label: 'Przełącz ostatni stan', key: 'Alt+Ctrl+Z', off: true }, '-', { label: 'Wytnij', key: 'Ctrl+X', off: true }, { label: 'Kopiuj', key: 'Ctrl+C', off: true }, { label: 'Wklej', key: 'Ctrl+V', off: true }, { label: 'Wyczyść', run: ed.clear, off: !ed.sel }, '-',
       { label: 'Wypełnij…', key: 'Shift+F5', run: () => ed.sel && ed.fill(ed.sel.x, ed.sel.y), off: !ed.sel }, { label: 'Obrysuj…', off: true }, { label: 'Wypełnienie z uwzględnieniem zawartości…', off: true }, '-', { label: 'Swobodne przekształcanie', key: 'Ctrl+T', run: () => show('size'), ...off() },
@@ -346,7 +352,7 @@ export default function PhotoshopUI({ ed, sources, hints, defaultName, hasParamS
         </PDialog>
       )}
       {dlg === 'sfw' && (
-        <PDialog w={980} title="Zapisz dla Internetu (100%)" onClose={() => setDlg(null)} buttons={<><button className={btn} onClick={() => setDlg('save')}>Zapisz…</button><button className={btn} onClick={() => setDlg(null)}>Anuluj</button><button className={btnP} onClick={() => setDlg('save')}>Gotowe</button></>}>
+        <PDialog w={980} title="Zapisz dla Internetu (100%)" onClose={() => setDlg(null)} buttons={<><button className={btn} onClick={() => goSave()}>Zapisz…</button><button className={btn} onClick={() => setDlg(null)}>Anuluj</button><button className={btnP} onClick={() => goSave()}>Gotowe</button></>}>
           <div className="flex gap-3">
             <div className="flex-1">
               <p className="mb-1 flex gap-1">{['Oryginalny', 'Zoptymalizowany', '2 obrazy', '4 obrazy'].map((t, i) => <span key={t} className={`px-3 py-1 ${i === 1 ? 'bg-[#454545] font-bold' : 'opacity-70'}`}>{t}</span>)}</p>
@@ -377,7 +383,7 @@ export default function PhotoshopUI({ ed, sources, hints, defaultName, hasParamS
         </PDialog>
       )}
       {dlg === 'exportAs' && (
-        <PDialog w={760} title="Eksportuj jako" onClose={() => setDlg(null)} buttons={<><button className={btnP} onClick={() => setDlg('save')}>Eksportuj</button><button className={btn} onClick={() => setDlg(null)}>Anuluj</button></>}>
+        <PDialog w={760} title="Eksportuj jako" onClose={() => setDlg(null)} buttons={<><button className={btnP} onClick={() => goSave()}>Eksportuj</button><button className={btn} onClick={() => setDlg(null)}>Anuluj</button></>}>
           <div className="flex gap-3">
             <div className="grid h-[300px] flex-1 place-items-center bg-[#454545]">{L && <img src={ed.visible().toDataURL()} alt="" className="max-h-full max-w-full" />}</div>
             <div className="w-[240px] space-y-2">

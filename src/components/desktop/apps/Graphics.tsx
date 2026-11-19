@@ -22,7 +22,9 @@ export default function Graphics({ win }: { win: Win }) {
     <ImageEditor embedded mode={win.app === 'gimp' ? 'gimp' : 'photoshop'} onMode={() => {}} sources={sources} hints={[]} initial={initial}
       onTitle={(t) => os.setTitle(win.id, t)}
       onDoc={(n) => { const p = byName.current.get(n) ?? [...byName.current.entries()].find(([k]) => base(k) === n)?.[1]; if (p) lastDir.current = parent(p); }}
-      onSave={(name, url) => { const p = /[\\/]/.test(name) ? join(DESKTOP, name) : join(lastDir.current, name); vfs.write(p, url, true); }}
+      pickOpen={async () => { const p = await os.pick({ mode: 'open', title: win.app === 'gimp' ? 'Otwórz obraz' : 'Otwórz', dir: lastDir.current, filters: [{ label: 'Wszystkie obrazy', exts: ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'] }, { label: 'Wszystkie pliki (*.*)', exts: ['*'] }] }); if (!p) return null; lastDir.current = parent(p); return { name: base(p), url: vfs.read(p) }; }}
+      pickSave={async (name) => { const p = await os.pick({ mode: 'save', title: win.app === 'gimp' ? 'Eksportuj obraz' : 'Zapisz zoptymalizowany jako', dir: lastDir.current, name, filters: [{ label: 'PNG (*.png)', exts: ['png'] }, { label: 'JPEG (*.jpg)', exts: ['jpg'] }, { label: 'GIF (*.gif)', exts: ['gif'] }] }); if (p) lastDir.current = parent(p); return p; }}
+      onSave={(name, url) => { const p = /^C:\//.test(name) ? name : join(lastDir.current, name); vfs.write(p, url, true); }}
       onClose={() => os.close(win.id)} />
   );
 }

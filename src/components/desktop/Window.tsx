@@ -5,7 +5,8 @@ export type Snap = 'max' | 'left' | 'right';
 import { APPS } from './os';
 
 /** Okno Windows 11: pasek tytulu, przeciaganie, zmiana rozmiaru, min/max/zamknij. */
-export default function Window({ win, active, onFocus, onChange, onClose, children, bar, dark, onSnapHint, onSnap }: {
+export default function Window({ win, active, onFocus, onChange, onClose, children, bar, dark, onSnapHint, onSnap, ghost }: {
+  ghost?: boolean;
   win: Win; active: boolean; onFocus: () => void; onChange: (p: Partial<Win>) => void; onClose: () => void; children: React.ReactNode; bar?: React.ReactNode; dark?: boolean;
   onSnapHint?: (s: Snap | null) => void; onSnap?: (s: Snap) => void;
 }) {
@@ -40,10 +41,12 @@ export default function Window({ win, active, onFocus, onChange, onClose, childr
     window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
   };
   if (win.min) return null;
+  // okno bez ramki: same okna dialogowe (np. wypakowanie z menu kontekstowego)
+  if (ghost) return <div data-win={win.id} data-active={active ? '1' : '0'} onPointerDown={onFocus} style={{ zIndex: win.z }} className="pointer-events-none fixed inset-0 [&_*]:pointer-events-auto">{children}</div>;
   const style = win.max ? { left: 0, top: 0, width: '100%', height: 'calc(100% - 48px)', zIndex: win.z } : { left: win.x, top: win.y, width: win.w, height: win.h, zIndex: win.z };
   const ctl = dark ? 'text-[#ddd] hover:bg-white/10' : 'text-[#1a1a1a] hover:bg-black/[.06]';
   return (
-    <div data-win={win.id} data-active={active ? '1' : '0'} onPointerDown={onFocus} style={style}
+    <div data-win={win.id} data-active={active ? '1' : '0'} {...(dark ? { 'data-dark-app': '' } : {})} onPointerDown={onFocus} style={style}
       className={`absolute flex flex-col overflow-hidden border ${win.max ? 'rounded-none' : 'rounded-[8px]'} ${active ? 'border-[#8a8a8a]/60 shadow-[0_8px_32px_rgba(0,0,0,.35)]' : 'border-[#aaa]/40 shadow-[0_4px_16px_rgba(0,0,0,.2)]'} ${dark ? 'bg-[#202020]' : 'bg-[#f3f3f3]'}`}>
       <div className={`flex ${bar ? 'h-[40px]' : 'h-[32px]'} shrink-0 select-none items-center ${dark ? 'bg-[#202020] text-[#ddd]' : active ? 'bg-[#f3f3f3] text-[#1a1a1a]' : 'bg-[#f3f3f3] text-[#7a7a7a]'}`}
         onPointerDown={(e) => start(e, 'move')} onDoubleClick={() => onChange({ max: !win.max })}>

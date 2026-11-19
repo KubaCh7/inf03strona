@@ -224,3 +224,14 @@ h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: -0.02em
 @keyframes shine { 0%, 60% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
 .nav-gold { background: var(--gold-soft); color: var(--gold-3) !important; font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--gold-2); }
 .dark .nav-gold { color: var(--gold-1) !important; }
+
+/* ---------- pulpit egzaminacyjny (Windows 11): wlasne kolory niezalezne od motywu strony ---------- */
+@layer base {
+  [data-vm] { color-scheme: light; color: #1a1a1a; }
+  [data-vm] [data-dark-app] { color-scheme: dark; }
+}
+[data-vm] :focus-visible { outline: none; border-radius: 0; }
+[data-vm] button:focus-visible { outline: 1px solid #1a1a1a; outline-offset: -2px; }
+[data-vm] input:focus-visible, [data-vm] textarea:focus-visible, [data-vm] select:focus-visible { outline: none; }
+[data-vm] ::selection { background: #0078d4; color: #fff; }
+[data-vm] * { scrollbar-width: thin; scrollbar-color: #8a8a8a transparent; }
