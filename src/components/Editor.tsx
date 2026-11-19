@@ -86,7 +86,7 @@ function statementAt(view: EditorView): string {
   return stmt.replace(/^\s*(--[^\n]*\n|#[^\n]*\n|\s)+/, '').trim() ? stmt : text;
 }
 
-export default function Editor({ file, value, onChange, fontSize = 14, schema, onRun }: { file: string; value: string; onChange: (v: string) => void; fontSize?: number; schema?: Record<string, string[]>; onRun?: (sql: string, all: boolean) => void }) {
+export default function Editor({ file, value, onChange, fontSize = 14, schema, onRun, theme, bare, onCursor, autoFocus }: { file: string; value: string; onChange: (v: string) => void; fontSize?: number; schema?: Record<string, string[]>; onRun?: (sql: string, all: boolean) => void; theme?: string; bare?: boolean; onCursor?: (ln: number, col: number, sel: number) => void; autoFocus?: boolean }) {
   const viewRef = useRef<EditorView | null>(null);
   const runRef = useRef(onRun);
   runRef.current = onRun;
@@ -116,7 +116,7 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema, o
   }, []);
   useEffect(() => {
     const el = viewRef.current?.dom;
-    const h = () => void save();
+    const h = () => { if (!bare) void save(); }; // VS Code domyslnie nie formatuje przy zapisie
     el?.addEventListener('p03-save', h);
     return () => el?.removeEventListener('p03-save', h);
   });
@@ -130,7 +130,9 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema, o
   const changeRef = useRef(onChange);
   changeRef.current = onChange;
   const stableChange = useCallback((v: string) => changeRef.current(v), []);
-  const themeId = useStore((s) => s.equipped.editorTheme);
+  const equippedTheme = useStore((s) => s.equipped.editorTheme);
+  const themeId = theme ?? equippedTheme;
+  const cursorRef = useRef(onCursor); cursorRef.current = onCursor;
   const custom = useMemo(() => editorTheme(themeId), [themeId]);
   const vimOn = useStore((s) => !!s.settings.vim);
   const setSettings = useStore((s) => s.setSettings);
@@ -141,18 +143,19 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema, o
     // w Vimie lista podpowiedzi nie wyskakuje sama (Ctrl+Spacja ja otwiera)
     autocompletion({ activateOnTyping: !vimOn, icons: true, defaultKeymap: true, closeOnBlur: true, maxRenderedOptions: 80, selectOnOpen: true, aboveCursor: false }),
     ...tabKeys,
-    ...(vimOn ? [] : [EditorView.lineWrapping]),
+    ...(vimOn || bare ? [] : [EditorView.lineWrapping]),
+    EditorView.updateListener.of((u) => { if (!cursorRef.current || !(u.selectionSet || u.docChanged)) return; const m = u.state.selection.main; const l = u.state.doc.lineAt(m.head); cursorRef.current(l.number, m.head - l.from + 1, Math.abs(m.to - m.from)); }),
     // Ctrl+Enter: wykonaj kwerende pod kursorem (pliki .sql/.txt)
     Prec.highest(keymap.of([
       { key: 'Mod-s', preventDefault: true, run: (v) => { v.dom.dispatchEvent(new CustomEvent('p03-save', { bubbles: true })); return true; } },
       { key: 'Mod-Enter', run: (v) => { if (!runRef.current) return false; runRef.current(statementAt(v), false); return true; } },
       { key: 'Mod-Shift-Enter', run: (v) => { if (!runRef.current) return false; runRef.current(v.state.doc.toString(), true); return true; } },
     ])),
-  ], [file, schema, vimOn]);
+  ], [file, schema, vimOn, bare]);
   return (
     <div className="relative h-full min-h-0 overflow-hidden" style={{ ['--editor-font' as string]: `${fontSize}px` }}>
-      <button type="button" onClick={() => setSettings({ vim: !vimOn })} title={vimOn ? 'Wyłącz skróty Vima' : 'Włącz skróty Vima'}
-        className={`mono absolute right-2 top-1.5 z-10 rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${vimOn ? 'border-success bg-success text-white' : 'border-line bg-surface/80 text-muted opacity-70 hover:opacity-100'}`}>VIM</button>
+      {!bare && <button type="button" onClick={() => setSettings({ vim: !vimOn })} title={vimOn ? 'Wyłącz skróty Vima' : 'Włącz skróty Vima'}
+        className={`mono absolute right-2 top-1.5 z-10 rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${vimOn ? 'border-success bg-success text-white' : 'border-line bg-surface/80 text-muted opacity-70 hover:opacity-100'}`}>VIM</button>}
       {onRun && (
         <div className="flex h-8 items-center gap-1 border-b border-line bg-surface-2 px-2 pr-14">
           <button type="button" className="btn btn-primary px-2 py-0.5 text-[11px]" title="Wykonaj kwerendę pod kursorem (Ctrl+Enter)" onClick={() => { const v = viewRef.current; if (v) onRun(statementAt(v), false); }}>▶ Uruchom kwerendę</button>
@@ -160,8 +163,8 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema, o
           <span className="ml-1 hidden text-[11px] text-muted xl:inline">Ctrl+Enter</span>
         </div>
       )}
-      {toast && <div className={`pointer-events-none absolute bottom-2 right-2 z-20 max-w-[80%] rounded-lg px-3 py-1.5 text-xs font-bold shadow-lg ${toast.ok ? 'bg-success text-white' : 'bg-danger text-white'}`}>{toast.text}</div>}
-      <CodeMirror onCreateEditor={(v) => { viewRef.current = v; }} value={value} height="100%" theme={custom ?? (dark ? 'dark' : 'light')} extensions={extensions} onChange={stableChange}
+      {toast && !bare && <div className={`pointer-events-none absolute bottom-2 right-2 z-20 max-w-[80%] rounded-lg px-3 py-1.5 text-xs font-bold shadow-lg ${toast.ok ? 'bg-success text-white' : 'bg-danger text-white'}`}>{toast.text}</div>}
+      <CodeMirror onCreateEditor={(v) => { viewRef.current = v; if (autoFocus) setTimeout(() => v.focus(), 30); }} value={value} height="100%" theme={custom ?? (dark ? 'dark' : 'light')} extensions={extensions} onChange={stableChange}
         indentWithTab={false}
         basicSetup={vimOn ? BASIC_SETUP_VIM : BASIC_SETUP} className={onRun ? 'h-[calc(100%-2rem)]' : 'h-full'} />
     </div>

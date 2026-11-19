@@ -7,10 +7,11 @@ let nid = 1;
 export const TEXT_FILTERS: PickOpts['filters'] = [{ label: 'Wszystkie pliki (*.*)', exts: ['*'] }, { label: 'Dokumenty tekstowe (*.txt)', exts: ['txt'] }];
 
 /** Wiele otwartych dokumentow (karty) zapisywanych na wirtualnym dysku. */
-export function useDocs(initial?: string | null, untitled = 'Bez tytułu') {
+export function useDocs(initial?: string | null, untitled = 'Bez tytułu', askSave?: (doc: Doc) => Promise<'save' | 'discard' | 'cancel'>) {
   const os = useOS();
   const load = (p: string): Doc => { const n = os.vfs.get(p); const t = n?.bin ? dataUrlToText(n.data ?? '') : n?.data ?? ''; return { id: nid++, path: p, name: base(p), text: t, saved: t }; };
-  const blank = (): Doc => ({ id: nid++, path: null, name: untitled, text: '', saved: '' });
+  let unt = 0;
+  const blank = (): Doc => { unt++; return { id: nid++, path: null, name: /-1$/.test(untitled) ? untitled.replace(/-1$/, `-${unt}`) : untitled, text: '', saved: '' }; };
   const [docs, setDocs] = useState<Doc[]>(() => [initial && os.vfs.exists(initial) ? load(initial) : blank()]);
   const [cur, setCur] = useState(0);
   const d = docs[Math.min(cur, docs.length - 1)];
@@ -40,9 +41,13 @@ export function useDocs(initial?: string | null, untitled = 'Bez tytułu') {
   const newDoc = () => { setDocs((ds) => [...ds, blank()]); setCur(docs.length); };
   async function closeDoc(i: number) {
     const doc = docs[i];
-    if (doc.text !== doc.saved && !(await os.confirm(os.sheet ? 'Zapisywanie' : '', `Czy chcesz zapisać zmiany w ${doc.path ?? doc.name}?`).then((ok) => (ok ? save(undefined, i) : true)))) return;
+    if (doc.text !== doc.saved) {
+      if (askSave) { const r = await askSave(doc); if (r === 'cancel' || (r === 'save' && !(await save(undefined, i)))) return; }
+      else if (!(await os.confirm(os.sheet ? 'Zapisywanie' : '', `Czy chcesz zapisać zmiany w ${doc.path ?? doc.name}?`).then((ok) => (ok ? save(undefined, i) : true)))) return;
+    }
     setDocs((ds) => { const n = ds.filter((_, k) => k !== i); return n.length ? n : [blank()]; });
     setCur((c) => Math.max(0, c >= i ? c - 1 : c));
   }
-  return { docs, cur, setCur, d, update, save, saveAs, open, openPath, newDoc, closeDoc };
+  const closeOthers = (i: number) => { setDocs((ds) => ds.filter((_, k) => k === i)); setCur(0); };
+  return { docs, cur, setCur, d, update, closeOthers, setDocs, save, saveAs, open, openPath, newDoc, closeDoc };
 }
