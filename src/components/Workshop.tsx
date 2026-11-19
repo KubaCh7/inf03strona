@@ -45,6 +45,20 @@ function useIsDesktop() {
   return m;
 }
 
+/** Duze zdjecie -> max 3000 px dluzszego boku, ten sam format (JPG jakosc 0.9). */
+async function shrinkImage(f: File): Promise<string> {
+  const url = URL.createObjectURL(f);
+  try {
+    const img = await new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const k = Math.min(1, 3000 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    const x = c.getContext('2d')!; const png = /png$/i.test(f.type || f.name);
+    if (!png) { x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); }
+    x.drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL(png ? 'image/png' : 'image/jpeg', 0.9);
+  } finally { URL.revokeObjectURL(url); }
+}
+
 export default function Workshop({ storageKey, initial, sheet }: { storageKey: string; initial?: Record<string, string>; sheet?: Sheet }) {
   const saved = useStore((s) => s.workspaces[storageKey]);
   const saveWorkspace = useStore((s) => s.saveWorkspace);
@@ -254,15 +268,21 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
     if (!list) return;
     const next: Record<string, string> = {};
     const tooBig: string[] = [];
+    const shrunk: string[] = [];
     for (const f of Array.from(list)) {
       if (f.name.endsWith('.sql')) { void loadSql(f); continue; }
       if (f.type.startsWith('image/') || f.type.startsWith('video/') || f.type.startsWith('audio/') || /\.(png|jpe?g|gif|svg|webp|bmp|ico|mp4|webm|ogg|mp3|wav)$/i.test(f.name)) {
-        if (f.size > 5 * 1024 * 1024) { tooBig.push(f.name); continue; }
-        // data: URL zamiast blob: (blob jest blokowany w sandboxowanym podgladzie)
+        // duze zdjecia (np. JPG z telefonu) zmniejszamy zamiast odrzucac; data: URL, bo blob: jest blokowany w podgladzie
+        if (f.size > 4 * 1024 * 1024 && /^image\/(jpeg|png|webp|bmp)$|\.(jpe?g|png|webp|bmp)$/i.test(f.type || f.name)) {
+          try { next[f.name] = await shrinkImage(f); shrunk.push(f.name); } catch { tooBig.push(f.name); }
+          continue;
+        }
+        if (f.size > 12 * 1024 * 1024) { tooBig.push(f.name); continue; }
         next[f.name] = await readAsDataUrl(f);
       } else if (/\.(html|css|js|php|txt)$/i.test(f.name)) void f.text().then((t) => setFiles((x) => ({ ...x, [f.name]: t })));
     }
-    if (tooBig.length) alert(`Za duże (max 5 MB): ${tooBig.join(', ')}`);
+    if (tooBig.length) alert(`Nie udało się dodać (za duże albo uszkodzone): ${tooBig.join(', ')}`);
+    if (shrunk.length) setDbInfo(`Duże zdjęcia zmniejszone do max 3000 px, żeby zmieściły się w przeglądarce: ${shrunk.join(', ')}.`);
     if (Object.keys(next).length) setImages((i) => { const n = { ...i, ...next }; void saveAssets(storageKey, n); return n; });
   }
   const removeImage = (name: string) => setImages((i) => { const n = { ...i }; delete n[name]; void saveAssets(storageKey, n); return n; });

@@ -30,6 +30,7 @@
     "fflate": "^0.8.2",
     "gifenc": "^1.0.3",
     "html2canvas": "^1.4.1",
+    "html2canvas-pro": "^2.6.3",
     "lucide-react": "1.69.0",
     "pdfjs-dist": "6.5.438",
     "prettier": "^3.9.10",

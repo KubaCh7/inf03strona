@@ -106,9 +106,10 @@ export default function SheetChecker({ sheet, onScore, autoRun, storageKey }: { 
                           {r.note && <p className={`text-xs ${r.ok === false ? 'text-danger' : 'text-muted'}`}>{r.note}</p>}
                           {open === r.label && (r.user || r.expected) && <div className="mt-2 flex flex-wrap gap-3"><Mini r={r.user} title="Twój wynik" /><Mini r={r.expected} title="Oczekiwany" /></div>}
                           {r.compare && (
-                            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                              <figure><img src={r.compare.mine} alt="Twoja strona" className="w-full cursor-zoom-in rounded-md border border-line" onClick={() => setZoom(r.compare!.mine)} /><figcaption className="text-[11px] text-muted">Twoja strona (podgląd 1280 px)</figcaption></figure>
-                              <figure><img src={r.compare.sheet} alt="Ilustracja z arkusza" className="w-full cursor-zoom-in rounded-md border border-line" onClick={() => setZoom(r.compare!.sheet)} /><figcaption className="text-[11px] text-muted">Arkusz: {r.compare.caption}</figcaption></figure>
+                            <div className={`mt-2 grid gap-2 ${r.compare.diff ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+                              <figure><div className="max-h-72 overflow-auto rounded-md border border-line"><img src={r.compare.mine} alt="Twoja strona" className="w-full cursor-zoom-in" onClick={() => setZoom(r.compare!.mine)} /></div><figcaption className="text-[11px] text-muted">Twoja strona (cała, 1280 px)</figcaption></figure>
+                              <figure><div className="max-h-72 overflow-auto rounded-md border border-line"><img src={r.compare.sheet} alt="Wzorzec" className="w-full cursor-zoom-in" onClick={() => setZoom(r.compare!.sheet)} /></div><figcaption className="text-[11px] text-muted">{r.compare.diff ? 'Wzorzec: ' : 'Arkusz: '}{r.compare.caption}</figcaption></figure>
+                              {r.compare.diff && <figure><div className="max-h-72 overflow-auto rounded-md border border-line"><img src={r.compare.diff} alt="Różnice" className="w-full cursor-zoom-in" onClick={() => setZoom(r.compare!.diff!)} /></div><figcaption className="text-[11px] text-muted">Różnice (czerwone = inaczej niż we wzorcu)</figcaption></figure>}
                             </div>
                           )}
                         </div>
@@ -126,7 +127,7 @@ export default function SheetChecker({ sheet, onScore, autoRun, storageKey }: { 
           <p className="mt-4 text-xs text-muted">Sprawdzane jak u egzaminatora: lista plików z arkusza, kwerendy na świeżej bazie porównane z rozwiązaniem, zrzuty (nazwa, format, cały ekran), grafika (wymiary, przezroczystość, klatki GIF), wykonany PHP, treści i kolory z arkusza. Punkty są orientacyjne, prawdziwe kryteria CKE są w zasadach oceniania.</p>
         </div>
       )}
-      {zoom && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setZoom(null)}><img src={zoom} alt="" className="max-h-full max-w-full rounded-lg bg-white" /></div>}
+      {zoom && <div className="fixed inset-0 z-50 overflow-auto bg-black/70 p-4" onClick={() => setZoom(null)}><img src={zoom} alt="" className="mx-auto max-w-full rounded-lg bg-white" /></div>}
     </div>
   );
 }

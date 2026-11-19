@@ -13,7 +13,7 @@ export type Item = {
   group: Group; label: string; points: number;
   ok: boolean; got?: number; // got: punkty czesciowe (np. wyglad)
   note?: string; thumb?: string; user?: QueryResult; expected?: QueryResult;
-  compare?: { mine: string; sheet: string; pct: number; caption: string };
+  compare?: { mine: string; sheet: string; pct: number; caption: string; diff?: string };
 };
 type Shot = { name: string; ext: string; whole: boolean; import: boolean };
 type Gfx = { text: string; names: string[]; out: string | null; w: number | null; h: number | null; ratio: boolean; transparent: boolean; gif: boolean; delay: number | null; loop: boolean };
@@ -103,19 +103,20 @@ export function splitQueries(txt: string): string[] {
 
 // ---------- render stron ----------
 type Page = { name: string; query: string; html: string; errors: string[] };
+async function renderOne(files: Record<string, string>, dump: string | null, name: string, query = ''): Promise<Page> {
+  if (!name.endsWith('.php')) return { name, query, html: files[name], errors: [] };
+  try {
+    const { runPhp } = await import('./php/runtime');
+    const db = dump ? await freshFromDump(dump) : null;
+    const r = await runPhp({ files, entry: name, db, query });
+    db?.close();
+    return { name, query, html: r.html, errors: r.errors };
+  } catch (e) { return { name, query, html: files[name].replace(/<\?php[\s\S]*?(\?>|$)/g, ''), errors: ['PHP: ' + (e as Error).message] }; }
+}
 async function renderPages(files: Record<string, string>, dump: string | null): Promise<Page[]> {
   const pages: Page[] = [];
   const names = Object.keys(files).filter((n) => /\.(html?|php)$/i.test(n));
-  const runOne = async (name: string, query = ''): Promise<Page> => {
-    if (!name.endsWith('.php')) return { name, query, html: files[name], errors: [] };
-    try {
-      const { runPhp } = await import('./php/runtime');
-      const db = dump ? await freshFromDump(dump) : null;
-      const r = await runPhp({ files, entry: name, db, query });
-      db?.close();
-      return { name, query, html: r.html, errors: r.errors };
-    } catch (e) { return { name, query, html: files[name].replace(/<\?php[\s\S]*?(\?>|$)/g, ''), errors: ['PHP: ' + (e as Error).message] }; }
-  };
+  const runOne = (name: string, query = '') => renderOne(files, dump, name, query);
   for (const n of names) pages.push(await runOne(n));
   // linki z parametrem (np. obiekty.php?id=46) – egzaminator klika pierwszy z nich
   const seen = new Set<string>();
@@ -134,18 +135,21 @@ const textOf = (d: Document) => [d.title, d.body?.textContent ?? '', ...Array.fr
 const squash = (s: string) => s.replace(/\s+/g, ' ').replace(/\s*([:,.;!?])/g, '$1').trim().toLowerCase();
 
 // ---------- wyglad ----------
-async function snapshot(files: Record<string, string>, entryHtml: string, entry: string, base: string | undefined, images: Record<string, string>, w: number, h: number, archive: string[] = []): Promise<string | null> {
+async function snapshot(files: Record<string, string>, entryHtml: string, entry: string, base: string | undefined, images: Record<string, string>, w: number, h: number | 'full', archive: string[] = []): Promise<string | null> {
   const html2canvas = (await import('html2canvas')).default;
   const iframe = document.createElement('iframe');
   iframe.setAttribute('sandbox', 'allow-same-origin');
-  iframe.style.cssText = `position:fixed;left:-10000px;top:0;width:${w}px;height:${h}px;border:0;background:#fff`;
+  iframe.style.cssText = `position:fixed;left:-10000px;top:0;width:${w}px;height:${h === 'full' ? 800 : h}px;border:0;background:#fff`;
   iframe.srcdoc = inlineAssets(flattenPaths(buildSrcDoc({ ...files, [entry]: entryHtml }, entry, base), archive), images);
   document.body.appendChild(iframe);
   try {
     await new Promise<void>((res) => { iframe.onload = () => res(); setTimeout(res, 4000); });
     await new Promise((r) => setTimeout(r, 400));
     const doc = iframe.contentDocument!;
-    const canvas = await html2canvas(doc.documentElement, { width: w, height: h, windowWidth: w, windowHeight: h, backgroundColor: '#ffffff', logging: false, useCORS: true, scale: 1 });
+    // cala strona: wysokosc dokumentu (max 4000 px), jak zrzut „pelnej strony” w przegladarce
+    let hh = h === 'full' ? Math.min(4000, Math.max(600, doc.documentElement.scrollHeight, doc.body?.scrollHeight ?? 0)) : h;
+    if (h === 'full') { iframe.style.height = hh + 'px'; await new Promise((r) => setTimeout(r, 150)); hh = Math.min(4000, Math.max(hh, doc.documentElement.scrollHeight)); }
+    const canvas = await html2canvas(doc.documentElement, { width: w, height: hh, windowWidth: w, windowHeight: hh, backgroundColor: '#ffffff', logging: false, useCORS: true, scale: 1 });
     return canvas.toDataURL('image/jpeg', 0.8);
   } catch { return null; } finally { iframe.remove(); }
 }
@@ -168,6 +172,33 @@ async function similarity(a: string, b: string) {
   const ha = hist(A), hb = hist(B); let inter = 0;
   for (let i = 0; i < 64; i++) inter += Math.min(ha[i], hb[i]);
   return Math.round(100 * (0.7 * r + 0.3 * (inter / (W * H))));
+}
+
+/** Strona vs strona wzorcowa (te same 1280 px, pelna wysokosc). Liczy, jaka czesc „tresci” (nie-bialych pikseli)
+ *  wyglada tak samo (z tolerancja przesuniecia o 1 px) i robi obraz roznic: czerwone = inaczej niz we wzorcu. */
+async function pageCompare(mine: string, ref: string) {
+  const [a, b] = await Promise.all([loadImg(mine), loadImg(ref)]);
+  const W = 480;
+  const ha = Math.round((a.naturalHeight * W) / a.naturalWidth), hb = Math.round((b.naturalHeight * W) / b.naturalWidth);
+  const H = Math.max(ha, hb);
+  const draw = (img: HTMLImageElement, h: number) => { const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d')!; x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.drawImage(img, 0, 0, W, h); return x.getImageData(0, 0, W, H).data; };
+  const A = draw(a, ha), B = draw(b, hb);
+  const out = document.createElement('canvas'); out.width = W; out.height = H; const ox = out.getContext('2d')!; const od = ox.createImageData(W, H);
+  const white = (d: Uint8ClampedArray, i: number) => d[i] > 235 && d[i + 1] > 235 && d[i + 2] > 235;
+  const dist = (i: number, j: number) => (Math.abs(A[i] - B[j]) + Math.abs(A[i + 1] - B[j + 1]) + Math.abs(A[i + 2] - B[j + 2])) / 3;
+  let content = 0, bad = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = (y * W + x) * 4;
+    const g = Math.round((A[i] + A[i + 1] + A[i + 2]) / 3);
+    od.data[i] = od.data[i + 1] = od.data[i + 2] = 255 - Math.round((255 - g) * 0.35); od.data[i + 3] = 255;
+    if (white(A, i) && white(B, i)) continue;
+    content++;
+    let best = 255;
+    for (let dy = -1; dy <= 1 && best > 40; dy++) for (let dx = -1; dx <= 1; dx++) { const yy = y + dy, xx = x + dx; if (yy < 0 || yy >= H || xx < 0 || xx >= W) continue; best = Math.min(best, dist(i, (yy * W + xx) * 4)); }
+    if (best > 40) { bad++; od.data[i] = 230; od.data[i + 1] = 40; od.data[i + 2] = 40; }
+  }
+  ox.putImageData(od, 0, 0);
+  return { pct: content ? Math.round(100 * (1 - bad / content)) : 100, diff: out.toDataURL('image/png') };
 }
 
 // ---------- glowna funkcja ----------
@@ -323,7 +354,11 @@ export async function examine({ sheet, files, images: imgs0, candidate, folder, 
       const got = reqs.quotes.length - miss.length;
       items.push({ group: 'Strona', label: `Treści z arkusza na stronie (${got}/${reqs.quotes.length})`, points: 3, ok: got / reqs.quotes.length >= 0.9, note: miss.length ? `Nie znaleziono: ${miss.slice(0, 10).map((q) => `„${q}”`).join(', ')}${miss.length > 10 ? '…' : ''}` : undefined });
     }
-    if (reqs?.author) items.push({ group: 'Strona', label: 'Numer zdającego na stronie (autor)', points: 1, ok: !!cand && all.includes(lower(cand)), note: cand ? (all.includes(lower(cand)) ? undefined : `Nie ma „${cand}” w treści strony.`) : 'Wpisz numer zdającego, żeby to sprawdzić.' });
+    if (reqs?.author) {
+      // zaliczone: wpisany numer albo „Autor…”, „wykonał(a)”, „Wykonanie” albo dowolny 11-cyfrowy numer
+      const okA = (!!cand && all.includes(lower(cand))) || /\bautor(ka)?\b|wykona(ł|ła|nie|li)|\b\d{11}\b/i.test(all);
+      items.push({ group: 'Strona', label: 'Autor strony w stopce', points: 1, ok: okA, note: okA ? undefined : 'Brak stopki z autorem (np. „Autor: 00000000000” albo „Stronę wykonał: …”).' });
+    }
 
     // reguly z tagow arkusza (formularz, $_GET, transition…) na wykonanym HTML
     const merged = parse(docs.map(({ p }) => p.html).join('\n'));
@@ -345,20 +380,44 @@ export async function examine({ sheet, files, images: imgs0, candidate, folder, 
     }
   }
 
-  // --- WYGLAD ---
-  step('Wygląd');
+  // --- WYGLAD: kazda strona zdajacego vs ta sama strona z rozwiazania wzorcowego (pelne zrzuty) ---
+  step('Wygląd (porównanie z rozwiązaniem wzorcowym)');
+  let compared = false;
+  const ref = await import('./walkthrough').then((m) => m.fetchSolution(sheet.code)).catch(() => null);
+  const base = sheet.assets ? sheet.assets.dir + '/' : undefined;
+  if (ref) {
+    const want = pages.filter((p) => !(!p.query && pages.some((q) => q.query && q.name === p.name)) && (reqs?.files.length ? reqs.files.includes(p.name) : true) && Object.keys(ref).some((r) => lower(r) === lower(p.name)));
+    const pts = want.length ? Math.max(2, Math.round(6 / want.length)) : 0;
+    for (const p of want) {
+      const refName = Object.keys(ref).find((r) => lower(r) === lower(p.name))!;
+      const rp = await renderOne(ref, dump, refName, p.query);
+      const [mine, theirs] = await Promise.all([
+        snapshot(files, p.html, p.name, base, images, 1280, 'full', archive),
+        snapshot(ref, rp.html, refName, base, images, 1280, 'full', archive), // te same przygotowane grafiki: ocenia sie wyglad strony, grafike osobno
+      ]);
+      if (!mine || !theirs) continue;
+      const { pct, diff } = await pageCompare(mine, theirs);
+      const got = pct >= 85 ? pts : pct >= 65 ? Math.round(pts / 2) : 0;
+      const title = `${p.name}${p.query ? '?' + p.query : ''}`;
+      items.push({ group: 'Wygląd', label: `Wygląd ${title} jak w rozwiązaniu wzorcowym`, points: pts, ok: got === pts, got,
+        note: `Zgodność ${pct}% (${got}/${pts} pkt). ${pct >= 85 ? 'Strona wygląda jak wzorcowa.' : pct >= 65 ? 'Część elementów różni się wyglądem: czerwone miejsca na obrazie różnic.' : 'Wygląda inaczej niż wzorcowa: sprawdź układ bloków, kolory, rozmiary.'} Porównanie całej strony w oknie 1280 px.`,
+        compare: { mine, sheet: theirs, pct, caption: `rozwiązanie wzorcowe ${title}`, diff } });
+      compared = true;
+    }
+  }
+  // zapas: brak rozwiazania wzorcowego -> ilustracja z arkusza
   const look = reqs?.looks[0];
   const entryPage = pages.find((p) => !p.query && reqs?.files.includes(p.name) && /\.(html|php)$/.test(p.name)) ?? pages.find((p) => !p.query);
-  if (look && sheet.assets && entryPage) {
+  if (!compared && look && sheet.assets && entryPage) {
     const sheetImg = `${sheet.assets.dir}/${look.file}`;
     try {
-      const ref = await loadImg(sheetImg);
-      const W = 1280, H = Math.round((W * ref.naturalHeight) / ref.naturalWidth);
-      const mine = await snapshot(files, entryPage.html, entryPage.name, sheet.assets.dir + '/', images, W, H, archive);
+      const refImg = await loadImg(sheetImg);
+      const W = 1280, H = Math.round((W * refImg.naturalHeight) / refImg.naturalWidth);
+      const mine = await snapshot(files, entryPage.html, entryPage.name, base, images, W, H, archive);
       if (mine) {
         const pct = await similarity(mine, sheetImg);
         const got = pct >= 50 ? 4 : pct >= 30 ? 2 : 0;
-        items.push({ group: 'Wygląd', label: `Wygląd ${entryPage.name} zgodny z ilustracją z arkusza`, points: 4, ok: got === 4, got, note: `Podobieństwo do ilustracji ${pct}%: ${pct >= 50 ? 'układ i kolory wyglądają podobnie (4/4)' : pct >= 30 ? 'częściowo podobne, popraw bloki i kolory (2/4)' : 'wygląda inaczej niż w arkuszu (0/4)'}. Liczone z układu i kolorów: poprawne rozwiązanie daje zwykle 55–70%, strona bez CSS około 20%.`, compare: { mine, sheet: sheetImg, pct, caption: look.caption } });
+        items.push({ group: 'Wygląd', label: `Wygląd ${entryPage.name} zgodny z ilustracją z arkusza`, points: 4, ok: got === 4, got, note: `Brak rozwiązania wzorcowego, porównanie z ilustracją z arkusza: ${pct}%.`, compare: { mine, sheet: sheetImg, pct, caption: look.caption } });
       }
     } catch { /* brak ilustracji */ }
   }
