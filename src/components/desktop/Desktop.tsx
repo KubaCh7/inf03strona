@@ -114,7 +114,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
   const binFull = vfs.list(RECYCLE).length > 0;
   type Ic = { key: string; label: string; icon: React.ReactNode; open: () => void; path?: string; dropDir?: string };
   const icons: Ic[] = [
-    { key: 'pc', label: 'Ten komputer', icon: SpecialIcon.pc(44), open: () => open('explorer', { path: 'C:' }) },
+    { key: 'pc', label: 'Ten komputer', icon: SpecialIcon.pc(44), open: () => open('explorer', { path: 'PC' }) },
     { key: 'trash', label: 'Kosz', icon: SpecialIcon.trash(44, binFull), open: () => open('explorer', { path: RECYCLE }), dropDir: RECYCLE },
     ...SHORTCUTS.map((a) => ({ key: a, label: APPS[a].name, icon: <span className="relative">{APPS[a].icon(42)}<ShortcutArrow /></span>, open: () => open(a) })),
     { key: 'pdf', label: 'Arkusz egzaminacyjny.pdf', icon: <span className="relative">{APPS.pdf.icon(44)}<ShortcutArrow /></span>, open: () => open('pdf') },
@@ -198,7 +198,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
       if (e.key === 'Meta' || e.key === 'OS') { winKey.current = true; return; }
       if (e.metaKey) winKey.current = false;
       const aw = wins.find((w) => w.id === active);
-      if (e.metaKey && e.key.toLowerCase() === 'e') { e.preventDefault(); open('explorer', { path: 'C:' }); }
+      if (e.metaKey && e.key.toLowerCase() === 'e') { e.preventDefault(); open('explorer'); }
       else if (e.metaKey && e.key.toLowerCase() === 'd') { e.preventDefault(); setWins((ws) => ws.map((w) => ({ ...w, min: true }))); setActive(null); }
       else if (e.metaKey && aw && e.key === 'ArrowUp') { e.preventDefault(); patch(aw.id, { max: true }); }
       else if (e.metaKey && aw && e.key === 'ArrowDown') { e.preventDefault(); patch(aw.id, aw.max ? { max: false } : { min: true }); }
@@ -279,7 +279,8 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
         {/* okna */}
         {wins.map((w) => (
           <Window key={w.id} win={w} active={active === w.id} dark={DARK.includes(w.app)} onFocus={() => active !== w.id && focus(w.id)} onClose={() => close(w.id)}
-            onChange={(p) => patch(w.id, p)} onSnapHint={setSnapHint} onSnap={(side) => snapTo(w.id, side)}>
+            onChange={(p) => patch(w.id, p)} onSnapHint={setSnapHint} onSnap={(side) => snapTo(w.id, side)}
+            bar={w.app === 'explorer' ? <span className="flex h-full flex-1 items-end gap-1 pl-1"><span className="mb-[-1px] flex h-[30px] w-[230px] items-center gap-2 rounded-t-[8px] bg-[#f9f9f9] px-3 text-[12px] shadow-[0_-1px_2px_rgba(0,0,0,.05)]">{APPS.explorer.icon(16)}<span className="flex-1 truncate">{w.title}</span><button onPointerDown={(e) => e.stopPropagation()} onClick={() => close(w.id)} className="rounded p-0.5 hover:bg-black/10"><X size={12} /></button></span><button onPointerDown={(e) => e.stopPropagation()} onClick={() => open('explorer')} className="mb-1 rounded p-1 hover:bg-black/[.06]" title="Nowa karta"><Plus size={14} /></button><span className="flex-1" /></span> : undefined}>
             <Suspense fallback={<div className="grid h-full place-items-center bg-white text-[#666]">Uruchamianie…</div>}>{renderApp(w)}</Suspense>
           </Window>
         ))}

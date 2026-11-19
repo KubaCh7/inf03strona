@@ -45,9 +45,9 @@ export default function Window({ win, active, onFocus, onChange, onClose, childr
   return (
     <div data-win={win.id} data-active={active ? '1' : '0'} onPointerDown={onFocus} style={style}
       className={`absolute flex flex-col overflow-hidden border ${win.max ? 'rounded-none' : 'rounded-[8px]'} ${active ? 'border-[#8a8a8a]/60 shadow-[0_8px_32px_rgba(0,0,0,.35)]' : 'border-[#aaa]/40 shadow-[0_4px_16px_rgba(0,0,0,.2)]'} ${dark ? 'bg-[#202020]' : 'bg-[#f3f3f3]'}`}>
-      <div className={`flex h-[32px] shrink-0 select-none items-center ${dark ? 'bg-[#202020] text-[#ddd]' : active ? 'bg-[#f3f3f3] text-[#1a1a1a]' : 'bg-[#f3f3f3] text-[#7a7a7a]'}`}
+      <div className={`flex ${bar ? 'h-[40px]' : 'h-[32px]'} shrink-0 select-none items-center ${dark ? 'bg-[#202020] text-[#ddd]' : active ? 'bg-[#f3f3f3] text-[#1a1a1a]' : 'bg-[#f3f3f3] text-[#7a7a7a]'}`}
         onPointerDown={(e) => start(e, 'move')} onDoubleClick={() => onChange({ max: !win.max })}>
-        <span className="ml-2.5 mr-2 grid w-4 place-items-center">{APPS[win.app].icon(16)}</span>
+        {!bar && <span className="ml-2.5 mr-2 grid w-4 place-items-center">{APPS[win.app].icon(16)}</span>}
         {bar ?? <span className="flex-1 truncate text-[12px]">{win.title}</span>}
         <button onPointerDown={(e) => e.stopPropagation()} onClick={() => onChange({ min: true })} className={`grid h-full w-[46px] place-items-center ${ctl}`} aria-label="Minimalizuj"><Minus size={14} strokeWidth={1.2} /></button>
         <button onPointerDown={(e) => e.stopPropagation()} onClick={() => onChange({ max: !win.max })} className={`grid h-full w-[46px] place-items-center ${ctl}`} aria-label="Maksymalizuj">{win.max ? <Copy size={12} strokeWidth={1.2} className="-scale-x-100" /> : <Square size={11} strokeWidth={1.2} />}</button>
