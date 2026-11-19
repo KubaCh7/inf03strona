@@ -192,7 +192,7 @@ export default function Exam() {
   const tRes = t ? scoreTheory(t, byId) : null;
   const passed = (tPct === null || tPct >= THEORY_PASS) && (!p || (p.score ?? 0) / 100 >= PRACTICE_PASS);
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto max-w-3xl">
       <section className={`mb-5 p-6 text-center md:p-8 ${passed ? 'gold-frame gold-frame-soft gold-shine' : 'card'}`}>
         {passed ? <Trophy size={40} className="mx-auto text-[var(--gold-2)]" /> : <RotateCcw size={36} className="mx-auto text-muted" />}
         <p className="eyebrow mt-3">Próba egzaminu zakończona</p>

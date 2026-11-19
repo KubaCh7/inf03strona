@@ -64,7 +64,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   const saveWorkspace = useStore((s) => s.saveWorkspace);
   const fontSize = useStore((s) => s.settings.editorFont);
   // arkusz domyslnie po prawej (nowe ustawienie, zeby stary wybor „lewo” nie zostal)
-  const pdfSide = useStore((s) => s.settings.sheetSide ?? 'right');
+  const pdfSide = useStore((s) => s.settings.sheetPos ?? 'right');
   const [copied, setCopied] = useState(false);
   const setSettings = useStore((s) => s.setSettings);
   const [showPdf, setShowPdf] = useState(true);
@@ -444,7 +444,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
         )}
         <button className="btn btn-ghost hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setSettings({ hideNav: !hideNav })} title="Ukryj/pokaż boczne menu strony">{hideNav ? <Minimize2 size={14} /> : <Maximize2 size={14} />}{hideNav ? 'Pokaż menu' : 'Pełny ekran'}</button>
         {sheet && <button className="btn btn-ghost hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setShowPdf((x) => !x)}>{showPdf ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}{showPdf ? 'Ukryj arkusz' : 'Pokaż arkusz'}</button>}
-        {sheet && showPdf && <button className="btn btn-dark hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setSettings({ sheetSide: pdfSide === 'left' ? 'right' : 'left' })} title="Zamień strony"><ArrowLeftRight size={14} />Zamień strony</button>}
+        {sheet && showPdf && <button className="btn btn-dark hidden px-2 py-1 text-xs lg:inline-flex" onClick={() => setSettings({ sheetPos: pdfSide === 'left' ? 'right' : 'left' })} title="Zamień strony"><ArrowLeftRight size={14} />Zamień strony</button>}
         <button className="btn btn-ghost px-2 py-1 text-xs" onClick={reset} title="Wyczyść warsztat"><RotateCcw size={14} /></button>
       </span>
       <input ref={imgRef} type="file" multiple hidden onChange={(e) => { void addImages(e.target.files); e.target.value = ""; }} />

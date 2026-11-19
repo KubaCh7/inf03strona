@@ -13,9 +13,9 @@ export default function CheckerPage() {
   const code = sp.get('code') ?? '';
   const sheet = c.sheets.find((s) => s.code === code);
   return (
-    <div className="max-w-4xl">
+    <div className="mx-auto max-w-4xl">
       <PageHeader eyebrow="Egzamin · trening" title="Sprawdzarka">
-        Wybierz arkusz. Sprawdzarka bierze pliki z warsztatu (albo wgrane przez Ciebie), szuka elementów, których wymaga zadanie, i liczy wynik treningowy z progiem 75%.
+        Wybierz arkusz i kliknij „Sprawdź”. Wszystko bierze się z warsztatu tego arkusza (pliki, grafiki, zrzuty) i jest oceniane jak u egzaminatora, z progiem 75%.
       </PageHeader>
       <div className="card mb-4 p-4">
         <label className="eyebrow mb-2 block" htmlFor="sheet-sel">Arkusz</label>

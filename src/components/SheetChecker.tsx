@@ -64,7 +64,7 @@ export default function SheetChecker({ sheet, onScore, autoRun, storageKey }: { 
   const grouped = useMemo(() => GROUPS.map((g) => [g, items?.filter((i) => i.group === g) ?? []] as const).filter(([, l]) => l.length), [items]);
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-5xl space-y-4">
       <div className="card p-5">
         <div className="flex flex-wrap items-end gap-3">
           <button className="btn btn-primary text-base" disabled={!files || !!busy} onClick={() => go()}>{busy ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} />}{busy || 'Sprawdź'}</button>
