@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Plus, Minus, Check, Copy, MoveRight, X, Info, FolderUp, KeyRound, ChevronDown, Lock } from 'lucide-react';
 import { useOS, FileIcon, type Win, type OS } from '../os';
-import type { CItem } from '../ui';
+import { useDragBox, type CItem } from '../ui';
 import { useVfs, base, parent, join, win as winPath, isText, fmtDate } from '../../../lib/vfs';
 import { FolderSvg } from '../icons';
 
@@ -50,6 +50,7 @@ export default function SevenZip({ win }: { win: Win }) {
   const pwRef = useRef<HTMLInputElement>(null);
   const pending = useRef<Job | null>(null);
   const cancel = useRef(false); const pauseRef = useRef(false); pauseRef.current = paused;
+  const drag = useDragBox(dlg);
   const total = entries.reduce((s, e) => s + e.size, 0);
 
   useEffect(() => {
@@ -130,7 +131,7 @@ export default function SevenZip({ win }: { win: Win }) {
   const box = mode ? 'fixed inset-0 z-[240] grid place-items-center [pointer-events:none!important] [&>*]:pointer-events-auto' : 'fixed inset-0 z-[240] grid place-items-center bg-black/5';
   const xpDlg = 'border border-[#888] bg-[#f0f0f0] text-[12px] text-black shadow-[0_8px_30px_rgba(0,0,0,.35)]';
   const winBtn = 'h-[23px] min-w-[75px] border border-[#adadad] bg-[#e1e1e1] px-3 hover:border-[#0078d7] hover:bg-[#e5f1fb]';
-  const title = (t: string, onX: () => void) => <div className="flex h-[30px] items-center bg-white pl-2.5"><span className="flex-1 truncate">{t}</span><button onClick={onX} className="grid h-full w-[45px] place-items-center hover:bg-[#c42b1c] hover:text-white"><X size={14} /></button></div>;
+  const title = (t: string, onX: () => void) => <div onPointerDown={drag.onTitleDown} className="flex h-[30px] items-center bg-white pl-2.5"><span className="flex-1 truncate">{t}</span><button onClick={onX} className="grid h-full w-[45px] place-items-center hover:bg-[#c42b1c] hover:text-white"><X size={14} /></button></div>;
   const elapsed = prog.t0 ? Date.now() - prog.t0 : 0;
   const doneBytes = entries.slice(0, prog.done).reduce((s, e) => s + e.size, 0);
   const browse = async (t: string) => { const p = await os.pick({ mode: 'open', dirOnly: true, title: t, dir: parent(arch) }); if (p) setDest(p); };
@@ -159,7 +160,7 @@ export default function SevenZip({ win }: { win: Win }) {
       <div className="flex gap-6 border-t border-[#ddd] px-2 py-0.5 text-[11px]"><span>{sel ? 1 : 0} obiekt(ów) zaznaczonych</span><span>{num(sel ? entries.find((e) => e.name === sel)?.size ?? 0 : total)}</span></div>
       </>}
 
-      {dlg === 'extract' && <div className={box}><div className={`${xpDlg} w-[520px]`}>
+      {dlg === 'extract' && <div className={box}><div style={drag.style} className={`${xpDlg} w-[520px]`}>
         {title(`Wypakuj : ${winPath(arch)}`, abort)}
         <div className="space-y-2 p-3">
           <label className="block">Wypakuj do:
@@ -185,7 +186,7 @@ export default function SevenZip({ win }: { win: Win }) {
         <div className="flex justify-end gap-2 px-3 pb-3"><button onClick={() => { pending.current = { kind: 'extract' }; void run(pw); }} className={`${winBtn} !border-[#0078d7]`}>OK</button><button onClick={abort} className={winBtn}>Anuluj</button><button className={winBtn}>Pomoc</button></div>
       </div></div>}
 
-      {dlg === 'pass' && <div className={box}><div className={`${xpDlg} w-[360px]`}>
+      {dlg === 'pass' && <div className={box}><div style={drag.style} className={`${xpDlg} w-[360px]`}>
         {title('Wprowadź hasło', abort)}
         <div className="space-y-2 p-3">
           <p className="flex items-center gap-2"><KeyRound size={16} className="text-[#c9a400]" />Wprowadź hasło:</p>
@@ -195,8 +196,8 @@ export default function SevenZip({ win }: { win: Win }) {
         <div className="flex justify-end gap-2 px-3 pb-3"><button onClick={() => void run(pw)} className={`${winBtn} !border-[#0078d7]`}>OK</button><button onClick={abort} className={winBtn}>Anuluj</button></div>
       </div></div>}
 
-      {dlg === 'progress' && <div className={box}><div className={`${xpDlg} w-[480px]`}>
-        <div className="flex h-[30px] items-center bg-white pl-2.5">{prog.pct}% {paused ? 'Wstrzymano ' : ''}Wypakowywanie {base(arch)}</div>
+      {dlg === 'progress' && <div className={box}><div style={drag.style} className={`${xpDlg} w-[480px]`}>
+        <div onPointerDown={drag.onTitleDown} className="flex h-[30px] items-center bg-white pl-2.5">{prog.pct}% {paused ? 'Wstrzymano ' : ''}Wypakowywanie {base(arch)}</div>
         <div className="space-y-2 p-3">
           <div className="grid grid-cols-[1fr_auto_1fr_auto] gap-x-4 gap-y-0.5">
             <span>Upłynęło:</span><span className="text-right">{clock(elapsed)}</span><span>Rozmiar całkowity:</span><span className="text-right">{num(Math.ceil(total / 1024))} KB</span>
@@ -210,7 +211,7 @@ export default function SevenZip({ win }: { win: Win }) {
         <div className="flex justify-end gap-2 px-3 pb-3"><button className={winBtn}>Tło</button><button onClick={() => setPaused((p) => !p)} className={winBtn}>{paused ? 'Kontynuuj' : 'Wstrzymaj'}</button><button onClick={() => { cancel.current = true; }} className={winBtn}>Anuluj</button></div>
       </div></div>}
 
-      {dlg === 'winwiz' && <div className={box}><div className="w-[620px] overflow-hidden rounded-[8px] border border-black/15 bg-white text-[13px] text-black shadow-[0_16px_48px_rgba(0,0,0,.35)]">
+      {dlg === 'winwiz' && <div className={box}><div style={drag.style} className="w-[620px] overflow-hidden rounded-[8px] border border-black/15 bg-white text-[13px] text-black shadow-[0_16px_48px_rgba(0,0,0,.35)]">
         {title('', abort)}
         <div className="px-10 pb-8 pt-1">
           <p className="mb-1 flex items-center gap-2 text-[12px] text-[#444]"><FolderSvg size={16} />Wyodrębnij foldery skompresowane (zip)</p>
@@ -223,14 +224,14 @@ export default function SevenZip({ win }: { win: Win }) {
         <div className="flex justify-end gap-2 border-t border-[#dfdfdf] bg-[#f0f0f0] px-4 py-3"><button onClick={() => askPass({ kind: 'extract', wizard: true })} className={`${winBtn} !border-[#0078d7]`}>Wyodrębnij</button><button onClick={abort} className={winBtn}>Anuluj</button></div>
       </div></div>}
 
-      {dlg === 'winpass' && <div className={box}><div className="w-[440px] overflow-hidden rounded-[8px] border border-black/15 bg-white text-[13px] text-black shadow-[0_16px_48px_rgba(0,0,0,.35)]">
+      {dlg === 'winpass' && <div className={box}><div style={drag.style} className="w-[440px] overflow-hidden rounded-[8px] border border-black/15 bg-white text-[13px] text-black shadow-[0_16px_48px_rgba(0,0,0,.35)]">
         {title('Hasło wymagane', abort)}
         <div className="flex gap-4 px-5 py-4"><Lock size={34} className="shrink-0 text-[#d39d00]" /><div className="flex-1 space-y-2"><p>Plik „{entries[0]?.name}” jest chroniony hasłem.</p><p>Wprowadź hasło, aby wyodrębnić pliki z „{base(arch)}”.</p>
           <input ref={pwRef} type="password" value={pw} onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void run(pw); } }} placeholder="Hasło" className="h-[28px] w-full border border-[#7a7a7a] border-b-[#0078d7] px-2 outline-none" /></div></div>
         <div className="flex justify-end gap-2 bg-[#f0f0f0] px-4 py-3"><button onClick={() => void run(pw)} className={`${winBtn} !border-[#0078d7]`}>OK</button><button onClick={abort} className={winBtn}>Anuluj</button></div>
       </div></div>}
 
-      {dlg === 'wincopy' && <div className={box}><div className="w-[460px] overflow-hidden rounded-[8px] border border-black/15 bg-white text-[13px] text-black shadow-[0_16px_48px_rgba(0,0,0,.35)]">
+      {dlg === 'wincopy' && <div className={box}><div style={drag.style} className="w-[460px] overflow-hidden rounded-[8px] border border-black/15 bg-white text-[13px] text-black shadow-[0_16px_48px_rgba(0,0,0,.35)]">
         {title(`Ukończono: ${prog.pct}%`, () => { cancel.current = true; })}
         <div className="px-5 pb-5"><p className="mb-1">Kopiowanie elementów: {entries.length} z <span className="text-[#0067c0]">{base(arch)}</span> do <span className="text-[#0067c0]">{base(dest)}</span></p>
           <p className="mb-2 text-[22px]">Ukończono: {prog.pct}%</p>

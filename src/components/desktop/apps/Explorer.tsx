@@ -102,6 +102,30 @@ export default function Explorer({ win }: { win: Win }) {
   const PINNED: [string, string][] = [['Pulpit', DESKTOP], ['Pobrane', DOWNLOADS], ['Dokumenty', DOCS], ['Obrazy', PICS], ['Muzyka', MUSIC], ['Wideo', VIDEOS]];
   const virt = dir === 'HOME' || dir === 'PC' || dir === 'NET';
   const recent = virt ? [DESKTOP, HTDOCS, DOWNLOADS, DOCS].flatMap((r) => vfs.tree(r)).filter((f) => !base(f.path).startsWith('.') && !/\.7z$/.test(f.path)).sort((x, y) => y.node.mtime - x.node.mtime).slice(0, 12) : [];
+  /** Prostokat zaznaczenia jak w Windows: przeciagniecie od pustego miejsca zaznacza pliki, Ctrl dodaje. */
+  const area = useRef<HTMLDivElement>(null);
+  const [band, setBand] = useState<{ x0: number; y0: number; x1: number; y1: number; on: boolean } | null>(null);
+  const bandBase = useRef<string[]>([]);
+  const local = (e: React.PointerEvent) => { const el = area.current!; const r = el.getBoundingClientRect(); return { x: e.clientX - r.left + el.scrollLeft, y: e.clientY - r.top + el.scrollTop }; };
+  const bandDown = (e: React.PointerEvent) => {
+    const t = e.target as HTMLElement;
+    if (e.button !== 0 || virt || t.closest('[data-path],button,input,.sticky')) return;
+    const { x, y } = local(e); bandBase.current = e.ctrlKey ? sel : [];
+    if (!e.ctrlKey) setSel([]);
+    setBand({ x0: x, y0: y, x1: x, y1: y, on: false }); area.current!.setPointerCapture(e.pointerId);
+  };
+  const bandMove = (e: React.PointerEvent) => {
+    if (!band) return; const el = area.current!; const { x, y } = local(e);
+    const on = band.on || Math.abs(x - band.x0) + Math.abs(y - band.y0) > 4; const b = { ...band, x1: x, y1: y, on }; setBand(b);
+    if (!on) return;
+    const r = el.getBoundingClientRect();
+    if (e.clientY > r.bottom - 20) el.scrollTop += 12; else if (e.clientY < r.top + 20) el.scrollTop -= 12;
+    const [lx, hx, ly, hy] = [Math.min(b.x0, b.x1), Math.max(b.x0, b.x1), Math.min(b.y0, b.y1), Math.max(b.y0, b.y1)];
+    const hit: string[] = [];
+    el.querySelectorAll<HTMLElement>('[data-path]').forEach((n) => { const q = n.getBoundingClientRect(); const nx = q.left - r.left + el.scrollLeft, ny = q.top - r.top + el.scrollTop; if (nx < hx && nx + q.width > lx && ny < hy && ny + q.height > ly) hit.push(n.dataset.path!); });
+    setSel([...new Set([...bandBase.current, ...hit])]);
+  };
+  const bandUp = (e: React.PointerEvent) => { if (band) { try { area.current?.releasePointerCapture(e.pointerId); } catch { /* */ } setBand(null); } };
   const detailsOf = sel.length === 1 && vfs.exists(sel[0]) ? sel[0] : null;
   const navBtn = (label: string, p: string, icon: React.ReactNode, indent = 0, pin = false, chevron?: boolean) => (
     <button key={p + label} {...(virt && p === dir ? {} : p.startsWith('C') ? dropProps(p) : {})} onClick={() => go(p)} style={{ paddingLeft: 8 + indent * 14 }}
@@ -110,7 +134,7 @@ export default function Explorer({ win }: { win: Win }) {
     </button>
   );
   const detailRow = (p: string, n: NonNullable<ReturnType<typeof vfs.get>>, cut: boolean) => (
-    <div key={p} draggable={ren !== p} onDragStart={(e) => { const ps = sel.includes(p) ? sel : [p]; if (!sel.includes(p)) setSel([p]); dragStart(e, ps); }} {...(n.dir ? dropProps(p) : {})} onClick={(e) => setSel(e.ctrlKey ? (sel.includes(p) ? sel.filter((x) => x !== p) : [...sel, p]) : e.shiftKey && sel.length ? (() => { const i0 = items.indexOf(sel[0]), i1 = items.indexOf(p); return items.slice(Math.min(i0, i1), Math.max(i0, i1) + 1); })() : [p])} onDoubleClick={() => open(p)} onContextMenu={(e) => ctxItem(e, p)}
+    <div key={p} data-path={p} draggable={ren !== p} onDragStart={(e) => { const ps = sel.includes(p) ? sel : [p]; if (!sel.includes(p)) setSel([p]); dragStart(e, ps); }} {...(n.dir ? dropProps(p) : {})} onClick={(e) => setSel(e.ctrlKey ? (sel.includes(p) ? sel.filter((x) => x !== p) : [...sel, p]) : e.shiftKey && sel.length ? (() => { const i0 = items.indexOf(sel[0]), i1 = items.indexOf(p); return items.slice(Math.min(i0, i1), Math.max(i0, i1) + 1); })() : [p])} onDoubleClick={() => open(p)} onContextMenu={(e) => ctxItem(e, p)}
       className={`mx-1 grid h-[30px] cursor-default grid-cols-[minmax(220px,1fr)_160px_170px_100px] items-center rounded-[4px] border px-3 ${sel.includes(p) ? 'border-[#99d1ff] bg-[#cce8ff]' : 'border-transparent hover:bg-[#e5f3ff]'} ${cut ? 'opacity-50' : ''}`}>
       <span className="flex min-w-0 items-center gap-2"><FileIcon path={p} dir={n.dir} size={18} />
         {ren === p ? <input autoFocus defaultValue={base(p)} onFocus={(e) => { const v = e.target.value; const d = n.dir ? v.length : v.lastIndexOf('.') > 0 ? v.lastIndexOf('.') : v.length; e.target.setSelectionRange(0, d); }}
@@ -179,8 +203,8 @@ export default function Explorer({ win }: { win: Win }) {
           {navBtn('Sieć', 'NET', NavSvg.network(16), 0, false, false)}
         </div>
         {/* zawartosc */}
-        <div className={`relative min-w-0 flex-1 overflow-auto rounded-tl-[8px] border-l border-t border-black/[.06] bg-white ${drop ? 'outline outline-2 -outline-offset-2 outline-[#0067c0]' : ''}`}
-          onContextMenu={(e) => (virt ? e.preventDefault() : ctxBg(e))} onPointerDown={(e) => { if (e.target === e.currentTarget) setSel([]); }}
+        <div ref={area} className={`relative min-w-0 flex-1 overflow-auto rounded-tl-[8px] border-l border-t border-black/[.06] bg-white ${drop ? 'outline outline-2 -outline-offset-2 outline-[#0067c0]' : ''}`}
+          onContextMenu={(e) => (virt ? e.preventDefault() : ctxBg(e))} onPointerDown={bandDown} onPointerMove={bandMove} onPointerUp={bandUp} onPointerCancel={bandUp}
           onDragOver={(e) => { if (!virt && isFileDrag(e)) { e.preventDefault(); setDrop(true); } }} onDragLeave={() => setDrop(false)} onDrop={(e) => { setDrop(false); if (!virt) void dropTo(os, e, dir); }}>
           {dir === 'HOME' && (
             <div className="p-4">
@@ -207,8 +231,8 @@ export default function Explorer({ win }: { win: Win }) {
           )}
           {!virt && view === 'details' && <div className="sticky top-0 z-10 mx-1 grid grid-cols-[minmax(220px,1fr)_160px_170px_100px] bg-white px-3 pt-1 text-[#4c4c4c]">{([['name', 'Nazwa'], ['date', 'Data modyfikacji'], ['type', 'Typ'], ['size', 'Rozmiar']] as const).map(([k, l], i) => <button key={k} onClick={() => sortBy(k)} className={`relative flex h-7 items-center gap-1 px-1 hover:bg-[#e5f3ff] ${i ? 'border-l border-black/[.08]' : ''} ${k === 'size' ? 'justify-end' : ''}`}>{sort.by === k && <ChevronDown size={11} className={`absolute left-1/2 top-[-3px] -translate-x-1/2 text-[#666] ${sort.desc ? '' : 'rotate-180'}`} />}{l}</button>)}</div>}
           {!virt && view === 'icons' && <div className="flex flex-wrap content-start gap-1 p-2">{items.map((p) => { const n = vfs.get(p)!; return (
-            <div key={p} draggable={ren !== p} onDragStart={(e) => { const ps = sel.includes(p) ? sel : [p]; if (!sel.includes(p)) setSel([p]); dragStart(e, ps); }} {...(n.dir ? dropProps(p) : {})}
-              onClick={(e) => setSel(e.ctrlKey ? (sel.includes(p) ? sel.filter((x) => x !== p) : [...sel, p]) : [p])} onDoubleClick={() => open(p)} onContextMenu={(e) => ctxItem(e, p)}
+            <div key={p} data-path={p} draggable={ren !== p} onDragStart={(e) => { const ps = sel.includes(p) ? sel : [p]; if (!sel.includes(p)) setSel([p]); dragStart(e, ps); }} {...(n.dir ? dropProps(p) : {})}
+              onClick={(e) => setSel(e.ctrlKey ? (sel.includes(p) ? sel.filter((x) => x !== p) : [...sel, p]) : e.shiftKey && sel.length ? (() => { const i0 = items.indexOf(sel[0]), i1 = items.indexOf(p); return items.slice(Math.min(i0, i1), Math.max(i0, i1) + 1); })() : [p])} onDoubleClick={() => open(p)} onContextMenu={(e) => ctxItem(e, p)}
               className={`flex w-[104px] cursor-default flex-col items-center gap-1 rounded-[4px] border p-2 text-center ${sel.includes(p) ? 'border-[#99d1ff] bg-[#cce8ff]' : 'border-transparent hover:bg-[#e5f3ff]'}`}>
               {n.bin && /^data:image\//.test(n.data ?? '') ? <img src={n.data} alt="" className="h-[72px] w-[88px] object-contain drop-shadow" draggable={false} /> : <FileIcon path={p} dir={n.dir} size={72} />}
               {ren === p ? <input autoFocus defaultValue={base(p)} onBlur={(e) => doRename(p, e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') doRename(p, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setRen(null); e.stopPropagation(); }} className="w-full border border-[#0067c0] px-1 text-center outline-none" />
@@ -216,6 +240,7 @@ export default function Explorer({ win }: { win: Win }) {
             </div>); })}</div>}
           {!virt && view === 'details' && items.map((p) => detailRow(p, vfs.get(p)!, os.clip.files?.mode === 'cut' && os.clip.files.paths.includes(p)))}
           {!virt && !items.length && <p className="p-8 text-center text-[#777]">{q ? 'Brak elementów pasujących do wyszukiwania.' : 'Ten folder jest pusty.'}</p>}
+          {band && band.on && <div className="pointer-events-none absolute z-20 border border-[#0078d4] bg-[#0078d4]/20" style={{ left: Math.min(band.x0, band.x1), top: Math.min(band.y0, band.y1), width: Math.abs(band.x1 - band.x0), height: Math.abs(band.y1 - band.y0) }} />}
           {dir === 'NET' && <p className="p-8 text-center text-[#777]">Odnajdowanie sieci jest wyłączone. Na stanowisku egzaminacyjnym nie ma dostępu do sieci.</p>}
         </div>
         {/* panel szczegolow */}

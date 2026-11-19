@@ -3,6 +3,22 @@ import { ChevronRight, ArrowLeft, ArrowRight, ArrowUp, Monitor, Download, FileTe
 import { useOS, FileIcon, typeName, type PickOpts } from './os';
 import { useVfs, base, parent, join, win as winPath, fmtDate, fmtSize, DESKTOP, DOCS, DOWNLOADS, ext } from '../../lib/vfs';
 
+
+/** Przesuwanie okna dialogowego za pasek tytulu (jak w Windows). */
+export function useDragBox(resetKey?: unknown) {
+  const [d, setD] = useState({ x: 0, y: 0 });
+  useEffect(() => { setD({ x: 0, y: 0 }); }, [resetKey]);
+  const onTitleDown = (e: React.PointerEvent) => {
+    if (e.button !== 0 || (e.target as HTMLElement).closest('button,input,select,textarea')) return;
+    e.preventDefault();
+    const sx = e.clientX - d.x, sy = e.clientY - d.y;
+    const mv = (ev: PointerEvent) => setD({ x: Math.max(-window.innerWidth / 2 + 60, Math.min(window.innerWidth / 2 - 60, ev.clientX - sx)), y: Math.max(-window.innerHeight / 2 + 20, Math.min(window.innerHeight / 2 - 40, ev.clientY - sy)) });
+    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+  };
+  return { style: { transform: `translate(${d.x}px, ${d.y}px)` } as React.CSSProperties, onTitleDown };
+}
+
 // ---------- menu kontekstowe Windows 11 ----------
 export type CItem = { label: string; icon?: React.ReactNode; run?: () => void; sub?: CItem[]; off?: boolean; key?: string } | '-';
 export type CTop = { label: string; icon: React.ReactNode; run: () => void; off?: boolean };
@@ -54,10 +70,11 @@ export function MsgBox({ title, text, kind = 'info', confirm, onDone }: { title:
   const ok = useRef<HTMLButtonElement>(null);
   // fokus z opoznieniem: Enter, ktory otworzyl okno, nie moze go od razu zamknac
   useEffect(() => { const t = setTimeout(() => ok.current?.focus(), 250); return () => clearTimeout(t); }, []);
+  const drag = useDragBox();
   return (
     <div className="fixed inset-0 z-[300] grid place-items-center bg-black/10" onPointerDown={(e) => e.stopPropagation()}>
-      <div className="w-[420px] overflow-hidden rounded-[8px] border border-black/15 bg-white text-[13px] text-[#1a1a1a] shadow-[0_12px_40px_rgba(0,0,0,.3)]">
-        <div className="flex h-8 items-center bg-[#f3f3f3] pl-3 text-[12px]"><span className="flex-1">{title}</span><button onClick={() => onDone(false)} className="grid h-full w-[46px] place-items-center hover:bg-[#c42b1c] hover:text-white"><X size={14} /></button></div>
+      <div style={drag.style} className="w-[420px] overflow-hidden rounded-[8px] border border-black/15 bg-white text-[13px] text-[#1a1a1a] shadow-[0_12px_40px_rgba(0,0,0,.3)]">
+        <div onPointerDown={drag.onTitleDown} className="flex h-8 items-center bg-[#f3f3f3] pl-3 text-[12px]"><span className="flex-1">{title}</span><button onClick={() => onDone(false)} className="grid h-full w-[46px] place-items-center hover:bg-[#c42b1c] hover:text-white"><X size={14} /></button></div>
         <div className="flex gap-3 p-5"><I size={30} className={kind === 'error' ? 'text-[#c42b1c]' : kind === 'warn' ? 'text-[#d39d00]' : 'text-[#0067c0]'} /><p className="whitespace-pre-wrap pt-1">{text}</p></div>
         <div className="flex justify-end gap-2 bg-[#f3f3f3] px-4 py-3">
           <button ref={ok} onClick={() => onDone(true)} className="h-8 min-w-[90px] rounded-[4px] bg-[#0067c0] px-4 text-white hover:bg-[#1975c5]">{confirm ? 'Tak' : 'OK'}</button>
@@ -100,10 +117,11 @@ export function FileDialog({ o, onDone }: { o: PickOpts; onDone: (p: string | nu
     if (vfs.exists(p) && !vfs.isDir(p)) { void os.confirm('Potwierdzanie zapisywania jako', `${base(p)} już istnieje.\nCzy chcesz go zamienić?`).then((ok) => ok && onDone(p)); return; }
     onDone(p);
   };
+  const drag = useDragBox();
   return (
     <div className="fixed inset-0 z-[250] grid place-items-center bg-black/5" onPointerDown={(e) => e.stopPropagation()}>
-      <div className="flex h-[520px] w-[820px] max-w-[96vw] flex-col overflow-hidden rounded-[8px] border border-black/15 bg-[#f3f3f3] text-[12.5px] text-[#1a1a1a] shadow-[0_16px_48px_rgba(0,0,0,.35)]">
-        <div className="flex h-8 items-center pl-3 text-[12px]"><span className="flex-1">{o.title ?? (o.mode === 'save' ? 'Zapisywanie jako' : 'Otwieranie')}</span><button onClick={() => onDone(null)} className="grid h-full w-[46px] place-items-center hover:bg-[#c42b1c] hover:text-white"><X size={14} /></button></div>
+      <div style={drag.style} className="flex h-[520px] w-[820px] max-w-[96vw] flex-col overflow-hidden rounded-[8px] border border-black/15 bg-[#f3f3f3] text-[12.5px] text-[#1a1a1a] shadow-[0_16px_48px_rgba(0,0,0,.35)]">
+        <div onPointerDown={drag.onTitleDown} className="flex h-8 items-center pl-3 text-[12px]"><span className="flex-1">{o.title ?? (o.mode === 'save' ? 'Zapisywanie jako' : 'Otwieranie')}</span><button onClick={() => onDone(null)} className="grid h-full w-[46px] place-items-center hover:bg-[#c42b1c] hover:text-white"><X size={14} /></button></div>
         <div className="flex items-center gap-1 px-2 pb-2">
           <button disabled={!hist.length} onClick={() => { setDir(hist[hist.length - 1]); setHist(hist.slice(0, -1)); }} className="rounded p-1.5 hover:bg-black/[.05] disabled:opacity-30"><ArrowLeft size={15} /></button>
           <button disabled className="rounded p-1.5 opacity-30"><ArrowRight size={15} /></button>
@@ -149,10 +167,11 @@ export function Properties({ path, onClose }: { path: string; onClose: () => voi
   const size = n.dir ? files.reduce((s, f) => s + vfs.size(f.path), 0) : vfs.size(path);
   const folders = n.dir ? [...vfs.nodes.keys()].filter((k) => k.startsWith(path + '/') && vfs.isDir(k)).length : 0;
   const row = (l: string, v: React.ReactNode) => <div className="grid grid-cols-[110px_1fr] py-1"><span>{l}</span><span className="break-all">{v}</span></div>;
+  const drag = useDragBox();
   return (
     <div className="fixed inset-0 z-[260] grid place-items-center bg-black/5" onPointerDown={(e) => e.stopPropagation()}>
-      <div className="w-[380px] overflow-hidden rounded-[8px] border border-black/15 bg-[#f3f3f3] text-[12.5px] text-[#1a1a1a] shadow-[0_16px_48px_rgba(0,0,0,.35)]">
-        <div className="flex h-8 items-center pl-3 text-[12px]"><span className="flex-1">Właściwości: {base(path)}</span><button onClick={onClose} className="grid h-full w-[46px] place-items-center hover:bg-[#c42b1c] hover:text-white"><X size={14} /></button></div>
+      <div style={drag.style} className="w-[380px] overflow-hidden rounded-[8px] border border-black/15 bg-[#f3f3f3] text-[12.5px] text-[#1a1a1a] shadow-[0_16px_48px_rgba(0,0,0,.35)]">
+        <div onPointerDown={drag.onTitleDown} className="flex h-8 items-center pl-3 text-[12px]"><span className="flex-1">Właściwości: {base(path)}</span><button onClick={onClose} className="grid h-full w-[46px] place-items-center hover:bg-[#c42b1c] hover:text-white"><X size={14} /></button></div>
         <div className="flex gap-4 border-b border-black/10 px-3 text-[12px]"><span className="border-b-2 border-[#0067c0] pb-1">Ogólne</span><span className="pb-1 text-[#666]">Zabezpieczenia</span><span className="pb-1 text-[#666]">Szczegóły</span></div>
         <div className="space-y-1 bg-white p-4">
           <div className="mb-3 flex items-center gap-3"><FileIcon path={path} dir={n.dir} size={36} /><input readOnly value={base(path)} className="flex-1 border border-black/20 px-2 py-1" /></div>
