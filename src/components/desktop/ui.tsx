@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronRight, ArrowLeft, ArrowRight, ArrowUp, Monitor, Download, FileText, Images, HardDrive, FolderPlus, Search, X, Info, AlertTriangle, XCircle } from 'lucide-react';
 import { useOS, FileIcon, typeName, type PickOpts } from './os';
+import { FI } from './fluent';
 import { useVfs, base, parent, join, win as winPath, fmtDate, fmtSize, DESKTOP, DOCS, DOWNLOADS, ext } from '../../lib/vfs';
 
 
@@ -25,24 +26,26 @@ export type CTop = { label: string; icon: React.ReactNode; run: () => void; off?
 export function ContextMenu({ x, y, items, top, onClose }: { x: number; y: number; items: CItem[]; top?: CTop[]; onClose: () => void }) {
   const [classic, setClassic] = useState(false);
   useEffect(() => { const c = () => onClose(); setTimeout(() => window.addEventListener('pointerdown', c), 0); const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose(); window.addEventListener('keydown', k); return () => { window.removeEventListener('pointerdown', c); window.removeEventListener('keydown', k); }; }, [onClose]);
-  const all: CItem[] = classic ? [...(top ?? []).map((t) => ({ label: t.label, icon: t.icon, run: t.run, off: t.off })), '-', ...items] : [...items, ...(top ? ['-' as const, { label: 'Pokaż więcej opcji', key: 'Shift+F10', icon: <span className="text-[11px]">⋯</span>, run: () => setTimeout(() => setClassic(true), 0) }] : [])];
-  const h = 40 + all.length * 30 + (top && !classic ? 44 : 0);
-  const left = Math.min(x, window.innerWidth - 280), topY = Math.max(4, Math.min(y, window.innerHeight - 52 - h));
+  const all: CItem[] = classic ? [...(top ?? []).map((t) => ({ label: t.label, icon: t.icon, run: t.run, off: t.off })), '-', ...items] : [...items, ...(top ? ['-' as const, { label: 'Pokaż więcej opcji', key: 'Shift+F10', icon: <FI name="open" size={20} />, run: () => setTimeout(() => setClassic(true), 0) }] : [])];
+  const h = 12 + all.filter((i) => i !== '-').length * 36 + all.filter((i) => i === '-').length * 9 + (top && !classic ? 66 : 0);
+  const left = Math.min(x, window.innerWidth - (top ? 370 : 270)), topY = Math.max(4, Math.min(y, window.innerHeight - 52 - h));
   return <div style={{ left, top: topY }} className="fixed z-[200]" onPointerDown={(e) => e.stopPropagation()} onContextMenu={(e) => e.preventDefault()}>
-    {classic ? <ClassicList items={all} onClose={onClose} /> : <MenuList items={all} top={top} onClose={onClose} keepOpen={(it) => it !== '-' && it.label === 'Pokaż więcej opcji'} />}
+    {classic ? <ClassicList items={all} onClose={onClose} /> : <MenuList flip={left + 360 + 280 > window.innerWidth} items={all} top={top} onClose={onClose} keepOpen={(it) => it !== '-' && it.label === 'Pokaż więcej opcji'} />}
   </div>;
 }
-function MenuList({ items, top, onClose, keepOpen }: { items: CItem[]; top?: CTop[]; onClose: () => void; keepOpen?: (i: CItem) => boolean }) {
+function MenuList({ items, top, onClose, keepOpen, sub, flip }: { items: CItem[]; top?: CTop[]; onClose: () => void; keepOpen?: (i: CItem) => boolean; sub?: boolean; flip?: boolean }) {
+  // menu Windows 11 (24H2): akryl, rzad akcji z podpisami, wiersze 36 px przy skali 125%
   return (
-    <div className="p03-pop min-w-[260px] rounded-[8px] border border-black/10 bg-[#f9f9f9]/95 p-1 text-[12.5px] text-[#1a1a1a] shadow-[0_8px_24px_rgba(0,0,0,.18)] backdrop-blur">
-      {top && <div className="mb-1 flex gap-1 border-b border-black/[.06] px-1 pb-1">{top.map((t) => <button key={t.label} title={t.label} disabled={t.off} onClick={() => { onClose(); t.run(); }} className="grid h-9 w-9 place-items-center rounded-[4px] hover:bg-black/[.06] disabled:opacity-35">{t.icon}</button>)}</div>}
-      {items.map((it, i) => it === '-' ? <div key={i} className="mx-1 my-1 h-px bg-black/10" /> : (
-        <div key={i} className="group relative">
-          <button disabled={it.off} onClick={() => { if (!it.sub && it.run) { if (!keepOpen?.(it)) onClose(); it.run(); } }} className="flex h-[30px] w-full items-center gap-3 rounded-[4px] px-2 text-left hover:bg-black/[.05] disabled:opacity-40">
-            <span className="grid w-4 place-items-center">{it.icon}</span><span className="flex-1">{it.label}</span>
-            {it.key && <span className="text-[11px] text-[#666]">{it.key}</span>}{it.sub && <ChevronRight size={13} />}
+    <div className={`${sub ? 'p03-pop-side' : 'p03-pop'} ${top ? 'min-w-[360px]' : 'min-w-[260px]'} rounded-[8px] border border-black/[.08] bg-[rgba(249,249,249,.86)] p-[4px] text-[14px] text-[#1a1a1a] shadow-[0_8px_16px_rgba(0,0,0,.14),0_0_2px_rgba(0,0,0,.12)] outline outline-1 -outline-offset-2 outline-white/60 backdrop-blur-[30px] backdrop-saturate-150`}>
+      {top && <div className="mb-[4px] flex justify-between gap-0.5 border-b border-black/[.08] px-1 pb-[4px]">{top.map((t) => <button key={t.label} title={t.label} disabled={t.off} onClick={() => { onClose(); t.run(); }}
+        className="flex min-w-[64px] flex-1 flex-col items-center gap-1 rounded-[4px] px-1 pb-1.5 pt-2 text-[12px] text-[#1a1a1a] hover:bg-black/[.04] [&>svg]:text-[#2e5f9e] active:bg-black/[.03] disabled:opacity-40">{t.icon}<span className="whitespace-nowrap">{t.label}</span></button>)}</div>}
+      {items.map((it, i) => it === '-' ? <div key={i} className="-mx-[4px] my-[4px] h-px bg-black/[.08]" /> : (
+        <div key={i} className="group/m relative">
+          <button disabled={it.off} onClick={() => { if (!it.sub && it.run) { if (!keepOpen?.(it)) onClose(); it.run(); } }} className="flex h-[36px] w-full items-center gap-3 rounded-[4px] px-3 text-left hover:bg-black/[.04] active:bg-black/[.03] disabled:opacity-40 group-hover/m:bg-black/[.04]">
+            <span className="grid w-5 shrink-0 place-items-center text-[#2e5f9e]">{it.icon}</span><span className="flex-1 whitespace-nowrap pr-4">{it.label}</span>
+            {it.key && <span className="whitespace-nowrap pl-6 text-[12px] text-[#5d5d5d]">{it.key}</span>}{it.sub && <ChevronRight size={16} strokeWidth={1.5} className="text-[#5d5d5d]" />}
           </button>
-          {it.sub && !it.off && <div className="absolute left-full top-0 hidden group-hover:block"><MenuList items={it.sub} onClose={onClose} /></div>}
+          {it.sub && !it.off && <div className={`absolute ${flip ? 'right-[calc(100%-6px)]' : 'left-[calc(100%-6px)]'} top-[-5px] z-10 hidden group-hover/m:block`}><MenuList items={it.sub} onClose={onClose} sub flip={flip} /></div>}
         </div>
       ))}
     </div>

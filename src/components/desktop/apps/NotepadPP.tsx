@@ -30,7 +30,7 @@ const langExt = (l: string) => (l === 'HTML' ? [html()] : l === 'PHP' ? [php()] 
 /** Notepad++ 8: karty, kolorowanie wg jezyka, bez podpowiedzi; Uruchom → przegladarka. */
 export default function NotepadPP({ win }: { win: Win }) {
   const os = useOS();
-  const D = useDocs(win.args.path ? String(win.args.path) : null, 'new 1');
+  const D = useDocs(win.args.path ? String(win.args.path) : null, 'new 1', undefined, String(win.id));
   const [langOver, setLangOver] = useState<Record<number, string>>({});
   const [menu, setMenu] = useState<string | null>(null);
   const [pos, setPos] = useState({ ln: 1, col: 1, p: 0 });

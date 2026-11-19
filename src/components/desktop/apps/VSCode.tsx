@@ -24,8 +24,10 @@ type Panel = 'terminal' | 'problems' | 'output' | 'debug' | 'ports';
 export default function VSCode({ win }: { win: Win }) {
   const os = useOS(); const vfs = useVfs(os.vfs); const frame = useFrame();
   const [modal, setModal] = useState<null | { doc: Doc; done: (r: 'save' | 'discard' | 'cancel') => void }>(null);
-  const D = useDocs(win.args.path ? String(win.args.path) : null, 'Untitled-1', (doc) => new Promise((done) => setModal({ doc, done })));
-  const [folder, setFolder] = useState<string | null>(win.args.folder ? String(win.args.folder) : win.args.path ? parent(String(win.args.path)) : null);
+  const D = useDocs(win.args.path ? String(win.args.path) : null, 'Untitled-1', (doc) => new Promise((done) => setModal({ doc, done })), String(win.id));
+  const FK = `p03:vsc:${os.vfs.key}:${win.id}`;
+  const [folder, setFolder] = useState<string | null>(() => { try { const f = localStorage.getItem(FK); if (f !== null) return f || null; } catch { /* */ } return win.args.folder ? String(win.args.folder) : win.args.path ? parent(String(win.args.path)) : null; });
+  useEffect(() => { try { localStorage.setItem(FK, folder ?? ''); } catch { /* */ } }, [FK, folder]);
   const [openDirs, setOpenDirs] = useState<Record<string, boolean>>({});
   const [menu, setMenu] = useState<string | null>(null);
   const [creating, setCreating] = useState<{ dir: string; kind: 'file' | 'dir'; err?: string } | null>(null);

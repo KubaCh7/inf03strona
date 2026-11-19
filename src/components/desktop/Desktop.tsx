@@ -49,6 +49,21 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
   const zTop = useRef(10);
   const nextId = useRef(1);
 
+  // zapis wszystkiego przy zamknieciu/odswiezeniu strony albo przejsciu do innej karty
+  useEffect(() => {
+    const flush = () => { vfs.flush(); void server.save(); };
+    const vis = () => { if (document.visibilityState === 'hidden') flush(); };
+    window.addEventListener('pagehide', flush); window.addEventListener('beforeunload', flush); document.addEventListener('visibilitychange', vis);
+    return () => { flush(); window.removeEventListener('pagehide', flush); window.removeEventListener('beforeunload', flush); document.removeEventListener('visibilitychange', vis); };
+  }, [vfs, server]);
+  // otwarte okna wracaja po odswiezeniu strony
+  const WKEY = `p03:wins:${attempt}`;
+  const restored = useRef(false);
+  useEffect(() => {
+    if (!restored.current) return;
+    const keep = wins.filter((w) => w.app !== 'snip' && !(w.app === 'sevenzip' && w.args.extract));
+    try { localStorage.setItem(WKEY, JSON.stringify({ wins: keep, next: nextId.current, z: zTop.current, active })); } catch { /* */ }
+  }, [wins, active, WKEY]);
   // pierwszy start proby: archiwum z arkusza na pulpicie
   useEffect(() => {
     let on = true;
@@ -61,7 +76,11 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
         vfs.write(join(DESKTOP, arch), data ?? 'data:application/x-7z-compressed;base64,', true);
         vfs.write(DESKTOP + '/.init', '1');
       }
-      if (on) setReady(true);
+      if (on) {
+        try { const st = JSON.parse(localStorage.getItem(WKEY) ?? 'null') as { wins: Win[]; next: number; z: number; active: number | null } | null;
+          if (st?.wins?.length) { nextId.current = Math.max(st.next, ...st.wins.map((w) => w.id + 1)); zTop.current = st.z; setWins(st.wins); setActive(st.active); } } catch { /* */ }
+        restored.current = true; setReady(true);
+      }
     })();
     return () => { on = false; };
   }, [vfs, server, sheet]);
@@ -90,6 +109,10 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
   }, [wins.length]);
   // zamkniecie z animacja (okno znika po 150 ms, jak w Windows)
   const [closing, setClosing] = useState<number[]>([]);
+  const slowT = useRef<number | undefined>(undefined); const wasSel = useRef<string | null>(null);
+  // tlo pulpitu ustawione z menu „Ustaw jako tlo pulpitu”
+  const [wall, setWall] = useState<string | null>(() => { try { return localStorage.getItem(`p03:wall:${attempt}`); } catch { return null; } });
+  useEffect(() => { const h = (e: Event) => { const d = (e as CustomEvent<string>).detail; setWall(d); try { localStorage.setItem(`p03:wall:${attempt}`, d); } catch { /* za duze */ } }; window.addEventListener('p03-wallpaper', h); return () => window.removeEventListener('p03-wallpaper', h); }, [attempt]);
   const close = useCallback((id: number) => {
     setClosing((c) => [...c, id]);
     setTimeout(() => { setWins((ws) => ws.filter((w) => w.id !== id)); setClosing((c) => c.filter((x) => x !== id)); }, 150);
@@ -295,7 +318,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
   return (
     <OSContext.Provider value={os}>
       <div ref={root} data-vm className="fixed inset-0 z-[80] select-none overflow-hidden font-['Segoe_UI_Variable','Segoe_UI',system-ui,sans-serif] text-[13px]"
-        style={{ background: 'radial-gradient(ellipse at 30% 110%, #4d8fd9 0%, transparent 55%), radial-gradient(ellipse at 80% -10%, #7aa8e6 0%, transparent 50%), linear-gradient(135deg,#0f2f63 0%,#1b4f9c 45%,#2a6fd0 70%,#173f7a 100%)' }}
+        style={wall ? { background: `url(${wall}) center / cover no-repeat #000` } : { background: 'radial-gradient(ellipse at 30% 110%, #4d8fd9 0%, transparent 55%), radial-gradient(ellipse at 80% -10%, #7aa8e6 0%, transparent 50%), linear-gradient(135deg,#0f2f63 0%,#1b4f9c 45%,#2a6fd0 70%,#173f7a 100%)'  }}
         onContextMenu={bgMenu}
         onPointerDown={(e) => { setStart(false); setCal(false); setTaskMenu(null); if (e.button === 0 && e.target === e.currentTarget) { setSel([]); setActive(null); setBand({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY }); } }}
         onPointerMove={(e) => { if (!band) return; const b = { ...band, x1: e.clientX, y1: e.clientY }; setBand(b);
@@ -316,14 +339,14 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
             onDragOver={(e) => { if (ic.dropDir && isFileDrag(e)) { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('bg-white/30'); } }}
             onDragLeave={(e) => e.currentTarget.classList.remove('bg-white/30')}
             onDrop={(e) => { e.currentTarget.classList.remove('bg-white/30'); if (ic.dropDir) void dropTo(os, e, ic.dropDir); }}
-            onPointerDown={(e) => { e.stopPropagation(); setActive(null); if (e.button !== 0) return; setSel((s) => (e.ctrlKey ? (s.includes(ic.key) ? s.filter((x) => x !== ic.key) : [...s, ic.key]) : s.includes(ic.key) ? s : [ic.key])); }}
-            onDoubleClick={ic.open} onContextMenu={(e) => iconMenu(e, ic)}
+            onPointerDown={(e) => { e.stopPropagation(); setActive(null); if (e.button !== 0) return; wasSel.current = sel.length === 1 && sel[0] === ic.key ? ic.key : null; setSel((s) => (e.ctrlKey ? (s.includes(ic.key) ? s.filter((x) => x !== ic.key) : [...s, ic.key]) : s.includes(ic.key) ? s : [ic.key])); }}
+            onDoubleClick={() => { clearTimeout(slowT.current); if (ren !== ic.path) ic.open(); }} onContextMenu={(e) => iconMenu(e, ic)}
             className={`absolute flex flex-col items-center gap-0.5 rounded-[3px] border px-0.5 pb-1 pt-1.5 text-center text-white ${on ? 'border-white/45 bg-[#cde8ff]/30' : 'border-transparent hover:border-white/20 hover:bg-white/10'} ${cut ? 'opacity-50' : ''}`}>
             <span className="pointer-events-none grid h-[48px] place-items-center drop-shadow-[0_2px_3px_rgba(0,0,0,.35)]">{ic.icon}</span>
-            {ren === ic.path && ic.path ? <textarea autoFocus defaultValue={ic.label} onPointerDown={(e) => e.stopPropagation()} onFocus={(e) => { const v = e.target.value; e.target.setSelectionRange(0, vfs.isDir(ic.path!) || v.lastIndexOf('.') <= 0 ? v.length : v.lastIndexOf('.')); }}
+            {ren === ic.path && ic.path ? <textarea autoFocus defaultValue={ic.label} spellCheck={false} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()} onFocus={(e) => { const v = e.target.value; e.target.setSelectionRange(0, vfs.isDir(ic.path!) || v.lastIndexOf('.') <= 0 ? v.length : v.lastIndexOf('.')); }}
               onBlur={(e) => doRename(ic.path!, e.target.value)} onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); doRename(ic.path!, (e.target as HTMLTextAreaElement).value); } if (e.key === 'Escape') setRen(null); }}
               className="w-full resize-none border border-[#0067c0] bg-white px-0.5 text-center text-[12px] leading-tight text-black outline-none" rows={2} />
-              : <span className={`pointer-events-none break-words text-[12px] leading-tight [text-shadow:0_1px_2px_rgba(0,0,0,.85)] ${on ? '' : 'line-clamp-2'}`}>{ic.label}</span>}
+              : <span onClick={(e) => { clearTimeout(slowT.current); if (e.detail === 1 && !e.ctrlKey && wasSel.current === ic.key && ic.path) { const p = ic.path; slowT.current = window.setTimeout(() => setRen(p), 600); } }} className={`break-words text-[12px] leading-tight [text-shadow:0_1px_2px_rgba(0,0,0,.85)] ${on ? '' : 'line-clamp-2'}`}>{ic.label}</span>}
           </div>); })}
         {band && <div className="pointer-events-none absolute z-[5] border border-[#3a8ee6] bg-[#3a8ee6]/25" style={{ left: Math.min(band.x0, band.x1), top: Math.min(band.y0, band.y1), width: Math.abs(band.x1 - band.x0), height: Math.abs(band.y1 - band.y0) }} />}
 
@@ -331,7 +354,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
         {wins.map((w) => (
           <Window key={w.id} win={w} frameless={w.app === 'vscode'} closing={closing.includes(w.id)} ghost={w.app === 'sevenzip' && !!w.args.extract} active={active === w.id} dark={DARK.includes(w.app)} onFocus={() => active !== w.id && focus(w.id)} onClose={() => close(w.id)}
             onChange={(p) => patch(w.id, p)} onSnapHint={setSnapHint} onSnap={(side) => snapTo(w.id, side)}
-            bar={w.app === 'explorer' ? <span className="flex h-full flex-1 items-end gap-1 pl-1"><span className="mb-[-1px] flex h-[30px] w-[230px] items-center gap-2 rounded-t-[8px] bg-[#f9f9f9] px-3 text-[12px] shadow-[0_-1px_2px_rgba(0,0,0,.05)]">{APPS.explorer.icon(16)}<span className="flex-1 truncate">{w.title}</span><button onPointerDown={(e) => e.stopPropagation()} onClick={() => close(w.id)} className="rounded p-0.5 hover:bg-black/10"><X size={12} /></button></span><button onPointerDown={(e) => e.stopPropagation()} onClick={() => open('explorer')} className="mb-1 rounded p-1 hover:bg-black/[.06]" title="Nowa karta"><Plus size={14} /></button><span className="flex-1" /></span> : undefined}>
+            bar={w.app === 'explorer' ? <span className="flex h-full flex-1 items-end gap-1 pl-1"><span className="mb-[-1px] flex h-[36px] w-[260px] items-center gap-2.5 rounded-t-[8px] bg-[#f9f9f9] pl-3.5 pr-1.5 text-[14px] shadow-[0_-1px_2px_rgba(0,0,0,.05)]">{APPS.explorer.icon(18)}<span className="flex-1 truncate">{w.title}</span><button onPointerDown={(e) => e.stopPropagation()} onClick={() => close(w.id)} className="grid h-7 w-7 place-items-center rounded-[4px] hover:bg-black/[.06]"><X size={14} strokeWidth={1.5} /></button></span><button onPointerDown={(e) => e.stopPropagation()} onClick={() => open('explorer')} className="mb-1 grid h-8 w-8 place-items-center rounded-[4px] hover:bg-black/[.06]" title="Nowa karta"><Plus size={16} strokeWidth={1.5} /></button><span className="flex-1" /></span> : undefined}>
             <Suspense fallback={<div className="grid h-full place-items-center bg-white text-[#666]">Uruchamianie…</div>}>{renderApp(w)}</Suspense>
           </Window>
         ))}

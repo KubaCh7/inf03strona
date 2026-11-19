@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useOS, type PickOpts } from '../os';
 import { base, DOCS, parent, dataUrlToText } from '../../../lib/vfs';
 
@@ -7,13 +7,17 @@ let nid = 1;
 export const TEXT_FILTERS: PickOpts['filters'] = [{ label: 'Wszystkie pliki (*.*)', exts: ['*'] }, { label: 'Dokumenty tekstowe (*.txt)', exts: ['txt'] }];
 
 /** Wiele otwartych dokumentow (karty) zapisywanych na wirtualnym dysku. */
-export function useDocs(initial?: string | null, untitled = 'Bez tytułu', askSave?: (doc: Doc) => Promise<'save' | 'discard' | 'cancel'>) {
+export function useDocs(initial?: string | null, untitled = 'Bez tytułu', askSave?: (doc: Doc) => Promise<'save' | 'discard' | 'cancel'>, keepKey?: string) {
   const os = useOS();
   const load = (p: string): Doc => { const n = os.vfs.get(p); const t = n?.bin ? dataUrlToText(n.data ?? '') : n?.data ?? ''; return { id: nid++, path: p, name: base(p), text: t, saved: t }; };
   let unt = 0;
   const blank = (): Doc => { unt++; return { id: nid++, path: null, name: /-1$/.test(untitled) ? untitled.replace(/-1$/, `-${unt}`) : untitled, text: '', saved: '' }; };
-  const [docs, setDocs] = useState<Doc[]>(() => [initial && os.vfs.exists(initial) ? load(initial) : blank()]);
-  const [cur, setCur] = useState(0);
+  // niezapisane karty przetrwaja odswiezenie strony (zapis w localStorage dla danego okna)
+  const KK = keepKey ? `p03:docs:${os.vfs.key}:${keepKey}` : '';
+  const kept = (() => { try { return KK ? (JSON.parse(localStorage.getItem(KK) ?? 'null') as { docs: Doc[]; cur: number } | null) : null; } catch { return null; } })();
+  const [docs, setDocs] = useState<Doc[]>(() => (kept?.docs?.length ? kept.docs.map((x) => ({ ...x, id: nid++ })) : [initial && os.vfs.exists(initial) ? load(initial) : blank()]));
+  const [cur, setCur] = useState(kept?.cur ?? 0);
+  useEffect(() => { if (!KK) return; const t = setTimeout(() => { try { localStorage.setItem(KK, JSON.stringify({ docs, cur })); } catch { /* */ } }, 300); return () => clearTimeout(t); }, [KK, docs, cur]);
   const d = docs[Math.min(cur, docs.length - 1)];
   const update = (patch: Partial<Doc>, i = cur) => setDocs((ds) => ds.map((x, k) => (k === i ? { ...x, ...patch } : x)));
   async function saveAs(filters = TEXT_FILTERS, i = cur) {
@@ -49,5 +53,6 @@ export function useDocs(initial?: string | null, untitled = 'Bez tytułu', askSa
     setCur((c) => Math.max(0, c >= i ? c - 1 : c));
   }
   const closeOthers = (i: number) => { setDocs((ds) => ds.filter((_, k) => k === i)); setCur(0); };
-  return { docs, cur, setCur, d, update, closeOthers, setDocs, save, saveAs, open, openPath, newDoc, closeDoc };
+  const forget = () => { if (KK) try { localStorage.removeItem(KK); } catch { /* */ } };
+  return { forget, docs, cur, setCur, d, update, closeOthers, setDocs, save, saveAs, open, openPath, newDoc, closeDoc };
 }

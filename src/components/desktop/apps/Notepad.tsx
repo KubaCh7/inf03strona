@@ -6,7 +6,7 @@ import { useDocs } from './useDoc';
 /** Notatnik Windows 11 (karty, Plik/Edycja/Wyswietl, pasek stanu). */
 export default function Notepad({ win }: { win: Win }) {
   const os = useOS();
-  const D = useDocs(win.args.path ? String(win.args.path) : null);
+  const D = useDocs(win.args.path ? String(win.args.path) : null, undefined, undefined, String(win.id));
   const [menu, setMenu] = useState<string | null>(null);
   const [pos, setPos] = useState({ l: 1, c: 1 });
   const [wrap, setWrap] = useState(true);

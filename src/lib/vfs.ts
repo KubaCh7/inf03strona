@@ -64,6 +64,8 @@ export class Vfs {
     this.ver++; this.subs.forEach((f) => f());
     if (save) { clearTimeout(this.t); this.t = window.setTimeout(() => void kvSet(this.key, [...this.nodes]), 400); }
   }
+  /** Natychmiastowy zapis (np. przy zamykaniu karty), bez czekania na opoznienie. */
+  flush() { clearTimeout(this.t); void kvSet(this.key, [...this.nodes]); }
   async reset() { this.nodes = fresh(); await kvSet(this.key, undefined); this.bump(false); }
 
   get(p: string) { return this.nodes.get(norm(p)); }

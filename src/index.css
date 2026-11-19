@@ -241,6 +241,8 @@ h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: -0.02em
 @keyframes p03-win-close { to { opacity: 0; transform: scale(.94); } }
 @keyframes p03-flyout-up { from { opacity: 0; transform: translateY(32px); } }
 @keyframes p03-pop { from { opacity: 0; transform: translateY(-6px); } }
+@keyframes p03-pop-side { from { opacity: 0; transform: translateX(-6px); } }
+[data-vm] .p03-pop-side { animation: p03-pop-side .167s cubic-bezier(0,0,0,1); }
 @keyframes p03-pop-up { from { opacity: 0; transform: translateY(8px); } }
 [data-vm] .p03-win { transition: opacity .2s cubic-bezier(0,0,0,1), transform .2s cubic-bezier(0,0,0,1), visibility 0s; transform-origin: 50% 100%; }
 [data-vm] .p03-win.p03-opening { animation: p03-win-open .2s cubic-bezier(0,0,0,1); }

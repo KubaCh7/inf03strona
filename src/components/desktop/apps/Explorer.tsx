@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, ArrowUp, RotateCw, Search, Plus, Scissors, Copy,
 import { useOS, FileIcon, typeName, APPS, OPEN_WITH, dragStart, dropTo, isFileDrag, useVmBack, type Win, type AppId } from '../os';
 import { FolderSvg, NavSvg } from '../icons';
 import { ContextMenu, type CItem, type CTop } from '../ui';
+import { FI } from '../fluent';
 import { archiveItems } from './SevenZip';
 import { useVfs, base, parent, join, fmtDate, fmtSize, DESKTOP, DOCS, DOWNLOADS, HTDOCS, isImage, isText, RECYCLE } from '../../../lib/vfs';
 const PICS = 'C:/Users/Egzamin/Pictures', MUSIC = 'C:/Users/Egzamin/Music', VIDEOS = 'C:/Users/Egzamin/Videos';
@@ -17,7 +18,7 @@ export default function Explorer({ win }: { win: Win }) {
   const [q, setQ] = useState('');
   const [menu, setMenu] = useState<{ x: number; y: number; items: CItem[]; top?: CTop[] } | null>(null);
   const [sort, setSort] = useState<{ by: 'name' | 'date' | 'type' | 'size'; desc: boolean }>({ by: 'name', desc: false });
-  const [view, setView] = useState<'details' | 'icons'>('details');
+  const [view, setView] = useState<'details' | 'icons'>(String(win.args.path ?? '').endsWith('/Pictures') ? 'icons' : 'details');
   const [editAddr, setEditAddr] = useState<string | null>(null);
   const [viewMenu, setViewMenu] = useState<'sort' | 'view' | null>(null);
   const [newOpen, setNewOpen] = useState(false);
@@ -61,29 +62,67 @@ export default function Explorer({ win }: { win: Win }) {
     if (/[\\/:*?"<>|]/.test(n)) { void os.alert('Zmiana nazwy', 'Nazwa pliku nie może zawierać żadnego z następujących znaków:\n\\ / : * ? " < > |', 'error'); return; }
     try { const np = vfs.rename(p, n); setSel([np]); } catch (e) { void os.alert('Zmiana nazwy', (e as Error).message, 'error'); }
   };
+  /** Obrot obrazu o 90 stopni (jak w menu Windows), zapis w tym samym formacie. */
+  const rotate = async (p: string, deg: number) => {
+    const src = vfs.read(p); const im = new Image(); im.src = src; await im.decode().catch(() => null);
+    const c = document.createElement('canvas'); c.width = im.naturalHeight; c.height = im.naturalWidth;
+    const g = c.getContext('2d')!; g.translate(c.width / 2, c.height / 2); g.rotate((deg * Math.PI) / 180); g.drawImage(im, -im.naturalWidth / 2, -im.naturalHeight / 2);
+    const mime = /^data:([^;]+)/.exec(src)?.[1] ?? 'image/png';
+    vfs.write(p, c.toDataURL(mime === 'image/jpeg' ? 'image/jpeg' : 'image/png', 0.92), true);
+  };
+  /** Pole zmiany nazwy: zaznacza nazwe bez rozszerzenia, a klik/dwuklik w polu nie otwiera pliku. */
+  const renProps = (p: string, isDir: boolean) => ({
+    autoFocus: true, defaultValue: base(p), spellCheck: false,
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => { const v = e.target.value; e.target.setSelectionRange(0, isDir || v.lastIndexOf('.') <= 0 ? v.length : v.lastIndexOf('.')); },
+    onBlur: (e: React.FocusEvent<HTMLInputElement>) => doRename(p, e.target.value),
+    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => { e.stopPropagation(); if (e.key === 'Enter') doRename(p, e.currentTarget.value); if (e.key === 'Escape') setRen(null); },
+    onPointerDown: (e: React.PointerEvent) => e.stopPropagation(), onClick: (e: React.MouseEvent) => e.stopPropagation(), onDoubleClick: (e: React.MouseEvent) => e.stopPropagation(),
+    onDragStart: (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); },
+  });
+  /** „Powolne klikniecie” jak w Windows: klik w nazwe juz zaznaczonego pliku po chwili wlacza zmiane nazwy. */
+  const slow = useRef<number | undefined>(undefined);
+  const slowClick = (e: React.MouseEvent, p: string) => {
+    clearTimeout(slow.current);
+    if (e.detail === 1 && !e.ctrlKey && !e.shiftKey && sel.length === 1 && sel[0] === p && dir !== RECYCLE) slow.current = window.setTimeout(() => setRen(p), 600);
+  };
   const ctxItem = (e: React.MouseEvent, p: string) => {
     e.preventDefault(); e.stopPropagation(); if (!sel.includes(p)) setSel([p]);
     const ps = sel.includes(p) ? sel : [p]; const isDir = vfs.isDir(p);
     const withApps: AppId[] = isDir ? [] : isImage(p) ? OPEN_WITH.image : isText(p) ? OPEN_WITH.text : ['notepad'];
+    const img = !isDir && isImage(p);
     const items: CItem[] = [
-      { label: 'Otwórz', icon: <FileIcon path={p} dir={isDir} size={15} />, run: () => open(p), key: 'Enter' },
-      ...(withApps.length ? [{ label: 'Otwórz za pomocą', sub: withApps.map((a) => ({ label: APPS[a].name, icon: APPS[a].icon(15), run: () => os.open(a, { path: p }) })) }] : []),
+      { label: 'Otwórz', icon: <FileIcon path={p} dir={isDir} size={20} />, run: () => open(p), key: 'Enter' },
+      ...(withApps.length ? [{ label: 'Otwórz za pomocą', icon: <FI name="app_generic" />, sub: withApps.map((a) => ({ label: APPS[a].name, icon: APPS[a].icon(20), run: () => os.open(a, { path: p }) })) }] : []),
       ...(/\.(7z|zip)$/i.test(p) ? archiveItems(os, p) : []),
-      ...(isDir && os.clip.files ? [{ label: 'Wklej', icon: <ClipboardPaste size={14} />, run: () => { const c = os.clip.files!; c.paths.forEach((x) => vfs.copy(x, p, c.mode === 'cut')); } }] : []),
-      ...(isDir ? [{ label: 'Otwórz w nowym oknie', run: () => os.open('explorer', { path: p }) }] : []),
-      ...(dir === RECYCLE ? [{ label: 'Przywróć', run: () => ps.forEach((x) => vfs.copy(x, DESKTOP, true)) }] : []),
-      { label: 'Kopiuj jako ścieżkę', key: 'Ctrl+Shift+C', run: () => void navigator.clipboard?.writeText(p.replace(/\//g, '\\')) },
-      { label: 'Właściwości', key: 'Alt+Enter', run: () => os.properties(p) },
+      ...(isDir && os.clip.files ? [{ label: 'Wklej', icon: <FI name="clipboard_paste" />, run: () => { const c = os.clip.files!; c.paths.forEach((x) => vfs.copy(x, p, c.mode === 'cut')); } }] : []),
+      ...(isDir ? [{ label: 'Otwórz w nowym oknie', icon: <FI name="window_new" />, run: () => os.open('explorer', { path: p }) }, { label: 'Przypnij do Szybkiego dostępu', icon: <FI name="pin" />, run: () => {} }] : []),
+      ...(dir === RECYCLE ? [{ label: 'Przywróć', icon: <FI name="arrow_rotate_counterclockwise" />, run: () => ps.forEach((x) => vfs.copy(x, DESKTOP, true)) }] : []),
+      ...(img ? [
+        { label: 'Ustaw jako tło pulpitu', icon: <FI name="image" />, run: () => window.dispatchEvent(new CustomEvent('p03-wallpaper', { detail: vfs.read(p) })) },
+        { label: 'Obróć w prawo', icon: <FI name="arrow_rotate_clockwise" />, run: () => void rotate(p, 90) },
+        { label: 'Obróć w lewo', icon: <FI name="arrow_rotate_counterclockwise" />, run: () => void rotate(p, -90) },
+      ] : []),
+      { label: 'Dodaj do ulubionych', icon: <FI name="star" />, run: () => {} },
+      { label: 'Kompresuj do', icon: <FI name="folder_zip" />, sub: [{ label: 'Plik ZIP', icon: <FI name="folder_zip" />, off: true }, { label: 'Plik 7z', icon: <FI name="folder_zip" />, off: true }, { label: 'Plik TAR', icon: <FI name="folder_zip" />, off: true }, '-', { label: 'Dodatkowe opcje', icon: <FI name="settings" />, off: true }] },
+      { label: 'Kopiuj jako ścieżkę', icon: <FI name="clipboard_link" />, key: 'Ctrl+Shift+C', run: () => void navigator.clipboard?.writeText(`"${p.replace(/\//g, '\\')}"`) },
+      { label: 'Właściwości', icon: <FI name="wrench" />, key: 'Alt+Enter', run: () => os.properties(p) },
+      ...(!isDir && (isText(p) || img) ? ['-' as const] : []),
+      ...(!isDir && isText(p) ? [{ label: 'Edytuj w Notatniku', icon: APPS.notepad.icon(20), run: () => os.open('notepad', { path: p }) }] : []),
+      ...(img ? [{ label: 'Edytuj w programie Paint', icon: APPS.paint.icon(20), run: () => os.open('paint', { path: p }) }] : []),
     ];
-    const top: CTop[] = [{ label: 'Wytnij', icon: <Scissors size={16} />, run: () => copy('cut', ps) }, { label: 'Kopiuj', icon: <Copy size={16} />, run: () => copy('copy', ps) }, { label: 'Zmień nazwę', icon: <PenLine size={16} />, run: () => setRen(p) }, { label: 'Usuń', icon: <Trash2 size={16} />, run: () => void del(ps) }];
+    const top: CTop[] = [{ label: 'Wytnij', icon: <FI name="cut" />, run: () => copy('cut', ps) }, { label: 'Kopiuj', icon: <FI name="copy" />, run: () => copy('copy', ps) }, { label: 'Zmień nazwę', icon: <FI name="rename" />, run: () => setRen(p) }, { label: 'Udostępnij', icon: <FI name="share" />, run: () => {}, off: true }, { label: 'Usuń', icon: <FI name="delete" />, run: () => void del(ps) }];
     setMenu({ x: e.clientX, y: e.clientY, items, top });
   };
   const ctxBg = (e: React.MouseEvent) => {
     e.preventDefault(); setSel([]);
     setMenu({ x: e.clientX, y: e.clientY, items: [
-      { label: 'Widok', icon: <LayoutList size={14} />, sub: [{ label: 'Duże ikony', run: () => setView('icons') }, { label: 'Szczegóły', run: () => setView('details') }] }, { label: 'Sortuj według', icon: <ArrowUpDown size={14} />, sub: [{ label: 'Nazwa', run: () => sortBy('name') }, { label: 'Data modyfikacji', run: () => sortBy('date') }, { label: 'Typ', run: () => sortBy('type') }, { label: 'Rozmiar', run: () => sortBy('size') }] }, '-',
-      { label: 'Wklej', icon: <ClipboardPaste size={14} />, run: paste, off: !os.clip.files, key: 'Ctrl+V' }, { label: 'Odśwież', icon: <RotateCw size={14} />, run: () => {} }, '-',
-      { label: 'Nowy', icon: <Plus size={14} />, sub: [{ label: 'Folder', icon: <FolderPlus size={14} className="text-[#d9a521]" />, run: () => newItem('dir') }, '-', { label: 'Dokument tekstowy', icon: <FileText size={14} />, run: () => newItem('txt') }] },
+      { label: 'Widok', icon: <FI name="grid" />, sub: [{ label: 'Bardzo duże ikony', run: () => setView('icons') }, { label: 'Duże ikony', icon: view === 'icons' ? <span className="h-1.5 w-1.5 rounded-full bg-[#1a1a1a]" /> : undefined, run: () => setView('icons') }, { label: 'Szczegóły', icon: view === 'details' ? <span className="h-1.5 w-1.5 rounded-full bg-[#1a1a1a]" /> : undefined, run: () => setView('details') }] },
+      { label: 'Sortuj według', icon: <FI name="arrow_sort" />, sub: [{ label: 'Nazwa', run: () => sortBy('name') }, { label: 'Data modyfikacji', run: () => sortBy('date') }, { label: 'Typ', run: () => sortBy('type') }, { label: 'Rozmiar', run: () => sortBy('size') }] },
+      { label: 'Grupuj według', icon: <FI name="apps_list" />, sub: [{ label: '(Brak)', run: () => {} }] },
+      { label: 'Odśwież', icon: <FI name="arrow_clockwise" />, run: () => {} }, '-',
+      { label: 'Wklej', icon: <FI name="clipboard_paste" />, run: paste, off: !os.clip.files, key: 'Ctrl+V' }, '-',
+      { label: 'Nowy', icon: <FI name="add_circle" />, sub: [{ label: 'Folder', icon: <FolderSvg size={20} />, run: () => newItem('dir') }, '-', { label: 'Dokument tekstowy', icon: <FileIcon path="a.txt" size={20} />, run: () => newItem('txt') }] }, '-',
+      { label: 'Właściwości', icon: <FI name="wrench" />, key: 'Alt+Enter', run: () => os.properties(dir) },
     ] });
   };
   const keys = (e: React.KeyboardEvent) => {
@@ -96,8 +135,9 @@ export default function Explorer({ win }: { win: Win }) {
     else if (c && e.shiftKey && e.key.toLowerCase() === 'n') newItem('dir');
     else if (e.altKey && e.key === 'Enter' && sel[0]) os.properties(sel[0]);
   };
-  const tb = 'flex items-center gap-1.5 rounded-[4px] px-2 py-1.5 hover:bg-black/[.05] disabled:opacity-35';
-  const ICON_OF: Record<string, (s?: number) => React.ReactNode> = { [DESKTOP]: NavSvg.desktop, [DOWNLOADS]: NavSvg.downloads, [DOCS]: NavSvg.documents, [PICS]: NavSvg.pictures, [MUSIC]: NavSvg.music, [VIDEOS]: NavSvg.videos, 'C:': NavSvg.drive, HOME: NavSvg.home, PC: NavSvg.pc };
+  const tb = 'flex h-9 items-center gap-2 rounded-[4px] px-2.5 hover:bg-black/[.05] disabled:opacity-35 [&>svg:first-child]:text-[#2e5f9e]';
+  const fi = (name: string, cls = '', color = true) => (s = 20) => <FI name={name} size={s} color={color} className={cls} />;
+  const ICON_OF: Record<string, (s?: number) => React.ReactNode> = { [DESKTOP]: fi('desktop', 'text-[#0f6cbd]'), [DOWNLOADS]: fi('arrow_download', 'text-[#107c41]'), [DOCS]: fi('document'), [PICS]: fi('image'), [MUSIC]: fi('music_note_2', 'text-[#e3742f]'), [VIDEOS]: fi('video'), 'C:': fi('hard_drive', 'text-[#5d5d5d]'), HOME: fi('home'), PC: fi('laptop'), NET: fi('globe') };
   const LABEL = (p: string) => (p === 'HOME' ? 'Strona główna' : p === 'PC' ? 'Ten komputer' : p === 'C:' ? 'Dysk lokalny (C:)' : p === RECYCLE ? 'Kosz' : base(p));
   const PINNED: [string, string][] = [['Pulpit', DESKTOP], ['Pobrane', DOWNLOADS], ['Dokumenty', DOCS], ['Obrazy', PICS], ['Muzyka', MUSIC], ['Wideo', VIDEOS]];
   const virt = dir === 'HOME' || dir === 'PC' || dir === 'NET';
@@ -129,30 +169,29 @@ export default function Explorer({ win }: { win: Win }) {
   const detailsOf = sel.length === 1 && vfs.exists(sel[0]) ? sel[0] : null;
   const navBtn = (label: string, p: string, icon: React.ReactNode, indent = 0, pin = false, chevron?: boolean) => (
     <button key={p + label} {...(virt && p === dir ? {} : p.startsWith('C') ? dropProps(p) : {})} onClick={() => go(p)} style={{ paddingLeft: 8 + indent * 14 }}
-      className={`group flex h-[30px] w-full items-center gap-2 rounded-[4px] pr-2 text-left ${dir === p ? 'bg-black/[.06] font-normal' : 'hover:bg-black/[.04]'}`}>
+      className={`group relative flex h-[34px] w-full items-center gap-2.5 rounded-[4px] pr-2 text-left ${dir === p ? 'bg-black/[.06] font-normal' : 'hover:bg-black/[.04]'}`}>{dir === p && <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-[#005fb8]" />}
       <span className="w-3 text-[#777]">{chevron !== undefined ? <ChevronRight size={11} className={chevron ? 'rotate-90' : ''} /> : null}</span>{icon}<span className="flex-1 truncate">{label}</span>{pin && <span className="opacity-60">{NavSvg.pin(12)}</span>}
     </button>
   );
   const detailRow = (p: string, n: NonNullable<ReturnType<typeof vfs.get>>, cut: boolean) => (
-    <div key={p} data-path={p} draggable={ren !== p} onDragStart={(e) => { const ps = sel.includes(p) ? sel : [p]; if (!sel.includes(p)) setSel([p]); dragStart(e, ps); }} {...(n.dir ? dropProps(p) : {})} onClick={(e) => setSel(e.ctrlKey ? (sel.includes(p) ? sel.filter((x) => x !== p) : [...sel, p]) : e.shiftKey && sel.length ? (() => { const i0 = items.indexOf(sel[0]), i1 = items.indexOf(p); return items.slice(Math.min(i0, i1), Math.max(i0, i1) + 1); })() : [p])} onDoubleClick={() => open(p)} onContextMenu={(e) => ctxItem(e, p)}
-      className={`mx-1 grid h-[30px] cursor-default grid-cols-[minmax(220px,1fr)_160px_170px_100px] items-center rounded-[4px] border px-3 ${sel.includes(p) ? 'border-[#99d1ff] bg-[#cce8ff]' : 'border-transparent hover:bg-[#e5f3ff]'} ${cut ? 'opacity-50' : ''}`}>
+    <div key={p} data-path={p} draggable={ren !== p} onDragStart={(e) => { const ps = sel.includes(p) ? sel : [p]; if (!sel.includes(p)) setSel([p]); dragStart(e, ps); }} {...(n.dir ? dropProps(p) : {})} onClick={(e) => setSel(e.ctrlKey ? (sel.includes(p) ? sel.filter((x) => x !== p) : [...sel, p]) : e.shiftKey && sel.length ? (() => { const i0 = items.indexOf(sel[0]), i1 = items.indexOf(p); return items.slice(Math.min(i0, i1), Math.max(i0, i1) + 1); })() : [p])} onDoubleClick={() => { clearTimeout(slow.current); if (ren !== p) open(p); }} onContextMenu={(e) => ctxItem(e, p)}
+      className={`mx-1 grid h-[32px] cursor-default grid-cols-[minmax(240px,1fr)_170px_170px_100px] items-center rounded-[4px] border px-3 ${sel.includes(p) ? 'border-[#99d1ff] bg-[#cce8ff]' : 'border-transparent hover:bg-[#e5f3ff]'} ${cut ? 'opacity-50' : ''}`}>
       <span className="flex min-w-0 items-center gap-2"><FileIcon path={p} dir={n.dir} size={18} />
-        {ren === p ? <input autoFocus defaultValue={base(p)} onFocus={(e) => { const v = e.target.value; const d = n.dir ? v.length : v.lastIndexOf('.') > 0 ? v.lastIndexOf('.') : v.length; e.target.setSelectionRange(0, d); }}
-          onBlur={(e) => doRename(p, e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') doRename(p, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setRen(null); e.stopPropagation(); }} className="w-full border border-[#0067c0] px-1 outline-none" />
-          : <span className="truncate">{base(p)}</span>}</span>
+        {ren === p ? <input {...renProps(p, n.dir)} className="h-[26px] w-full border border-[#0067c0] px-1 outline-none" />
+          : <span className="truncate" onClick={(e) => slowClick(e, p)}>{base(p)}</span>}</span>
       <span className="truncate text-[#5d5d5d]">{fmtDate(n.mtime)}</span><span className="truncate text-[#5d5d5d]">{typeName(p, n.dir)}</span><span className="text-right text-[#5d5d5d]">{n.dir ? '' : fmtSize(vfs.size(p))}</span>
     </div>
   );
 
   return (
-    <div ref={box} tabIndex={0} onKeyDown={keys} onPointerDown={() => { setNewOpen(false); setViewMenu(null); }} className="flex h-full flex-col bg-[#f3f3f3] font-['Segoe_UI_Variable','Segoe_UI',sans-serif] text-[12.5px] text-[#1a1a1a] outline-none">
+    <div ref={box} tabIndex={0} onKeyDown={keys} onPointerDown={() => { setNewOpen(false); setViewMenu(null); }} className="flex h-full flex-col bg-[#f3f3f3] font-['Segoe_UI_Variable','Segoe_UI',sans-serif] text-[14px] text-[#1a1a1a] outline-none">
       {/* pasek adresu */}
-      <div className="flex items-center gap-1 bg-[#f9f9f9] px-2 py-1.5">
-        <button disabled={!back.length} title="Wstecz (Alt+strzałka w lewo)" onClick={goBack} className="rounded-[4px] p-1.5 hover:bg-black/[.05] disabled:opacity-30"><ArrowLeft size={16} strokeWidth={1.6} /></button>
-        <button disabled={!fwd.length} title="Dalej" onClick={() => { setBack((bb) => [...bb, dir]); setDir(fwd[0]); setFwd(fwd.slice(1)); }} className="rounded-[4px] p-1.5 hover:bg-black/[.05] disabled:opacity-30"><ArrowRight size={16} strokeWidth={1.6} /></button>
-        <button disabled={virt} title="W górę" onClick={() => go(dir === 'C:' ? 'PC' : parent(dir))} className="rounded-[4px] p-1.5 hover:bg-black/[.05] disabled:opacity-30"><ArrowUp size={16} strokeWidth={1.6} /></button>
-        <button title="Odśwież" className="rounded-[4px] p-1.5 hover:bg-black/[.05]"><RotateCw size={15} strokeWidth={1.6} /></button>
-        <div className="flex min-w-0 flex-1 items-center gap-1 rounded-[4px] border border-black/[.08] bg-white px-2 py-[5px]">
+      <div className="flex h-[48px] items-center gap-1.5 bg-[#f9f9f9] px-3">
+        <button disabled={!back.length} title="Wstecz (Alt+strzałka w lewo)" onClick={goBack} className="grid h-9 w-9 place-items-center rounded-[4px] hover:bg-black/[.05] disabled:opacity-30"><FI name="arrow_left" size={16} /></button>
+        <button disabled={!fwd.length} title="Dalej" onClick={() => { setBack((bb) => [...bb, dir]); setDir(fwd[0]); setFwd(fwd.slice(1)); }} className="grid h-9 w-9 place-items-center rounded-[4px] hover:bg-black/[.05] disabled:opacity-30"><FI name="arrow_right" size={16} /></button>
+        <button disabled={virt} title="W górę" onClick={() => go(dir === 'C:' ? 'PC' : parent(dir))} className="grid h-9 w-9 place-items-center rounded-[4px] hover:bg-black/[.05] disabled:opacity-30"><FI name="arrow_up" size={16} /></button>
+        <button title="Odśwież" className="rounded-[4px] p-1.5 hover:bg-black/[.05]"><FI name="arrow_clockwise" size={16} /></button>
+        <div className="flex h-[34px] min-w-0 flex-1 items-center gap-1 rounded-[4px] border border-black/[.06] bg-white px-2.5 shadow-[0_1px_0_rgba(0,0,0,.04)]">
           <span className="shrink-0">{(ICON_OF[dir] ?? ((s = 16) => <FolderSvg size={s} />))(16)}</span>
           {editAddr !== null ? <input autoFocus value={editAddr} onChange={(e) => setEditAddr(e.target.value)} onBlur={() => setEditAddr(null)} onFocus={(e) => e.target.select()}
               onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Escape') setEditAddr(null); if (e.key === 'Enter') { const t = editAddr.trim().replace(/\\/g, '/').replace(/\/$/, '').replace(/^c:/i, 'C:'); setEditAddr(null); if (/^ten komputer$/i.test(t)) go('PC'); else if (vfs.isDir(t)) go(t); else if (vfs.exists(t)) os.openPath(t); else void os.alert('Eksplorator plików', `System Windows nie może odnaleźć „${editAddr}”. Sprawdź pisownię i spróbuj ponownie.`, 'error'); } }}
@@ -162,45 +201,45 @@ export default function Explorer({ win }: { win: Win }) {
             </div>}
           <ChevronDown size={13} className="text-[#777]" />
         </div>
-        <label className="flex w-60 items-center gap-1 rounded-[4px] border border-black/[.08] bg-white px-2 py-[5px]"><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Wyszukaj: ${LABEL(dir)}`} className="w-full bg-transparent outline-none placeholder:text-[#777]" /><Search size={14} className="text-[#555]" /></label>
+        <label className="flex h-[34px] w-72 items-center gap-1 rounded-[4px] border border-black/[.06] bg-white px-2.5 shadow-[0_1px_0_rgba(0,0,0,.04)]"><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Wyszukaj: ${LABEL(dir)}`} className="w-full bg-transparent outline-none placeholder:text-[#777]" /><FI name="search" size={16} className="text-[#555]" /></label>
       </div>
       {/* pasek polecen */}
-      <div className="relative flex h-[44px] items-center gap-0.5 border-b border-black/[.06] bg-[#f9f9f9] px-2">
-        <button disabled={virt} onPointerDown={(e) => e.stopPropagation()} onClick={() => setNewOpen((v) => !v)} className={`${tb} pr-1`}><span className="grid h-5 w-5 place-items-center rounded-full border border-[#0067c0] text-[#0067c0]"><Plus size={13} strokeWidth={2.4} /></span>Nowy<ChevronDown size={12} /></button>
+      <div className="relative flex h-[52px] items-center gap-1 border-b border-black/[.06] bg-[#f9f9f9] px-3">
+        <button disabled={virt} onPointerDown={(e) => e.stopPropagation()} onClick={() => setNewOpen((v) => !v)} className={`${tb} pr-1`}><FI name="add_circle" color />Nowy<FI name="chevron_down" size={12} /></button>
         {newOpen && <div onPointerDown={(e) => e.stopPropagation()} className="absolute left-2 top-full z-20 w-56 rounded-[8px] border border-black/10 bg-[#f9f9f9] p-1 shadow-xl">
           <button onClick={() => newItem('dir')} className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-black/[.05]"><FolderSvg size={16} />Folder</button>
           <div className="my-1 h-px bg-black/10" />
           <button onClick={() => newItem('txt')} className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-black/[.05]"><FileIcon path="a.txt" size={16} />Dokument tekstowy</button>
         </div>}
         <span className="mx-1.5 h-6 w-px bg-black/10" />
-        <button title="Wytnij (Ctrl+X)" disabled={!sel.length} onClick={() => copy('cut')} className={tb}><Scissors size={16} strokeWidth={1.6} /></button>
-        <button title="Kopiuj (Ctrl+C)" disabled={!sel.length} onClick={() => copy('copy')} className={tb}><Copy size={16} strokeWidth={1.6} /></button>
-        <button title="Wklej (Ctrl+V)" disabled={!os.clip.files || virt} onClick={paste} className={tb}><ClipboardPaste size={16} strokeWidth={1.6} /></button>
-        <button title="Zmień nazwę (F2)" disabled={sel.length !== 1} onClick={() => setRen(sel[0])} className={tb}><PenLine size={16} strokeWidth={1.6} /></button>
-        <button title="Udostępnij" disabled className={tb}><Share size={16} strokeWidth={1.6} /></button>
-        <button title="Usuń (Delete)" disabled={!sel.length} onClick={() => void del()} className={tb}><Trash2 size={16} strokeWidth={1.6} /></button>
+        <button title="Wytnij (Ctrl+X)" disabled={!sel.length} onClick={() => copy('cut')} className={tb}><FI name="cut" /></button>
+        <button title="Kopiuj (Ctrl+C)" disabled={!sel.length} onClick={() => copy('copy')} className={tb}><FI name="copy" /></button>
+        <button title="Wklej (Ctrl+V)" disabled={!os.clip.files || virt} onClick={paste} className={tb}><FI name="clipboard_paste" /></button>
+        <button title="Zmień nazwę (F2)" disabled={sel.length !== 1} onClick={() => setRen(sel[0])} className={tb}><FI name="rename" /></button>
+        <button title="Udostępnij" disabled className={tb}><FI name="share" /></button>
+        <button title="Usuń (Delete)" disabled={!sel.length} onClick={() => void del()} className={tb}><FI name="delete" /></button>
         <span className="mx-1.5 h-6 w-px bg-black/10" />
-        <div className="relative" onPointerDown={(e) => e.stopPropagation()}><button onClick={() => setViewMenu(viewMenu === 'sort' ? null : 'sort')} className={tb}><ArrowUpDown size={16} strokeWidth={1.6} />Sortuj<ChevronDown size={12} /></button>
+        <div className="relative" onPointerDown={(e) => e.stopPropagation()}><button onClick={() => setViewMenu(viewMenu === 'sort' ? null : 'sort')} className={tb}><FI name="arrow_sort" />Sortuj<FI name="chevron_down" size={12} /></button>
           {viewMenu === 'sort' && <div className="absolute left-0 top-full z-20 w-52 rounded-[8px] border border-black/10 bg-[#f9f9f9] p-1 shadow-xl">{([['name', 'Nazwa'], ['date', 'Data modyfikacji'], ['type', 'Typ'], ['size', 'Rozmiar']] as const).map(([k, l]) => <button key={k} onClick={() => { setSort({ by: k, desc: sort.by === k ? sort.desc : false }); setViewMenu(null); }} className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-black/[.05]"><span className="w-3 text-[#0067c0]">{sort.by === k ? '●' : ''}</span>{l}</button>)}
             <div className="my-1 h-px bg-black/10" />{[[false, 'Rosnąco'], [true, 'Malejąco']].map(([dd, l]) => <button key={String(dd)} onClick={() => { setSort({ ...sort, desc: dd as boolean }); setViewMenu(null); }} className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-black/[.05]"><span className="w-3 text-[#0067c0]">{sort.desc === dd ? '●' : ''}</span>{l as string}</button>)}</div>}</div>
-        <div className="relative" onPointerDown={(e) => e.stopPropagation()}><button onClick={() => setViewMenu(viewMenu === 'view' ? null : 'view')} className={tb}><LayoutList size={16} strokeWidth={1.6} />Widok<ChevronDown size={12} /></button>
+        <div className="relative" onPointerDown={(e) => e.stopPropagation()}><button onClick={() => setViewMenu(viewMenu === 'view' ? null : 'view')} className={tb}><FI name="text_bullet_list_ltr" />Wyświetl<FI name="chevron_down" size={12} /></button>
           {viewMenu === 'view' && <div className="absolute left-0 top-full z-20 w-56 rounded-[8px] border border-black/10 bg-[#f9f9f9] p-1 shadow-xl">{([['icons', 'Duże ikony', 'Ctrl+Shift+2'], ['details', 'Szczegóły', 'Ctrl+Shift+6']] as const).map(([k, l, key]) => <button key={k} onClick={() => { setView(k); setViewMenu(null); }} className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-black/[.05]"><span className="w-3 text-[#0067c0]">{view === k ? '●' : ''}</span><span className="flex-1 text-left">{l}</span><span className="text-[11px] text-[#666]">{key}</span></button>)}
             <div className="my-1 h-px bg-black/10" /><button onClick={() => { setPane((v) => !v); setViewMenu(null); }} className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-black/[.05]"><span className="w-3">{pane ? '✓' : ''}</span>Panel szczegółów</button></div>}</div>
-        <button className={tb} disabled><MoreHorizontal size={16} /></button>
+        <button className={tb} disabled><FI name="more_horizontal" /></button>
         <span className="flex-1" />
-        <button onClick={() => setPane((v) => !v)} className={`${tb} ${pane ? 'bg-black/[.06]' : ''}`}><PanelRight size={16} strokeWidth={1.6} />Szczegóły</button>
+        <button onClick={() => setPane((v) => !v)} className={`${tb} ${pane ? 'bg-black/[.06]' : ''}`}><FI name="panel_right" />Szczegóły</button>
       </div>
       <div className="flex min-h-0 flex-1">
         {/* panel nawigacji */}
-        <div className="w-[220px] shrink-0 overflow-auto bg-[#f3f3f3] px-1.5 py-2">
-          {navBtn('Strona główna', 'HOME', NavSvg.home(16))}
-          {navBtn('Galeria', PICS, NavSvg.gallery(16))}
+        <div className="w-[250px] shrink-0 overflow-auto bg-[#f3f3f3] px-1.5 py-2">
+          {navBtn('Strona główna', 'HOME', ICON_OF.HOME(20))}
+          {navBtn('Galeria', PICS, <FI name="image" color />)}
           <div className="mx-2 my-2 h-px bg-black/10" />
-          {PINNED.map(([l, p]) => navBtn(l, p, ICON_OF[p](16), 0, true))}
+          {PINNED.map(([l, p]) => navBtn(l, p, ICON_OF[p](20), 0, true))}
           <div className="mx-2 my-2 h-px bg-black/10" />
-          {navBtn('Ten komputer', 'PC', NavSvg.pc(16), 0, false, true)}
-          {navBtn('Dysk lokalny (C:)', 'C:', NavSvg.drive(16), 1, false, dir.startsWith('C:'))}
-          {navBtn('Sieć', 'NET', NavSvg.network(16), 0, false, false)}
+          {navBtn('Ten komputer', 'PC', ICON_OF.PC(20), 0, false, true)}
+          {navBtn('Dysk lokalny (C:)', 'C:', ICON_OF['C:'](20), 1, false, dir.startsWith('C:'))}
+          {navBtn('Sieć', 'NET', ICON_OF.NET(20), 0, false, false)}
         </div>
         {/* zawartosc */}
         <div ref={area} className={`relative min-w-0 flex-1 overflow-auto rounded-tl-[8px] border-l border-t border-black/[.06] bg-white ${drop ? 'outline outline-2 -outline-offset-2 outline-[#0067c0]' : ''}`}
@@ -229,14 +268,14 @@ export default function Explorer({ win }: { win: Win }) {
               <div className="flex flex-wrap gap-1">{PINNED.map(([l, p]) => <button key={p} onDoubleClick={() => go(p)} className="flex w-[200px] items-center gap-3 rounded-[4px] border border-transparent px-3 py-2 text-left hover:bg-[#e5f3ff]"><span className="relative"><FolderSvg size={36} /><span className="absolute bottom-0.5 right-0">{ICON_OF[p](14)}</span></span>{l}</button>)}</div>
             </div>
           )}
-          {!virt && view === 'details' && <div className="sticky top-0 z-10 mx-1 grid grid-cols-[minmax(220px,1fr)_160px_170px_100px] bg-white px-3 pt-1 text-[#4c4c4c]">{([['name', 'Nazwa'], ['date', 'Data modyfikacji'], ['type', 'Typ'], ['size', 'Rozmiar']] as const).map(([k, l], i) => <button key={k} onClick={() => sortBy(k)} className={`relative flex h-7 items-center gap-1 px-1 hover:bg-[#e5f3ff] ${i ? 'border-l border-black/[.08]' : ''} ${k === 'size' ? 'justify-end' : ''}`}>{sort.by === k && <ChevronDown size={11} className={`absolute left-1/2 top-[-3px] -translate-x-1/2 text-[#666] ${sort.desc ? '' : 'rotate-180'}`} />}{l}</button>)}</div>}
+          {!virt && view === 'details' && <div className="sticky top-0 z-10 mx-1 grid h-[34px] items-center grid-cols-[minmax(240px,1fr)_170px_170px_100px] bg-white px-3 text-[#4c4c4c]">{([['name', 'Nazwa'], ['date', 'Data modyfikacji'], ['type', 'Typ'], ['size', 'Rozmiar']] as const).map(([k, l], i) => <button key={k} onClick={() => sortBy(k)} className={`relative flex h-7 items-center gap-1 px-1 hover:bg-[#e5f3ff] ${i ? 'border-l border-black/[.08]' : ''} ${k === 'size' ? 'justify-end' : ''}`}>{sort.by === k && <ChevronDown size={11} className={`absolute left-1/2 top-[-3px] -translate-x-1/2 text-[#666] ${sort.desc ? '' : 'rotate-180'}`} />}{l}</button>)}</div>}
           {!virt && view === 'icons' && <div className="flex flex-wrap content-start gap-1 p-2">{items.map((p) => { const n = vfs.get(p)!; return (
             <div key={p} data-path={p} draggable={ren !== p} onDragStart={(e) => { const ps = sel.includes(p) ? sel : [p]; if (!sel.includes(p)) setSel([p]); dragStart(e, ps); }} {...(n.dir ? dropProps(p) : {})}
-              onClick={(e) => setSel(e.ctrlKey ? (sel.includes(p) ? sel.filter((x) => x !== p) : [...sel, p]) : e.shiftKey && sel.length ? (() => { const i0 = items.indexOf(sel[0]), i1 = items.indexOf(p); return items.slice(Math.min(i0, i1), Math.max(i0, i1) + 1); })() : [p])} onDoubleClick={() => open(p)} onContextMenu={(e) => ctxItem(e, p)}
-              className={`flex w-[104px] cursor-default flex-col items-center gap-1 rounded-[4px] border p-2 text-center ${sel.includes(p) ? 'border-[#99d1ff] bg-[#cce8ff]' : 'border-transparent hover:bg-[#e5f3ff]'}`}>
-              {n.bin && /^data:image\//.test(n.data ?? '') ? <img src={n.data} alt="" className="h-[72px] w-[88px] object-contain drop-shadow" draggable={false} /> : <FileIcon path={p} dir={n.dir} size={72} />}
-              {ren === p ? <input autoFocus defaultValue={base(p)} onBlur={(e) => doRename(p, e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') doRename(p, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setRen(null); e.stopPropagation(); }} className="w-full border border-[#0067c0] px-1 text-center outline-none" />
-                : <span className="line-clamp-2 break-all text-[12px] leading-tight">{base(p)}</span>}
+              onClick={(e) => setSel(e.ctrlKey ? (sel.includes(p) ? sel.filter((x) => x !== p) : [...sel, p]) : e.shiftKey && sel.length ? (() => { const i0 = items.indexOf(sel[0]), i1 = items.indexOf(p); return items.slice(Math.min(i0, i1), Math.max(i0, i1) + 1); })() : [p])} onDoubleClick={() => { clearTimeout(slow.current); if (ren !== p) open(p); }} onContextMenu={(e) => ctxItem(e, p)}
+              className={`flex w-[124px] cursor-default flex-col items-center gap-1.5 rounded-[4px] border p-2 text-center ${sel.includes(p) ? 'border-[#99d1ff] bg-[#cce8ff]' : 'border-transparent hover:bg-[#e5f3ff]'}`}>
+              {n.bin && /^data:image\//.test(n.data ?? '') ? <img src={n.data} alt="" className="h-[96px] w-[108px] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,.25)]" draggable={false} /> : <FileIcon path={p} dir={n.dir} size={96} />}
+              {ren === p ? <input {...renProps(p, n.dir)} className="w-full border border-[#0067c0] px-1 text-center text-[13px] outline-none" />
+                : <span className="line-clamp-2 break-all text-[13px] leading-tight" onClick={(e) => slowClick(e, p)}>{base(p)}</span>}
             </div>); })}</div>}
           {!virt && view === 'details' && items.map((p) => detailRow(p, vfs.get(p)!, os.clip.files?.mode === 'cut' && os.clip.files.paths.includes(p)))}
           {!virt && !items.length && <p className="p-8 text-center text-[#777]">{q ? 'Brak elementów pasujących do wyszukiwania.' : 'Ten folder jest pusty.'}</p>}
@@ -256,9 +295,9 @@ export default function Explorer({ win }: { win: Win }) {
         )}
       </div>
       {/* pasek stanu */}
-      <div className="flex h-[26px] items-center gap-4 bg-[#f3f3f3] px-4 text-[12px] text-[#444]">
-        <span>{virt ? '' : `Elementy: ${items.length}`}</span>{sel.length > 0 && !virt && <span>Zaznaczone elementy: {sel.length}{sel.length === 1 && !vfs.isDir(sel[0]) ? `  ${fmtSize(vfs.size(sel[0]))}` : ''}</span>}
-        <span className="ml-auto flex gap-0.5"><button title="Szczegóły" onClick={() => setView('details')} className={`rounded p-1 ${view === 'details' ? 'bg-black/[.08]' : 'hover:bg-black/[.05]'}`}><LayoutList size={13} /></button><button title="Duże ikony" onClick={() => setView('icons')} className={`rounded p-1 ${view === 'icons' ? 'bg-black/[.08]' : 'hover:bg-black/[.05]'}`}><LayoutGrid size={13} /></button></span>
+      <div className="flex h-[30px] items-center gap-5 bg-[#f3f3f3] px-4 text-[13px] text-[#1a1a1a]">
+        <span>{virt ? '' : `Elementy: ${items.length}`}</span>{sel.length > 0 && !virt && <span className="flex gap-5"><span>{sel.length === 1 ? 'Zaznaczono 1 element' : `Zaznaczone elementy: ${sel.length}`}</span>{sel.every((x) => !vfs.isDir(x)) && <span>{fmtSize(sel.reduce((a, x) => a + vfs.size(x), 0))}</span>}</span>}
+        <span className="ml-auto flex gap-0.5"><button title="Szczegóły" onClick={() => setView('details')} className={`rounded p-1 ${view === 'details' ? 'bg-black/[.08]' : 'hover:bg-black/[.05]'}`}><FI name="text_bullet_list_ltr" size={16} /></button><button title="Duże ikony" onClick={() => setView('icons')} className={`rounded p-1 ${view === 'icons' ? 'bg-black/[.08]' : 'hover:bg-black/[.05]'}`}><FI name="grid" size={16} /></button></span>
       </div>
       {menu && <ContextMenu {...menu} onClose={() => setMenu(null)} />}
     </div>
