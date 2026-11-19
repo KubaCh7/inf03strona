@@ -32,7 +32,7 @@ export default function Window({ win, active, onFocus, onChange, onClose, childr
   const style = win.max ? { left: 0, top: 0, width: '100%', height: 'calc(100% - 48px)', zIndex: win.z } : { left: win.x, top: win.y, width: win.w, height: win.h, zIndex: win.z };
   const ctl = dark ? 'text-[#ddd] hover:bg-white/10' : 'text-[#1a1a1a] hover:bg-black/[.06]';
   return (
-    <div data-win={win.id} onPointerDown={onFocus} style={style}
+    <div data-win={win.id} data-active={active ? '1' : '0'} onPointerDown={onFocus} style={style}
       className={`absolute flex flex-col overflow-hidden border ${win.max ? 'rounded-none' : 'rounded-[8px]'} ${active ? 'border-[#8a8a8a]/60 shadow-[0_8px_32px_rgba(0,0,0,.35)]' : 'border-[#aaa]/40 shadow-[0_4px_16px_rgba(0,0,0,.2)]'} ${dark ? 'bg-[#202020]' : 'bg-[#f3f3f3]'}`}>
       <div className={`flex h-[32px] shrink-0 select-none items-center ${dark ? 'bg-[#202020] text-[#ddd]' : active ? 'bg-[#f3f3f3] text-[#1a1a1a]' : 'bg-[#f3f3f3] text-[#7a7a7a]'}`}
         onPointerDown={(e) => start(e, 'move')} onDoubleClick={() => onChange({ max: !win.max })}>

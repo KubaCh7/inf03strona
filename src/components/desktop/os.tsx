@@ -1,5 +1,5 @@
 // „System” pulpitu egzaminacyjnego: okna, skojarzenia plikow, schowek, okna Otworz/Zapisz jako.
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useEffect, useRef } from 'react';
 import { Folder, FileText, FileCode, FileImage, FileArchive, Server, NotebookPen, Code2, Brush, Image as Img, Palette, Globe, FolderOpen, NotebookText, Monitor, Trash2, File, BookOpen } from 'lucide-react';
 import type { Sheet } from '../../lib/types';
 import type { Vfs } from '../../lib/vfs';
@@ -72,3 +72,18 @@ export const OPEN_WITH: Record<string, AppId[]> = {
   text: ['notepad', 'notepadpp', 'vscode', 'browser'],
   image: ['paint', 'gimp', 'photoshop', 'browser'],
 };
+
+/** Skroty klawiszowe okna: dzialaja, gdy fokus jest w oknie albo okno jest aktywne, a fokus „nigdzie” (body). */
+export function useWinKeys(ref: React.RefObject<HTMLElement | null>, handler: (e: KeyboardEvent) => void) {
+  const h = useRef(handler); h.current = handler;
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      const el = ref.current; if (!el) return;
+      const t = e.target as Node;
+      const inside = el.contains(t);
+      const idle = t === document.body || t === document.documentElement || !(t as HTMLElement).closest?.('[data-win]');
+      if (inside || (idle && el.closest('[data-win]')?.getAttribute('data-active') === '1' && !document.querySelector('.z-\\[240\\],.z-\\[250\\],.z-\\[300\\]'))) h.current(e);
+    };
+    window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
+  }, [ref]);
+}

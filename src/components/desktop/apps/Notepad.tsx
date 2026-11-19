@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Plus, X } from 'lucide-react';
-import { useOS, type Win } from '../os';
+import { useOS, type Win, useWinKeys } from '../os';
 import { useDocs } from './useDoc';
 
 /** Notatnik Windows 11 (karty, Plik/Edycja/Wyswietl, pasek stanu). */
@@ -13,7 +13,9 @@ export default function Notepad({ win }: { win: Win }) {
   const ta = useRef<HTMLTextAreaElement>(null);
   useEffect(() => { os.setTitle(win.id, `${D.d.name}${D.d.text !== D.d.saved ? ' *' : ''} - Notatnik`); }, [D.d]); // eslint-disable-line react-hooks/exhaustive-deps
   const caret = () => { const t = ta.current; if (!t) return; const before = t.value.slice(0, t.selectionStart); const ls = before.split('\n'); setPos({ l: ls.length, c: ls[ls.length - 1].length + 1 }); };
-  const keys = (e: React.KeyboardEvent) => {
+  const kroot = useRef<HTMLDivElement>(null);
+  useWinKeys(kroot, (e) => keys(e));
+  const keys = (e: KeyboardEvent) => {
     const c = e.ctrlKey || e.metaKey; const k = e.key.toLowerCase();
     if (c && k === 's') { e.preventDefault(); void (e.shiftKey ? D.saveAs() : D.save()); }
     else if (c && k === 'o') { e.preventDefault(); void D.open(); }
@@ -26,7 +28,7 @@ export default function Notepad({ win }: { win: Win }) {
     Wyświetl: [['Zawijanie wierszy', wrap ? '✓' : '', () => setWrap((w) => !w)]],
   };
   return (
-    <div className="flex h-full flex-col bg-white text-[13px] text-[#1a1a1a]" onKeyDown={keys}>
+    <div ref={kroot} className="flex h-full flex-col bg-white text-[13px] text-[#1a1a1a]">
       <div className="flex items-end gap-1 bg-[#f3f3f3] px-2 pt-1">
         {D.docs.map((d, i) => <div key={d.id} onClick={() => D.setCur(i)} className={`group flex h-8 min-w-[160px] max-w-[220px] items-center gap-2 rounded-t-[6px] px-3 ${i === D.cur ? 'bg-white' : 'hover:bg-white/60'}`}>
           <span className="flex-1 truncate">{d.name}</span>{d.text !== d.saved && <span className="text-[16px] leading-none">•</span>}<button onClick={(e) => { e.stopPropagation(); void D.closeDoc(i); }} className="rounded p-0.5 opacity-60 hover:bg-black/10"><X size={12} /></button></div>)}

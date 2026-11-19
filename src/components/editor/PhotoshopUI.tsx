@@ -23,8 +23,10 @@ function PDialog({ title, children, buttons, onClose, w = 520 }: { title: string
   );
 }
 
-export default function PhotoshopUI({ ed, sources, hints, defaultName, hasParamShot, onClose, modeSwitch }: { ed: Ed; sources: Src[]; hints: string[]; defaultName?: string; hasParamShot: boolean; onClose: () => void; modeSwitch: React.ReactNode }) {
+export default function PhotoshopUI({ ed, sources, hints, defaultName, hasParamShot, onClose, modeSwitch, embedded, onTitle }: { ed: Ed; sources: Src[]; hints: string[]; defaultName?: string; hasParamShot: boolean; onClose: () => void; modeSwitch: React.ReactNode; embedded?: boolean; onTitle?: (t: string) => void }) {
   const [dlg, setDlg] = useState<Dlg>(ed.L ? null : 'open');
+  const hadDoc = useRef(!!ed.L);
+  useEffect(() => { if (ed.L && !hadDoc.current) { hadDoc.current = true; setDlg((d) => (d === 'open' ? null : d)); } }, [ed.L]);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [timeline, setTimeline] = useState(true);
   const [tlMenu, setTlMenu] = useState(false);
@@ -100,7 +102,8 @@ export default function PhotoshopUI({ ed, sources, hints, defaultName, hasParamS
   ];
 
   const keys = (e: KeyboardEvent) => {
-    if ((e.target as HTMLElement).closest('input,textarea,select')) return;
+    if ((e.target as HTMLElement).closest('input,textarea,select,[contenteditable]')) return;
+    if (embedded && !root.current?.contains(e.target as Node)) return;
     const c = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
     const map: [boolean, () => void][] = [
       [c && !e.shiftKey && !e.altKey && k === 'z', ed.undo], [c && e.shiftKey && k === 'z', ed.redoAct], [c && !e.altKey && k === 'o', () => show('open')], [c && !e.shiftKey && k === 'n', () => show('new')],
@@ -118,13 +121,14 @@ export default function PhotoshopUI({ ed, sources, hints, defaultName, hasParamS
   const zoomPct = ed.zoom ? Math.round(ed.zoom * 100) : null;
   const sizeK = ((W * H * 3) / 1024).toFixed(1).replace('.', ',');
   const ax = anchor % 3, ay = Math.floor(anchor / 3);
+  useEffect(() => { onTitle?.(has ? `Adobe Photoshop – ${ed.docName} @ ${zoomPct ?? 'Dopasuj'}${zoomPct ? '%' : ''} (RGB/8)` : 'Adobe Photoshop'); }, [has, ed.docName, zoomPct]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { const h = (e: KeyboardEvent) => { if (!dlg || e.key === 'Escape') keys(e); }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); });
   return (
-    <div ref={root} className="fixed inset-0 z-[90] flex flex-col bg-[#535353] font-['Segoe_UI',Tahoma,sans-serif] text-[12.5px] text-[#e8e8e8] outline-none">
+    <div ref={root} tabIndex={-1} onPointerDown={() => { if (embedded && !(document.activeElement && root.current?.contains(document.activeElement))) root.current?.focus(); }} className={`${embedded ? 'absolute' : 'fixed z-[90]'} inset-0 flex flex-col outline-none bg-[#535353] font-['Segoe_UI',Tahoma,sans-serif] text-[12.5px] text-[#e8e8e8] outline-none`}>
       <input ref={file} type="file" accept="image/*,.jpg,.jpeg,.png,.gif,.bmp,.webp" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void ed.openFile(f, fileAsLayer.current); e.target.value = ''; setDlg(null); }} />
       <MenuBar menus={MENUS} skin={SKIN} lead={<span className="mx-2 grid h-[20px] w-[22px] place-items-center rounded-[3px] bg-[#3a3a3a] text-[#9fd0ff]"><Img size={13} /></span>} />
-      <div className="absolute right-0 top-0 z-[60] flex h-[26px] items-center">{modeSwitch}<button className="h-full px-3 hover:bg-[#666]"><Minus size={13} /></button><button className="h-full px-3 hover:bg-[#666]"><Square size={11} /></button><button className="h-full px-3 hover:bg-[#c42b1c]" onClick={onClose} title="Zamknij"><X size={14} /></button></div>
+      {!embedded && <div className="absolute right-0 top-0 z-[60] flex h-[26px] items-center">{modeSwitch}<button className="h-full px-3 hover:bg-[#666]"><Minus size={13} /></button><button className="h-full px-3 hover:bg-[#666]"><Square size={11} /></button><button className="h-full px-3 hover:bg-[#c42b1c]" onClick={onClose} title="Zamknij"><X size={14} /></button></div>}
 
       {/* pasek opcji narzedzia */}
       <div className="flex h-[36px] items-center gap-3 border-y border-[#3a3a3a] bg-[#535353] px-3">

@@ -23,8 +23,10 @@ function GDialog({ title, head, sub, children, buttons, onClose, wide }: { title
   );
 }
 
-export default function GimpUI({ ed, sources, hints, defaultName, hasParamShot, onClose, modeSwitch }: { ed: Ed; sources: Src[]; hints: string[]; defaultName?: string; hasParamShot: boolean; onClose: () => void; modeSwitch: React.ReactNode }) {
+export default function GimpUI({ ed, sources, hints, defaultName, hasParamShot, onClose, modeSwitch, embedded, onTitle }: { ed: Ed; sources: Src[]; hints: string[]; defaultName?: string; hasParamShot: boolean; onClose: () => void; modeSwitch: React.ReactNode; embedded?: boolean; onTitle?: (t: string) => void }) {
   const [dlg, setDlg] = useState<Dlg>(ed.L ? null : 'open');
+  const hadDoc = useRef(!!ed.L);
+  useEffect(() => { if (ed.L && !hadDoc.current) { hadDoc.current = true; setDlg((d) => (d === 'open' ? null : d)); } }, [ed.L]);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [dockTab, setDockTab] = useState<'layers' | 'channels' | 'paths' | 'undo'>('layers');
   const [hintOpen, setHintOpen] = useState(true);
@@ -90,7 +92,8 @@ export default function GimpUI({ ed, sources, hints, defaultName, hasParamShot, 
   ];
 
   const keys = (e: KeyboardEvent) => {
-    if ((e.target as HTMLElement).closest('input,textarea,select')) return;
+    if ((e.target as HTMLElement).closest('input,textarea,select,[contenteditable]')) return;
+    if (embedded && !root.current?.contains(e.target as Node)) return;
     const c = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
     const map: [boolean, () => void][] = [
       [c && !e.shiftKey && k === 'z', ed.undo], [c && k === 'y', ed.redoAct], [c && !e.altKey && k === 'o', () => show('open')], [c && e.altKey && k === 'o', () => has && show('layers')], [c && k === 'n' && !e.shiftKey, () => show('new')],
@@ -106,18 +109,19 @@ export default function GimpUI({ ed, sources, hints, defaultName, hasParamShot, 
   const toolName = TOOLS.find((t) => t.id === ed.tool)?.label ?? '';
   const title = has ? `[${ed.docName.replace(/\.\w+$/, '')}] ${ed.hist.length ? '(zmieniony)' : '(zaimportowany)'}-1.0 (Kolor RGB 8-bitowy gamma, ${layers.length} ${layers.length === 1 ? 'warstwa' : 'warstwy'}) ${W}x${H} – GIMP` : 'GNU Image Manipulation Program';
   const zoomPct = Math.round((ed.zoom || 0) * 100);
+  useEffect(() => { onTitle?.(title); }, [title]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { const h = (e: KeyboardEvent) => { if (!dlg || e.key === 'Escape') keys(e); }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); });
   return (
-    <div ref={root} className="fixed inset-0 z-[90] flex flex-col bg-[#454545] font-[Cantarell,'Segoe_UI',Ubuntu,sans-serif] text-[13px] text-[#dcdcdc] outline-none">
+    <div ref={root} tabIndex={-1} onPointerDown={() => { if (embedded && !(document.activeElement && root.current?.contains(document.activeElement))) root.current?.focus(); }} className={`${embedded ? 'absolute' : 'fixed z-[90]'} inset-0 flex flex-col outline-none bg-[#454545] font-[Cantarell,'Segoe_UI',Ubuntu,sans-serif] text-[13px] text-[#dcdcdc] outline-none`}>
       <input ref={file} type="file" accept="image/*,.jpg,.jpeg,.png,.gif,.bmp,.webp" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void ed.openFile(f, fileAsLayer.current); e.target.value = ''; setDlg(null); }} />
       {/* pasek tytulu okna */}
-      <div className="relative z-[60] flex h-[30px] items-center bg-[#2b2b2b] pl-2 text-[12px]">
+      {!embedded && <div className="relative z-[60] flex h-[30px] items-center bg-[#2b2b2b] pl-2 text-[12px]">
         <span className="mr-2 inline-block h-4 w-4 rounded-full bg-[#8a7a5a]" />
         <span className="flex-1 truncate">{title}</span>
         {modeSwitch}
         <button className="h-full px-3 hover:bg-[#444]"><Minus size={14} /></button><button className="h-full px-3 hover:bg-[#444]"><Square size={12} /></button><button className="h-full px-3 hover:bg-[#c42b1c]" onClick={onClose} title="Zamknij"><X size={15} /></button>
-      </div>
+      </div>}
       <MenuBar menus={MENUS} skin={SKIN} />
 
       <div className="flex min-h-0 flex-1 border-t border-[#2a2a2a]">
