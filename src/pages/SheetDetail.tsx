@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { ArrowLeft, Download, ExternalLink, Eye, EyeOff, FileArchive, FileCheck2, GitBranch, Code2, ShieldCheck, Copy, ListOrdered, Monitor } from 'lucide-react';
+import { ArrowLeft, Download, ExternalLink, Eye, EyeOff, FileArchive, FileCheck2, GitBranch, Code2, ShieldCheck, Copy, ListOrdered, Monitor, ClipboardList } from 'lucide-react';
 import { SESSION_LABEL, useContent } from '../lib/data';
 import { useStore, type SheetStatus } from '../lib/store';
 import { DifficultyBar, LangBadge, Loading, Tag } from '../components/ui';
@@ -65,13 +65,14 @@ export default function SheetDetail() {
 
           <div className="card p-5">
             <p className="eyebrow mb-2">Materiały</p>
-            <div className="grid gap-2">
-              {sheet.qualification === 'INF.03' && f.solutionUrl && <Link to={`/arkusze/${encodeURIComponent(sheet.code)}/rozwiazanie`} className="btn btn-primary justify-start"><ListOrdered size={16} />Rozwiązanie krok po kroku</Link>}
-              {sheet.qualification === 'INF.03' && <Link to={`/pulpit/${encodeURIComponent(sheet.code)}`} className="btn btn-ghost justify-start"><Monitor size={16} />Ćwicz na pulpicie jak na egzaminie (XAMPP)</Link>}
-              <a href={f.pdfRaw} className="btn btn-ghost justify-start" download><Download size={16} />Pobierz arkusz PDF</a>
-              {f.gradingRaw && <a href={f.gradingRaw} target="_blank" rel="noreferrer" className="btn btn-ghost justify-start"><FileCheck2 size={16} />Zasady oceniania</a>}
-              {f.archiveUrl && <a href={f.archiveUrl} className="btn btn-ghost justify-start"><FileArchive size={16} />Pliki do zadania (archiwum)</a>}
-              {f.solutionUrl && <a href={f.solutionUrl} target="_blank" rel="noreferrer" className="btn btn-ghost justify-start"><GitBranch size={16} />Przykładowe rozwiązanie (GitHub)</a>}
+            <div className="grid gap-2 [&_svg]:shrink-0">
+              {sheet.qualification === 'INF.03' && f.solutionUrl && <Link to={`/arkusze/${encodeURIComponent(sheet.code)}/rozwiazanie`} className="btn h-auto w-full min-w-0 justify-start whitespace-normal text-left btn-primary"><ListOrdered size={16} />Rozwiązanie krok po kroku</Link>}
+              {sheet.qualification === 'INF.03' && <Link to={`/arkusze/${encodeURIComponent(sheet.code)}/przebieg`} className="btn h-auto w-full min-w-0 justify-start whitespace-normal text-left btn-ghost"><ClipboardList size={16} />Jak rozwiązać egzamin krok po kroku</Link>}
+              {sheet.qualification === 'INF.03' && <Link to={`/pulpit/${encodeURIComponent(sheet.code)}`} className="btn h-auto w-full min-w-0 justify-start whitespace-normal text-left btn-ghost"><Monitor size={16} />Ćwicz na pulpicie (XAMPP)</Link>}
+              <a href={f.pdfRaw} className="btn h-auto w-full min-w-0 justify-start whitespace-normal text-left btn-ghost" download><Download size={16} />Pobierz arkusz PDF</a>
+              {f.gradingRaw && <a href={f.gradingRaw} target="_blank" rel="noreferrer" className="btn h-auto w-full min-w-0 justify-start whitespace-normal text-left btn-ghost"><FileCheck2 size={16} />Zasady oceniania</a>}
+              {f.archiveUrl && <a href={f.archiveUrl} className="btn h-auto w-full min-w-0 justify-start whitespace-normal text-left btn-ghost"><FileArchive size={16} />Pliki do zadania (archiwum)</a>}
+              {f.solutionUrl && <a href={f.solutionUrl} target="_blank" rel="noreferrer" className="btn h-auto w-full min-w-0 justify-start whitespace-normal text-left btn-ghost"><GitBranch size={16} />Przykładowe rozwiązanie (GitHub)</a>}
             </div>
             {f.archivePassword && (
               <div className="mt-3 flex items-center gap-2 rounded-lg bg-surface-2 p-2 text-sm">

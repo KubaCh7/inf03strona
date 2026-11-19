@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import EnvChoice from '../components/EnvChoice';
 import type { Sheet } from '../lib/types';
-import { ExternalLink, ShieldCheck, FileText } from 'lucide-react';
+import { ExternalLink, ShieldCheck, FileText, Monitor } from 'lucide-react';
 import { useContent } from '../lib/data';
 import Workshop from '../components/Workshop';
 import { Loading, PageHeader } from '../components/ui';
@@ -24,6 +24,7 @@ function WorkshopFor({ sheet }: { sheet?: Sheet }) {
     <div>
       <PageHeader eyebrow={sheet ? `Warsztat · ${sheet.code}` : 'Warsztat · wolny projekt'} title={sheet ? sheet.title : 'Warsztat'} right={sheet && (
         <div className="flex flex-wrap gap-2">
+          <button className="btn btn-ghost" title="Przejdź na pulpit jak na egzaminie (Windows, XAMPP, phpMyAdmin). Kod z warsztatu zostaje tutaj, pulpit ma osobny dysk." onClick={() => { try { sessionStorage.removeItem(key); } catch { /* */ } nav(`/pulpit/${encodeURIComponent(sheet.code)}`); }}><Monitor size={16} />Tryb realistyczny</button>
           <a className="btn btn-ghost" href={sheet.files.pdfView} target="_blank" rel="noreferrer"><FileText size={16} />Arkusz PDF <ExternalLink size={14} /></a>
           <Link className="btn btn-dark" to={`/sprawdzarka?code=${encodeURIComponent(sheet.code)}`}><ShieldCheck size={16} />Sprawdź</Link>
         </div>

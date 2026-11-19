@@ -15,8 +15,8 @@ export type Item = {
   note?: string; thumb?: string; user?: QueryResult; expected?: QueryResult;
   compare?: { mine: string; sheet: string; pct: number; caption: string; diff?: string };
 };
-type Shot = { name: string; ext: string; whole: boolean; import: boolean };
-type Gfx = { text: string; names: string[]; out: string | null; w: number | null; h: number | null; ratio: boolean; transparent: boolean; gif: boolean; delay: number | null; loop: boolean };
+export type Shot = { name: string; ext: string; whole: boolean; import: boolean };
+export type Gfx = { text: string; names: string[]; out: string | null; w: number | null; h: number | null; ratio: boolean; transparent: boolean; gif: boolean; delay: number | null; loop: boolean };
 export type Reqs = { dbName?: string | null; shots: Shot[]; files: string[]; graphicsCount: number; graphics: Gfx[]; colors: string[]; quotes: string[]; author: boolean; looks: { file: string; caption: string }[] };
 
 let reqsP: Promise<Record<string, Reqs>> | null = null;
