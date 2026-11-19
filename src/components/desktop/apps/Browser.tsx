@@ -7,7 +7,7 @@ import { buildSrcDoc } from '../../../lib/preview';
 import { inlineAssets } from '../../../lib/assetsStore';
 import Pma from './Pma';
 
-type Page = { kind: 'html' | 'pma' | 'error' | 'newtab' | 'text' | 'pdf'; doc?: string; title: string; err?: { head: string; text: string; code: string } };
+type Page = { kind: 'html' | 'pma' | 'error' | 'newtab' | 'text' | 'pdf'; doc?: string; title: string; err?: { head: string; text: string; code: string }; hint?: string };
 type Tab = { id: number; url: string; hist: string[]; idx: number; page: Page | null; post?: { method: 'GET' | 'POST'; data: string } };
 let tid = 1;
 
@@ -26,13 +26,17 @@ export default function Browser({ win }: { win: Win }) {
   const load = useCallback(async (url: string, post?: Tab['post']): Promise<Page> => {
     let u = url.trim().replace(/^https?:\/\//i, '');
     if (!u) return { kind: 'newtab', title: 'Nowa karta' };
+    // sciezka z dysku wpisana w pasek adresu (C:\xampp\...) otwiera sie jak plik, tak jak w Edge
+    if (/^[a-z]:[\\/]/i.test(u)) { u = 'file:///' + u.replace(/\\/g, '/'); setTabUrl(u); }
     if (/^file:\/\/\//i.test(u)) {
       const p = decodeURI(u.slice(8)).replace(/\\/g, '/').split('?')[0];
       if (!vfs.exists(p)) return { kind: 'error', title: base(p), err: { head: 'Nie można uzyskać dostępu do tego pliku', text: `Ten plik może być przeniesiony, edytowany lub usunięty.`, code: 'ERR_FILE_NOT_FOUND' } };
       if (ext(p) === 'pdf') return { kind: 'pdf', title: base(p) };
       if (isImage(p)) return { kind: 'html', title: base(p), doc: `<body style="margin:0;background:#0e0e0e;display:grid;place-items:center;height:100vh"><img src="${vfs.read(p)}" style="max-width:100%"></body>` };
       if (/^html?$/.test(ext(p))) return { kind: 'html', title: base(p), doc: render(p, vfs.read(p)) };
-      return { kind: 'text', title: base(p), doc: vfs.get(p)?.bin ? dataUrlToText(vfs.read(p)) : vfs.read(p) };
+      // PHP z dysku sie nie wykona (tak jest tez naprawde): podpowiedz adres przez serwer
+      const hint = /^php$/i.test(ext(p)) ? (p.startsWith(HTDOCS + '/') ? 'localhost/' + p.slice(HTDOCS.length + 1) : '') : undefined;
+      return { kind: 'text', title: base(p), doc: vfs.get(p)?.bin ? dataUrlToText(vfs.read(p)) : vfs.read(p), hint };
     }
     const m = /^(localhost|127\.0\.0\.1)(?::(\d+))?(\/[^?#]*)?(\?[^#]*)?/i.exec(u);
     if (!m) {
@@ -136,7 +140,13 @@ export default function Browser({ win }: { win: Win }) {
       <div className="relative min-h-0 flex-1 border-t border-black/[.06] bg-white" onKeyDown={(e) => { if (e.key === 'F5') { e.preventDefault(); void navigate(t.url, { push: false, post: t.post }); } }}>
         {t.page?.kind === 'pma' && <Pma setAddr={(a) => { if (a !== addr) { setAddr(a); setTabs((ts) => ts.map((x, i) => (i === cur ? { ...x, url: a } : x))); } }} />}
         {t.page?.kind === 'html' && <iframe ref={frame} title="Strona" sandbox="allow-scripts allow-forms allow-modals" srcDoc={t.page.doc} className="h-full w-full bg-white" />}
-        {t.page?.kind === 'text' && <pre className="h-full overflow-auto whitespace-pre-wrap p-3 font-[monospace] text-[13px]">{t.page.doc}</pre>}
+        {t.page?.kind === 'text' && <div className="flex h-full flex-col">
+          {t.page.hint !== undefined && <div className="flex shrink-0 items-start gap-3 border-b border-[#f0d27a] bg-[#fff8e1] px-4 py-2.5 text-[13px] text-[#1a1a1a]">
+            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#d39d00] text-[12px] font-bold text-white">!</span>
+            <div className="flex-1">Ten plik PHP otworzył się bezpośrednio z dysku, więc przeglądarka pokazuje sam kod. PHP działa tylko przez serwer: w XAMPP uruchom <b>Apache</b> (i MySQL, jeśli strona łączy się z bazą), a potem wpisz adres <b>{t.page.hint || 'localhost/…'}</b>.{!t.page.hint && ' Plik musi leżeć w C:\\xampp\\htdocs.'}</div>
+            {t.page.hint && <button onClick={() => void navigate(t.page!.hint!)} className="shrink-0 rounded-[4px] bg-[#0067c0] px-3 py-1 text-white hover:bg-[#005ba1]">Otwórz {t.page.hint}</button>}
+          </div>}
+          <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-3 font-[monospace] text-[13px]">{t.page.doc}</pre></div>}
         {t.page?.kind === 'error' && t.page.err && (
           <div className="mx-auto max-w-[600px] pt-[12vh] text-[#333]">
             <FileWarning size={60} className="mb-6 text-[#999]" strokeWidth={1} />
@@ -149,7 +159,7 @@ export default function Browser({ win }: { win: Win }) {
         {t.page?.kind === 'newtab' && (
           <div className="flex h-full flex-col items-center bg-gradient-to-b from-[#dbe7f5] to-[#f5f7fa] pt-[14vh]">
             <div className="flex w-[560px] items-center gap-2 rounded-full bg-white px-5 py-3 shadow"><Search size={16} className="text-[#666]" /><input onKeyDown={(e) => e.key === 'Enter' && void navigate((e.target as HTMLInputElement).value)} placeholder="Wyszukaj w Internecie" className="flex-1 outline-none" /></div>
-            <div className="mt-8 flex gap-4">{[['localhost/', 'localhost'], ['localhost/phpmyadmin/', 'phpMyAdmin']].map(([u, l]) => <button key={u} onClick={() => void navigate(u)} className="flex w-24 flex-col items-center gap-1 rounded-[8px] bg-white/70 p-3 text-[12px] hover:bg-white"><Globe size={22} className="text-[#0067c0]" />{l}</button>)}</div>
+            <div className="mt-8 flex gap-4">{[['localhost/', 'localhost'], ['localhost/phpmyadmin/', 'phpMyAdmin'], ...vfs.tree(HTDOCS).filter((f) => /\.(php|html?)$/i.test(f.rel) && !/^(dashboard|img|webalizer|xampp)\//.test(f.rel) && !/^(index\.php|applications\.html)$/.test(f.rel)).slice(0, 4).map((f) => ['localhost/' + f.rel, f.rel])].map(([u, l]) => <button key={u} onClick={() => void navigate(u)} className="flex w-28 flex-col items-center gap-1 rounded-[8px] bg-white/70 p-3 text-[12px] hover:bg-white" title={u}><Globe size={22} className="text-[#0067c0]" /><span className="w-full truncate text-center">{l}</span></button>)}</div>
           </div>
         )}
         {t.page?.kind === 'pdf' && <div className="grid h-full place-items-center text-[#666]">Otwórz arkusz ze skrótu na pulpicie.</div>}
