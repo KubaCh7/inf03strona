@@ -6,6 +6,8 @@ import { javascript } from '@codemirror/lang-javascript';
 import { php } from '@codemirror/lang-php';
 import { sql, MySQL } from '@codemirror/lang-sql';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { autocompletion, completeAnyWord, type CompletionContext } from '@codemirror/autocomplete';
+import { PHP_COMPLETIONS, JS_COMPLETIONS, SQL_COMPLETIONS } from '../../../lib/completions';
 import { tags as t } from '@lezer/highlight';
 import { FilePlus, FolderOpen, Save, SaveAll, X, Printer, Scissors, Copy, ClipboardPaste, Undo2, Redo2, Search, ZoomIn, ZoomOut, Globe } from 'lucide-react';
 import { useOS, type Win, useWinKeys } from '../os';
@@ -19,8 +21,24 @@ const NPP = HighlightStyle.define([
   { tag: [t.propertyName], color: '#0000ff' }, { tag: [t.typeName, t.className], color: '#8000ff' }, { tag: t.function(t.variableName), color: '#000080', fontWeight: 'bold' },
   { tag: t.processingInstruction, color: '#ff0000', fontWeight: 'bold' }, { tag: t.operator, color: '#000080', fontWeight: 'bold' },
 ]);
+// Podpowiadanie jak w Notepad++ (domyslnie wlaczone): funkcje jezyka i slowa z dokumentu od 1. litery, wstawia sama nazwe
+const HTML_WORDS = ['html', 'head', 'body', 'title', 'meta', 'link', 'style', 'script', 'header', 'footer', 'main', 'section', 'article', 'aside', 'nav', 'div', 'span', 'p', 'a', 'img', 'ul', 'ol', 'li', 'table', 'tr', 'td', 'th', 'form', 'input', 'button', 'label', 'select', 'option', 'textarea', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'br', 'hr', 'strong', 'em', 'iframe', 'video', 'audio', 'source'];
+const CSS_WORDS = ['background-color', 'background', 'color', 'font-family', 'font-size', 'font-weight', 'text-align', 'margin', 'padding', 'border', 'border-radius', 'width', 'height', 'display', 'float', 'clear', 'flex', 'box-shadow', 'transition', 'opacity', 'position', 'list-style', 'text-decoration', 'line-height', 'cursor', 'filter'];
+const plain = (c: { label: string }) => c.label.replace(/\(\)$/, '');
+const API: Record<string, string[]> = {
+  PHP: [...PHP_COMPLETIONS.map(plain).filter((l) => /^[\w$]+$/.test(l)), ...HTML_WORDS],
+  HTML: HTML_WORDS, CSS: CSS_WORDS, JavaScript: JS_COMPLETIONS.map(plain), SQL: SQL_COMPLETIONS.map(plain),
+};
+const nppComplete = (lang: string) => autocompletion({ activateOnTyping: true, icons: false, override: [
+  (ctx: CompletionContext) => { const w = ctx.matchBefore(/[\w$-]+$/); if (!w || (w.from === w.to && !ctx.explicit)) return null; return { from: w.from, options: (API[lang] ?? []).map((l) => ({ label: l, type: 'function' })), validFor: /^[\w$-]*$/ }; },
+  completeAnyWord,
+] });
+
 const THEME = EditorView.theme({
   '&': { fontSize: '13px', backgroundColor: '#fff', height: '100%' }, '.cm-content': { fontFamily: "'Courier New',Consolas,monospace", caretColor: '#000' },
+  '.cm-tooltip.cm-tooltip-autocomplete': { backgroundColor: '#fff', border: '1px solid #828790', borderRadius: '0', boxShadow: '2px 2px 3px rgba(0,0,0,.2)' },
+  '.cm-tooltip-autocomplete > ul': { fontFamily: "'Courier New',monospace", fontSize: '13px', maxHeight: '12em' },
+  '.cm-tooltip-autocomplete > ul > li[aria-selected]': { backgroundColor: '#0078d7', color: '#fff' },
   '.cm-gutters': { backgroundColor: '#e4e4e4', color: '#808080', borderRight: '1px solid #cfcfcf', fontFamily: "'Courier New',monospace" },
   '.cm-activeLine': { backgroundColor: '#e8e8ff' }, '.cm-activeLineGutter': { backgroundColor: '#e4e4e4', color: '#000' }, '.cm-selectionBackground, ::selection': { backgroundColor: '#c0c0c0 !important' },
 });
@@ -36,7 +54,7 @@ export default function NotepadPP({ win }: { win: Win }) {
   const [pos, setPos] = useState({ ln: 1, col: 1, p: 0 });
   const [zoom, setZoom] = useState(13);
   const lang = langOver[D.d.id] ?? (LANGS[ext(D.d.name)]?.[0] ?? 'Normal text');
-  const extensions = useMemo(() => [...langExt(lang), syntaxHighlighting(NPP), THEME, EditorView.theme({ '&': { fontSize: zoom + 'px' } })], [lang, zoom]);
+  const extensions = useMemo(() => [...langExt(lang), nppComplete(lang), syntaxHighlighting(NPP), THEME, EditorView.theme({ '&': { fontSize: zoom + 'px' } })], [lang, zoom]);
   useEffect(() => { os.setTitle(win.id, `${D.d.text !== D.d.saved ? '*' : ''}${D.d.path ? D.d.path.replace(/\//g, '\\') : D.d.name} - Notepad++`); }, [D.d]); // eslint-disable-line react-hooks/exhaustive-deps
   const FILTERS = [{ label: 'All types (*.*)', exts: ['*'] }, { label: 'Hyper Text Markup Language file (*.html;*.htm)', exts: ['html', 'htm'] }, { label: 'PHP Hypertext Preprocessor file (*.php)', exts: ['php'] }, { label: 'Cascade Style Sheets File (*.css)', exts: ['css'] }, { label: 'JavaScript file (*.js)', exts: ['js'] }, { label: 'Normal text file (*.txt)', exts: ['txt'] }, { label: 'Structured Query Language file (*.sql)', exts: ['sql'] }];
   const launch = () => { if (!D.d.path) { void os.alert('Uruchom', 'Najpierw zapisz plik.', 'warn'); return; } const p = D.d.path; os.open('browser', { url: p.startsWith('C:/xampp/htdocs/') ? 'localhost/' + p.slice('C:/xampp/htdocs/'.length) : 'file:///' + p }); };
@@ -57,7 +75,7 @@ export default function NotepadPP({ win }: { win: Win }) {
   };
   const I = (Ic: typeof Save, title: string, f?: () => void) => <button title={title} onClick={f} className="grid h-6 w-6 place-items-center hover:border hover:border-[#7eb4ea] hover:bg-[#e5f1fb]"><Ic size={15} strokeWidth={1.6} /></button>;
   return (
-    <div ref={kroot} className="flex h-full flex-col bg-[#f0f0f0] text-[12px] text-black">
+    <div ref={kroot} className="npp flex h-full flex-col bg-[#f0f0f0] text-[12px] text-black">
       <div className="relative flex border-b border-[#ddd] bg-white">
         {Object.keys(M).map((m) => <div key={m} className="relative"><button onClick={() => setMenu(menu === m ? null : m)} onMouseEnter={() => menu && setMenu(m)} className={`px-2 py-[3px] ${menu === m ? 'bg-[#cce8ff]' : 'hover:bg-[#e5f3ff]'}`}>{m}</button>
           {menu === m && M[m].length > 0 && <div className="absolute left-0 top-full z-30 min-w-[260px] border border-[#ccc] bg-[#f2f2f2] py-1 shadow-lg" onMouseLeave={() => setMenu(null)}>{M[m].map(([l, k, f]) => <button key={l} onClick={() => { setMenu(null); f(); }} className="flex w-full justify-between gap-6 px-6 py-1 text-left hover:bg-[#91c9f7]"><span>{l}</span><span>{k}</span></button>)}</div>}</div>)}

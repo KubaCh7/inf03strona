@@ -26,6 +26,7 @@ const htmlEmmet = emmetSource('markup');
 const cssEmmet = emmetSource('stylesheet');
 
 function langFor(file: string, schema?: Record<string, string[]>, autoClose = true): Extension[] {
+  if (file.endsWith('.plaintext')) return []; // zwykly tekst (np. nowy plik bez nazwy w VS Code)
   if (file.endsWith('.css')) return [css(), cssLanguage.data.of({ autocomplete: cssValueSource }), cssLanguage.data.of({ autocomplete: cssEmmet }), cssPropertyBehaviour];
   if (file.endsWith('.js')) return [javascript(), javascriptLanguage.data.of({ autocomplete: listSource(JS_COMPLETIONS) })];
   if (file.endsWith('.sql') || file.endsWith('.txt')) {

@@ -6,7 +6,7 @@ import { useDocs, type Doc } from './useDoc';
 import { useVfs, base, ext, join, parent, HTDOCS, win as winPath } from '../../../lib/vfs';
 
 const Editor = lazy(() => import('../../Editor'));
-const LANG: Record<string, string> = { html: 'HTML', htm: 'HTML', php: 'PHP', css: 'CSS', js: 'JavaScript', sql: 'SQL', txt: 'Plain Text', json: 'JSON', md: 'Markdown' };
+const LANG: Record<string, string> = { plaintext: 'Plain Text', html: 'HTML', htm: 'HTML', php: 'PHP', css: 'CSS', js: 'JavaScript', sql: 'SQL', txt: 'Plain Text', json: 'JSON', md: 'Markdown' };
 const FILTERS = [{ label: 'All Files (*.*)', exts: ['*'] }, { label: 'HTML (*.html)', exts: ['html'] }, { label: 'PHP (*.php)', exts: ['php'] }, { label: 'CSS (*.css)', exts: ['css'] }, { label: 'JavaScript (*.js)', exts: ['js'] }];
 
 /** Ikony plikow jak w motywie Seti (domyslnym w VS Code). Foldery maja tylko strzalki. */
@@ -18,6 +18,8 @@ function Seti({ name }: { name: string }) {
 }
 
 type Menu = [string, string, (() => void) | null][];
+/** Nowy plik bez nazwy: jezyk rozpoznany po tresci, jak w VS Code. */
+const guessExt = (t: string) => (/^\s*<\?php/i.test(t) ? 'php' : /^\s*<(!doctype|html|head|body|div|p|h\d|table|ul|form|section)\b/i.test(t) ? 'html' : /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER)\b/i.test(t) ? 'sql' : /^\s*[.#]?[\w-]+\s*\{/.test(t) ? 'css' : /^\s*(function|const|let|var|document\.)/.test(t) ? 'js' : 'plaintext');
 type Panel = 'terminal' | 'problems' | 'output' | 'debug' | 'ports';
 
 /** Visual Studio Code (motyw Dark Modern, angielski interfejs jak po instalacji). */
@@ -188,7 +190,7 @@ export default function VSCode({ win }: { win: Win }) {
   const section = (title: string, open: boolean, extra?: React.ReactNode) => (
     <div className="group flex h-[22px] items-center border-t border-[#2b2b2b] pr-1 text-[11px] font-bold">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}<span className="flex-1 truncate">{title}</span>{extra && <span className="flex gap-0.5 opacity-0 group-hover:opacity-100">{extra}</span>}</div>
   );
-  const lang = showWelcome ? '' : LANG[ext(D.d.name)] ?? 'Plain Text';
+  const lang = showWelcome ? '' : LANG[D.d.path ? ext(D.d.name) : guessExt(D.d.text)] ?? 'Plain Text';
 
   return (
     <div ref={kroot} className="relative flex h-full flex-col bg-[#1f1f1f] font-['Segoe_WPC','Segoe_UI',sans-serif] text-[13px] text-[#cccccc]" onPointerDown={() => ctx && setCtx(null)}>
@@ -310,7 +312,7 @@ export default function VSCode({ win }: { win: Win }) {
                   <label className="mt-12 flex items-center justify-center gap-2 text-[#cccccc]"><input type="checkbox" defaultChecked className="accent-[#0078d4]" />Show welcome page on startup</label>
                 </div>
               ) : (
-                <Suspense fallback={null}><Editor key={D.d.id} theme="vscode-dark-modern" bare autoFocus file={D.d.path ? base(D.d.path) : `${D.d.name}.txt`} value={D.d.text} onChange={(v) => D.update({ text: v })} onCursor={(ln, col, sel) => setPos({ ln, col, sel })} /></Suspense>
+                <Suspense fallback={null}><Editor key={D.d.id} theme="vscode-dark-modern" bare autoFocus file={D.d.path ? base(D.d.path) : `${D.d.name}.${guessExt(D.d.text)}`} value={D.d.text} onChange={(v) => D.update({ text: v })} onCursor={(ln, col, sel) => setPos({ ln, col, sel })} /></Suspense>
               )}
             </div>
           </div>

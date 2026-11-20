@@ -254,3 +254,10 @@ h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: -0.02em
 [data-vm] .p03-pop { animation: p03-pop .167s cubic-bezier(0,0,0,1); }
 [data-vm] .p03-pop-up { animation: p03-pop-up .167s cubic-bezier(0,0,0,1); }
 @media (prefers-reduced-motion: reduce) { [data-vm] .p03-win, [data-vm] .p03-start, [data-vm] .p03-pop, [data-vm] .p03-pop-up { animation: none !important; transition: none !important; } }
+
+/* Notepad++ w maszynie: biala lista podpowiedzi jak w Windows (zamiast ciemnej ze strony) */
+[data-vm] .npp .cm-editor .cm-tooltip.cm-tooltip-autocomplete { background: #fff; border: 1px solid #828790; border-radius: 0; box-shadow: 2px 2px 3px rgba(0,0,0,.2); padding: 0; }
+[data-vm] .npp .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul { font-family: 'Courier New', monospace; font-size: 13px; }
+[data-vm] .npp .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li { color: #000; padding: 1px 6px; border-radius: 0; }
+[data-vm] .npp .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] { background: #0078d7; color: #fff; }
+[data-vm] .npp .cm-editor .cm-tooltip-autocomplete .cm-completionMatchedText { color: inherit; }
