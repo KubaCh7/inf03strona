@@ -117,8 +117,16 @@ export async function checkQuery(dump: string, task: QueryTask, userSql: string,
   if (ok && ordered) ok = JSON.stringify(userRes.values) === JSON.stringify(expected?.values);
   let message = ok ? 'Wynik zgodny z oczekiwanym.' : 'Wynik różni się od oczekiwanego.';
   if (ok && expected && userRes.columns.join() !== expected.columns.join()) message += ' Uwaga: nazwy kolumn (aliasy) są inne niż w rozwiązaniu: ' + expected.columns.join(', ') + '.';
-  if (!ok && expected && userRes.columns.length !== expected.columns.length) message += ` Masz ${userRes.columns.length} kolumn, powinno być ${expected.columns.length}.`;
-  else if (!ok && expected && userRes.values.length !== expected.values.length) message += ` Masz ${userRes.values.length} wierszy, powinno być ${expected.values.length}.`;
+  // ktorych kolumn brakuje albo sa nadmiarowe (po nazwie, bez wielkosci liter i prefiksu tabeli)
+  const cn = (c: string) => c.toLowerCase().replace(/^.*\./, '').replace(/[`"']/g, '');
+  const missing = expected ? expected.columns.filter((c) => !userRes.columns.some((u) => cn(u) === cn(c))) : [];
+  const extra = expected ? userRes.columns.filter((u) => !expected.columns.some((c) => cn(c) === cn(u))) : [];
+  if (!ok && expected && (missing.length || extra.length)) {
+    if (missing.length) message += ` Brakuje kolumn: ${missing.join(', ')}.`;
+    if (extra.length) message += ` Nadmiarowe kolumny: ${extra.join(', ')}.`;
+    if (userRes.columns.length !== expected.columns.length) message += ` (Masz ${userRes.columns.length} kolumn, powinno być ${expected.columns.length}.)`;
+  } else if (!ok && expected && userRes.columns.map(cn).join() !== expected.columns.map(cn).join()) message += ` Kolumny są w innej kolejności niż w zadaniu: ${expected.columns.join(', ')}.`;
+  else if (!ok && expected && userRes.values.length !== expected.values.length) message += ` Masz ${userRes.values.length} wierszy, powinno być ${expected.values.length} (sprawdź WHERE i JOIN).`;
   else if (!ok && ordered) message += ' Sprawdź też sortowanie.';
   return { ok, message, user: userRes, expected, skipped };
 }
