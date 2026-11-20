@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { BookOpen, MonitorSmartphone, Trophy, ArrowRight, RotateCcw, OctagonX } from 'lucide-react';
+import { BookOpen, MonitorSmartphone, Trophy, ArrowRight, RotateCcw, OctagonX, Monitor } from 'lucide-react';
 import { useContent } from '../lib/data';
 import { useStore, type ActiveExam } from '../lib/store';
 import { newTheory, PRACTICE_MS, PRACTICE_PASS, THEORY_PASS } from '../lib/exam';
@@ -9,6 +9,7 @@ import { Loading, PageHeader } from '../components/ui';
 import TheoryTest, { scoreTheory, TimerBadge, useCountdown, type TheoryState } from '../components/TheoryTest';
 import Workshop from '../components/Workshop';
 import SheetChecker from '../components/SheetChecker';
+import ExportToVm from '../components/ExportToVm';
 import { lazy, Suspense } from 'react';
 import { dropAttempt } from '../lib/vfs';
 const Desktop = lazy(() => import('../components/desktop/Desktop'));
@@ -23,6 +24,7 @@ function Practice({ exam, onDone, onRestart, onAbort, onAbortNow, onLogin, initi
   const p = exam.practice!;
   const left = useCountdown(p.startedAt, p.durationMs, !!p.finishedAt);
   const [view, setView] = useState<'kod' | 'ocena'>(initialView ?? 'kod');
+  const [exp, setExp] = useState(false);
   const setSettings = useStore((s) => s.setSettings);
   // po oddaniu pracy (np. „Zakoncz egzamin” na pulpicie) od razu wraca boczne menu
   useEffect(() => { if (view === 'ocena') setSettings({ hideNav: false }); }, [view, setSettings]);
@@ -55,11 +57,13 @@ function Practice({ exam, onDone, onRestart, onAbort, onAbortNow, onLogin, initi
         <div className="flex gap-1.5">
           {(['kod', 'ocena'] as const).map((k) => <button key={k} className="chip" aria-pressed={view === k} onClick={() => setView(k)}>{k === 'kod' ? 'Arkusz + warsztat' : 'Oddaję pracę'}</button>)}
           <button className="chip" title="Wyczyść pliki, bazę i zegar" onClick={() => { if (confirm('Wyczyścić wszystko i zacząć ten arkusz od nowa?')) onRestart(); }}><RotateCcw size={13} />Od zera</button>
+          <button className="chip" title="Przejdź na pulpit jak na egzaminie, z przeniesieniem pracy albo bez" onClick={() => setExp(true)}><Monitor size={13} />Tryb realistyczny</button>
           <button className="chip !border-danger/40 !text-danger" title="Przerwij bez oceny" onClick={onAbort}><OctagonX size={13} />Przerwij</button>
         </div>
       </div>
       {timeUp && view !== 'ocena' && <p className="mb-4 rounded-xl bg-danger-soft p-3 text-sm font-bold text-danger">Czas minął. Przejdź do „Oddaję” i oceń pracę.</p>}
       {/* kazda proba ma wlasny, pusty projekt (nie miesza sie ze zwyklym warsztatem arkusza) */}
+      {exp && <ExportToVm sheet={sheet} storageKey={wsKey} attempt={`exam:${exam.id}`} onCancel={() => setExp(false)} onDone={() => { setExp(false); setView('kod'); useStore.getState().setActiveExam({ ...exam, practice: { ...p, desktop: true } }); }} />}
       {view === 'kod' && <Workshop key={wsKey} storageKey={wsKey} sheet={sheet} />}
       {view === 'ocena' && <SheetChecker sheet={sheet} storageKey={wsKey} autoRun onScore={onDone} />}
     </div>
