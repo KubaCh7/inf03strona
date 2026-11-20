@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, RotateCw, Home, Plus, X, Lock, Info, Star, MoreHorizontal, Globe, Search, FileWarning } from 'lucide-react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, RotateCw, Home, Plus, X, Lock, Info, Star, MoreHorizontal, Globe, Search, FileWarning, Clock } from 'lucide-react';
 import { useOS, useVmBack, type Win } from '../os';
 import { useVfs, HTDOCS, join, parent, isImage, isText, ext, base, dataUrlToText } from '../../../lib/vfs';
 import { useServer } from '../../../lib/mysqlServer';
@@ -86,7 +86,43 @@ export default function Browser({ win }: { win: Win }) {
     const page = await load(u, opts.post).catch((e) => ({ kind: 'error', title: 'Błąd', err: { head: 'Wystąpił błąd', text: String((e as Error).message), code: 'ERR_FAILED' } }) as Page);
     setTabs((ts) => ts.map((x, i) => (i !== cur ? x : opts.push === false ? { ...x, url: u, page } : { ...x, url: u, page, hist: [...x.hist.slice(0, x.idx + 1), u], idx: x.idx + 1, post: opts.post })));
     setBusy(false);
+    if (u && page.kind !== 'newtab') rememberUrl(u.replace(/^https?:\/\//, ''), page.title);
   }
+  // --- historia i podpowiedzi paska adresu (jak w Edge) ---
+  const HK = `p03:edgehist:${os.vfs.key}`;
+  const history = (): { url: string; title: string }[] => { try { return JSON.parse(localStorage.getItem(HK) ?? '[]'); } catch { return []; } };
+  function rememberUrl(url: string, title: string) { try { localStorage.setItem(HK, JSON.stringify([{ url, title }, ...history().filter((h) => h.url !== url)].slice(0, 30))); } catch { /* */ } }
+  const [typed, setTyped] = useState<string | null>(null); // null = lista zamknieta
+  const [sel, setSel] = useState(-1);
+  const addrRef = useRef<HTMLInputElement>(null);
+  const pendingSel = useRef<[number, number] | null>(null);
+  useLayoutEffect(() => { if (pendingSel.current && addrRef.current) { addrRef.current.setSelectionRange(...pendingSel.current); pendingSel.current = null; } });
+  const suggestions = (q: string) => {
+    const n = q.trim().toLowerCase().replace(/^https?:\/\//, ''); if (!n) return [];
+    const pages = vfs.tree(HTDOCS).filter((f) => /\.(php|html?)$/i.test(f.rel) && !/^(dashboard|img|webalizer|xampp)\//.test(f.rel)).map((f) => ({ url: 'localhost/' + f.rel, title: base(f.rel) }));
+    const dirs = vfs.list(HTDOCS).filter((d) => vfs.isDir(d) && !/^(dashboard|img|webalizer|xampp)$/.test(base(d))).map((d) => ({ url: `localhost/${base(d)}/`, title: `Index of /${base(d)}` }));
+    const all = [...history().map((h) => ({ ...h, hist: true })), { url: 'localhost/', title: 'Welcome to XAMPP' }, { url: 'localhost/phpmyadmin/', title: 'phpMyAdmin' }, ...pages, ...dirs];
+    const seen = new Set<string>(); const uniq = all.filter((x) => (seen.has(x.url) ? false : (seen.add(x.url), true)));
+    const pre = uniq.filter((x) => x.url.toLowerCase().startsWith(n)); const mid = uniq.filter((x) => !x.url.toLowerCase().startsWith(n) && (x.url.toLowerCase().includes(n) || x.title.toLowerCase().includes(n)));
+    return [...pre, ...mid].slice(0, 7) as { url: string; title: string; hist?: boolean }[];
+  };
+  const list = typed !== null ? suggestions(typed) : [];
+  const onAddrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value; const del = /^delete/.test((e.nativeEvent as InputEvent).inputType ?? '');
+    setTyped(v); setSel(-1);
+    // dokonczenie w pasku: reszta adresu zaznaczona, jak w Edge
+    const best = !del && v ? suggestions(v).find((x) => x.url.toLowerCase().startsWith(v.toLowerCase().replace(/^https?:\/\//, ''))) : undefined;
+    if (best && best.url.length > v.length && !/^https?:/i.test(v)) { setAddr(v + best.url.slice(v.length)); pendingSel.current = [v.length, best.url.length]; } else setAddr(v);
+  };
+  const onAddrKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (!list.length) return; e.preventDefault();
+      const i = e.key === 'ArrowDown' ? Math.min(list.length - 1, sel + 1) : Math.max(-1, sel - 1);
+      setSel(i); setAddr(i >= 0 ? list[i].url : typed ?? '');
+    } else if (e.key === 'Enter') { const target = sel >= 0 ? list[sel].url : addr; setTyped(null); setSel(-1); addrRef.current?.blur(); void navigate(target); }
+    else if (e.key === 'Escape') { if (typed !== null) { e.preventDefault(); setAddr(typed); setTyped(null); setSel(-1); } else setAddr(t.url); }
+    else if (e.key === 'Tab' && addrRef.current && addrRef.current.selectionEnd !== addrRef.current.selectionStart) { e.preventDefault(); const n = addr.length; addrRef.current.setSelectionRange(n, n); setTyped(addr); }
+  };
   useEffect(() => { if (!t.page) void navigate(t.url, { push: false }); }, [t.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setAddr(t.url); }, [t.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { os.setTitle(win.id, `${t.page?.title ?? 'Nowa karta'} — Microsoft Edge`); }, [t.page, win.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -131,10 +167,24 @@ export default function Browser({ win }: { win: Win }) {
         <button disabled={t.idx >= t.hist.length - 1} onClick={() => go(1)} className="rounded p-1.5 hover:bg-black/[.06] disabled:opacity-30"><ArrowRight size={16} /></button>
         <button onClick={() => void navigate(t.url, { push: false, post: t.post })} className="rounded p-1.5 hover:bg-black/[.06]" title="Odśwież (F5)"><RotateCw size={15} className={busy ? 'animate-spin' : ''} /></button>
         <button onClick={() => void navigate('')} className="rounded p-1.5 hover:bg-black/[.06]"><Home size={15} /></button>
-        <div className="flex flex-1 items-center gap-2 rounded-full border border-transparent bg-white px-3 py-1.5 focus-within:border-[#0067c0]">
+        <div className="relative flex flex-1 items-center gap-2 rounded-full border border-transparent bg-white px-3 py-1.5 focus-within:border-[#0067c0]">
           {secure ? <Info size={13} className="text-[#666]" /> : <Lock size={13} className="text-[#666]" />}
-          <input data-coach="edge-addr" value={addr} onChange={(e) => setAddr(e.target.value)} onFocus={(e) => e.target.select()} onKeyDown={(e) => e.key === 'Enter' && void navigate(addr)} placeholder="Wyszukaj lub wprowadź adres internetowy" className="flex-1 bg-transparent outline-none" spellCheck={false} />
+          <input ref={addrRef} data-coach="edge-addr" value={addr} onChange={onAddrChange} onFocus={(e) => e.target.select()} onBlur={() => setTimeout(() => { setTyped(null); setSel(-1); }, 150)} onKeyDown={onAddrKey} placeholder="Wyszukaj lub wprowadź adres internetowy" className="flex-1 bg-transparent outline-none" spellCheck={false} autoComplete="off" />
           <Star size={14} className="text-[#666]" />
+          {typed !== null && typed.trim() && (
+            <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 overflow-hidden rounded-[8px] border border-black/10 bg-white py-1 text-[13px] text-[#1a1a1a] shadow-[0_8px_24px_rgba(0,0,0,.18)]">
+              {list.map((x, i) => (
+                <button key={x.url} onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setSel(i)} onClick={() => { setTyped(null); setSel(-1); addrRef.current?.blur(); void navigate(x.url); }}
+                  className={`flex h-9 w-full items-center gap-3 px-3 text-left ${i === sel ? 'bg-[#f0f0f0]' : ''}`}>
+                  {x.hist ? <Clock size={15} className="shrink-0 text-[#666]" /> : <Globe size={15} className="shrink-0 text-[#666]" />}
+                  <span className="truncate">{(() => { const k = x.url.toLowerCase().indexOf(typed.toLowerCase().replace(/^https?:\/\//, '')); return k >= 0 && typed ? <>{x.url.slice(0, k)}<b>{x.url.slice(k, k + typed.replace(/^https?:\/\//, '').length)}</b>{x.url.slice(k + typed.replace(/^https?:\/\//, '').length)}</> : x.url; })()}</span>
+                  <span className="truncate text-[#666]">— {x.title}</span>
+                </button>
+              ))}
+              <button onMouseDown={(e) => e.preventDefault()} onClick={() => { const q = typed; setTyped(null); addrRef.current?.blur(); void navigate(q); }} className={`flex h-9 w-full items-center gap-3 px-3 text-left ${sel === list.length ? 'bg-[#f0f0f0]' : ''}`}>
+                <Search size={15} className="shrink-0 text-[#666]" /><span className="truncate">{typed}</span><span className="text-[#666]">— Wyszukaj w Bing</span></button>
+            </div>
+          )}
         </div>
         <button className="rounded p-1.5 hover:bg-black/[.06]"><MoreHorizontal size={16} /></button>
       </div>
