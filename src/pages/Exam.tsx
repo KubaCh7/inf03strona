@@ -35,7 +35,7 @@ function Practice({ exam, onDone, onRestart, onAbort, onAbortNow, onLogin, initi
   const wsKey = `exam:${exam.id}:${sheet.code}`;
   // pulpit jak na egzaminie: logowanie, Windows + XAMPP, oddanie folderu z numerem
   if (p.desktop && !p.candidate && view === 'kod') return <Suspense fallback={<Loading />}><Login onLogin={onLogin} /></Suspense>;
-  if (p.desktop && view === 'kod') return <Suspense fallback={<Loading />}><Desktop sheet={sheet} attempt={`exam:${exam.id}`} candidate={p.candidate!} endsAt={p.startedAt + p.durationMs} onFinish={() => setView('ocena')} onAbort={onAbortNow} /></Suspense>;
+  if (p.desktop && view === 'kod') return <Suspense fallback={<Loading />}><Desktop sheet={sheet} attempt={`exam:${exam.id}`} candidate={p.candidate!} endsAt={p.startedAt + p.durationMs} onRestart={onRestart} onFinish={() => setView('ocena')} onAbort={onAbortNow} /></Suspense>;
   if (p.desktop) return (
     <div>
       <div className="card mb-4 flex flex-wrap items-center justify-between gap-3 p-4">

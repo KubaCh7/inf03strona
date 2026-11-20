@@ -26,7 +26,8 @@ export default function Tutorial() {
   if (run === 'login') return <Login onLogin={(n) => { try { sessionStorage.setItem('p03:tut-cand', n); } catch { /* */ } setCand(n); setRun('desk'); }} />;
   if (run === 'desk') return <Desktop sheet={sheet} attempt={ATTEMPT} candidate={cand || '12345678901'} endsAt={endsAt} coach
     onFinish={() => { try { sessionStorage.removeItem('p03:tut-cand'); } catch { /* */ } nav(`/sprawdzarka?code=${encodeURIComponent(sheet.code)}&pulpit=1&attempt=${ATTEMPT}`); }}
-    onAbort={() => { try { sessionStorage.removeItem('p03:tut-cand'); } catch { /* */ } setRun('intro'); }} />;
+    onAbort={() => { try { sessionStorage.removeItem('p03:tut-cand'); } catch { /* */ } setRun('intro'); }}
+    onRestart={() => void dropAttempt(ATTEMPT).then(() => { try { sessionStorage.removeItem('p03:tut-cand'); } catch { /* */ } window.location.reload(); })} />;
 
   const restart = async () => {
     await dropAttempt(ATTEMPT);

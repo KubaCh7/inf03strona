@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, Power, Wifi, Volume2, ChevronUp, Camera, Scissors, Copy, ClipboardPaste, PenLine, Trash2, Plus, RotateCw, LayoutList, ArrowUpDown, Monitor, X, Brush, Maximize, Minimize, Lightbulb } from 'lucide-react';
+import { Search, Power, Wifi, Volume2, ChevronUp, Camera, Scissors, Copy, ClipboardPaste, PenLine, Trash2, Plus, RotateCw, LayoutList, ArrowUpDown, Monitor, X, Brush, Maximize, Minimize, Lightbulb, RotateCcw } from 'lucide-react';
 import type { Sheet } from '../../lib/types';
 import { Vfs, useVfs, DESKTOP, RECYCLE, base, parent, isImage, isText, join, win as winPath } from '../../lib/vfs';
 import { MysqlServer } from '../../lib/mysqlServer';
@@ -26,9 +26,9 @@ const DARK: AppId[] = ['vscode', 'gimp', 'photoshop'];
 const PINNED: AppId[] = ['explorer', 'browser', 'xampp', 'notepadpp', 'vscode', 'gimp', 'photoshop', 'paint', 'notepad', 'snip'];
 const SHORTCUTS: AppId[] = ['xampp', 'notepadpp', 'vscode', 'gimp', 'photoshop', 'browser'];
 
-export type DesktopProps = { sheet: Sheet; attempt: string; candidate: string; endsAt: number; onFinish: () => void; onAbort: () => void; coach?: boolean };
+export type DesktopProps = { sheet: Sheet; attempt: string; candidate: string; endsAt: number; onFinish: () => void; onAbort: () => void; coach?: boolean; onRestart?: () => void };
 
-export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, onAbort, coach }: DesktopProps) {
+export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, onAbort, coach, onRestart }: DesktopProps) {
   const vfs = useMemo(() => new Vfs(`vfs:${attempt}`), [attempt]);
   const server = useMemo(() => new MysqlServer(`mysql:${attempt}`), [attempt]);
   const [ready, setReady] = useState(false);
@@ -249,8 +249,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
       if (e.key === 'Meta' || e.key === 'OS') { winKey.current = true; return; }
       if (e.metaKey) winKey.current = false;
       const aw = wins.find((w) => w.id === active);
-      if (e.metaKey && e.key.toLowerCase() === 'c') { e.preventDefault(); setAsst((v) => !v); }
-      else if (e.metaKey && e.key.toLowerCase() === 'e') { e.preventDefault(); open('explorer'); }
+      if (e.metaKey && e.key.toLowerCase() === 'e') { e.preventDefault(); open('explorer'); }
       else if (e.metaKey && e.key.toLowerCase() === 'd') { e.preventDefault(); setWins((ws) => ws.map((w) => ({ ...w, min: true }))); setActive(null); }
       else if (e.metaKey && aw && e.key === 'ArrowUp') { e.preventDefault(); patch(aw.id, { max: true }); }
       else if (e.metaKey && aw && e.key === 'ArrowDown') { e.preventDefault(); patch(aw.id, aw.max ? { max: false } : { min: true }); }
@@ -429,6 +428,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
           <div data-noshot="1" className="flex items-center gap-2">
             <span className="rounded-[6px] bg-[#1a1a1a]/85 px-2 py-1 text-[12px] font-semibold text-white" title="Czas do końca egzaminu">⏱ {hms}</span>
             <button data-coach="finish" onClick={finish} className="rounded-[6px] bg-[#0067c0] px-2.5 py-1 text-[12px] font-semibold text-white hover:bg-[#1975c5]">Zakończ egzamin</button>
+            {onRestart && <button onClick={() => void os.confirm('Zacznij od nowa', 'Zacząć egzamin od nowa?\n\nPliki na pulpicie, bazy danych, otwarte okna i niezapisany tekst zostaną usunięte, a zegar wystartuje od początku.').then((ok) => { if (!ok) return; vfs.freeze(); server.freeze(); try { localStorage.removeItem(`p03:wins:${attempt}`); } catch { /* */ } onRestart(); })} title="Zacznij egzamin od nowa" className="flex items-center gap-1 rounded-[6px] px-2 py-1 text-[12px] text-[#1a1a1a] hover:bg-black/[.05]"><RotateCcw size={13} />Od nowa</button>}
             <button onClick={() => void os.confirm('Przerwij', 'Przerwać próbę bez oceny?').then((ok) => ok && onAbort())} className="rounded-[6px] px-2 py-1 text-[12px] text-[#c42b1c] hover:bg-black/[.05]">Przerwij</button>
           </div>
           <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1">
@@ -447,7 +447,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
             })}
           </div>
           <div className="ml-auto flex items-center gap-1 text-[12px] text-[#1a1a1a]">
-            <button data-noshot="1" data-coach="asst" onClick={() => setAsst((v) => !v)} title="Asystent egzaminacyjny (Win+C)" className={`flex items-center gap-1.5 rounded-[4px] border border-black/10 px-2.5 py-1.5 font-semibold hover:bg-white ${asst ? 'bg-white' : 'bg-white/80'}`}><Lightbulb size={15} className="text-[#d39d00]" />Asystent</button>
+            <button data-noshot="1" data-coach="asst" onClick={() => setAsst((v) => !v)} title="Asystent egzaminacyjny" className={`flex items-center gap-1.5 rounded-[4px] border border-black/10 px-2.5 py-1.5 font-semibold hover:bg-white ${asst ? 'bg-white' : 'bg-white/80'}`}><Lightbulb size={15} className="text-[#d39d00]" />Asystent</button>
             <button data-noshot="1" onClick={() => void toggleFull()} title={full ? 'Wyjdź z pełnego ekranu (przytrzymaj Esc albo F11)' : 'Pełny ekran: skróty (Ctrl+W, Win, Alt+Tab) działają w maszynie, a nie w przeglądarce'} className="flex items-center gap-1.5 rounded-[4px] border border-black/10 bg-white/80 px-2 py-1.5 hover:bg-white">{full ? <Minimize size={15} /> : <Maximize size={15} />}</button>
             <button data-noshot="1" data-coach="shot" onClick={() => void screenshot()} title="Zrzut ekranu (PrtSc / Win+Shift+S)" className="flex items-center gap-1.5 rounded-[4px] border border-black/10 bg-white/80 px-2.5 py-1.5 font-semibold hover:bg-white"><Camera size={15} className="text-[#0067c0]" />Zrzut ekranu</button>
             <ChevronUp size={14} className="mx-1" /><span className="px-1">POL</span><Wifi size={15} className="mx-1" /><Volume2 size={15} className="mx-1" />

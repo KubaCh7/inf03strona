@@ -62,10 +62,13 @@ export class Vfs {
   subscribe = (f: () => void) => { this.subs.add(f); return () => { this.subs.delete(f); }; };
   private bump(save = true) {
     this.ver++; this.subs.forEach((f) => f());
-    if (save) { clearTimeout(this.t); this.t = window.setTimeout(() => void kvSet(this.key, [...this.nodes]), 400); }
+    if (save && !this.dead) { clearTimeout(this.t); this.t = window.setTimeout(() => void kvSet(this.key, [...this.nodes]), 400); }
   }
   /** Natychmiastowy zapis (np. przy zamykaniu karty), bez czekania na opoznienie. */
-  flush() { clearTimeout(this.t); void kvSet(this.key, [...this.nodes]); }
+  /** Po „Od nowa”: dysk nie zapisuje sie juz (inaczej zamkniecie strony przywrociloby skasowany stan). */
+  dead = false;
+  freeze() { this.dead = true; clearTimeout(this.t); }
+  flush() { if (this.dead) return; clearTimeout(this.t); void kvSet(this.key, [...this.nodes]); }
   async reset() { this.nodes = fresh(); await kvSet(this.key, undefined); this.bump(false); }
 
   get(p: string) { return this.nodes.get(norm(p)); }
@@ -128,5 +131,6 @@ export async function readCandidateFolder(attempt: string, candidate: string) {
 }
 export async function dropAttempt(attempt: string) {
   await kvSet(`vfs:${attempt}`, undefined); await kvSet(`mysql:${attempt}`, undefined);
-  try { for (const k of [`p03:hints:${attempt}`, `p03:asst:${attempt}`, `p03:wins:${attempt}`]) localStorage.removeItem(k); } catch { /* */ }
+  // wszystko, co dotyczy tej proby: okna, niezapisane teksty, asystent, samouczek, tapeta
+  try { for (const k of Object.keys(localStorage)) if (k === `p03:hints:${attempt}` || k === `p03:asst:${attempt}` || k === `p03:wins:${attempt}` || k === `p03:wall:${attempt}` || k.startsWith(`p03:coach:${attempt}`) || k.startsWith(`p03:docs:vfs:${attempt}:`) || k.startsWith(`p03:vsc:vfs:${attempt}:`)) localStorage.removeItem(k); } catch { /* */ }
 }

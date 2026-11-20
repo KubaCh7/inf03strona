@@ -54,7 +54,7 @@ export default function Assistant({ attempt, onClose }: { attempt: string; onClo
         <span className="flex-1 font-semibold">Asystent egzaminacyjny</span>
         <span title="Liczba podpowiedzi widoczna przy wyniku" className="rounded-full bg-black/[.06] px-2 py-0.5 text-[11px]">podpowiedzi: {count}</span>
         <button onClick={() => setMin((v) => !v)} title={min ? 'Rozwiń' : 'Zwiń'} className="grid h-8 w-8 place-items-center rounded-[4px] hover:bg-black/[.06]">{min ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
-        <button onClick={onClose} title="Zamknij (Win+C)" className="grid h-8 w-8 place-items-center rounded-[4px] hover:bg-black/[.06]"><X size={16} /></button>
+        <button onClick={onClose} title="Zamknij" className="grid h-8 w-8 place-items-center rounded-[4px] hover:bg-black/[.06]"><X size={16} /></button>
       </div>
       {!min && <>
         <div className="min-h-0 flex-1 space-y-2.5 overflow-auto px-3 py-3">

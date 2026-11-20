@@ -17,7 +17,10 @@ export class MysqlServer {
   constructor(public key: string) {}
   subscribe = (f: () => void) => { this.subs.add(f); return () => { this.subs.delete(f); }; };
   bump(save = true) { this.ver++; this.subs.forEach((f) => f()); if (save) { clearTimeout(this.t); this.t = window.setTimeout(() => void this.save(), 500); } }
+  dead = false;
+  freeze() { this.dead = true; clearTimeout(this.t); }
   async save() {
+    if (this.dead) return;
     const s: Saved = { apache: this.apache, mysql: this.mysql, log: this.log.slice(-200), dbs: [...this.dbs].map(([name, v]) => ({ name, meta: v.meta, data: v.db.export() })) };
     await kvSet(this.key, s);
   }

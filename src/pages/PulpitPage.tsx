@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 import { useContent } from '../lib/data';
 import { Loading } from '../components/ui';
 import Desktop from '../components/desktop/Desktop';
+import { dropAttempt } from '../lib/vfs';
 
 /** Pulpit egzaminacyjny do cwiczen (bez zegara egzaminu). */
 export default function PulpitPage() {
@@ -16,5 +17,6 @@ export default function PulpitPage() {
   const sheet = c.sheets.find((s) => s.code === code);
   if (!sheet) return <div className="card p-8">Nie ma arkusza {code}.</div>;
   if (!cand) return <Login onLogin={(n) => { try { sessionStorage.setItem(`p03:pulpit-login:${code}`, n); } catch { /* */ } setCand(n); }} />;
-  return <Desktop sheet={sheet} attempt={`pulpit:${code}`} candidate={cand} endsAt={endsAt} onFinish={() => nav(`/sprawdzarka?code=${encodeURIComponent(code)}&pulpit=1`)} onAbort={() => nav(`/arkusze/${encodeURIComponent(code)}`)} />;
+  return <Desktop sheet={sheet} attempt={`pulpit:${code}`} candidate={cand} endsAt={endsAt} onFinish={() => nav(`/sprawdzarka?code=${encodeURIComponent(code)}&pulpit=1`)} onAbort={() => nav(`/arkusze/${encodeURIComponent(code)}`)}
+    onRestart={() => void dropAttempt(`pulpit:${code}`).then(() => { try { localStorage.removeItem(`p03:pulpit:${code}`); sessionStorage.removeItem(`p03:pulpit-login:${code}`); } catch { /* */ } window.location.reload(); })} />;
 }
