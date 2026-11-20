@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, Power, Wifi, Volume2, ChevronUp, Camera, Scissors, Copy, ClipboardPaste, PenLine, Trash2, Plus, RotateCw, LayoutList, ArrowUpDown, Monitor, X, Brush, Maximize, Minimize } from 'lucide-react';
+import { Search, Power, Wifi, Volume2, ChevronUp, Camera, Scissors, Copy, ClipboardPaste, PenLine, Trash2, Plus, RotateCw, LayoutList, ArrowUpDown, Monitor, X, Brush, Maximize, Minimize, Lightbulb } from 'lucide-react';
 import type { Sheet } from '../../lib/types';
 import { Vfs, useVfs, DESKTOP, RECYCLE, base, parent, isImage, isText, join, win as winPath } from '../../lib/vfs';
 import { MysqlServer } from '../../lib/mysqlServer';
@@ -11,6 +11,7 @@ import SnipApp, { SnipOverlay, SnipToast, SHOTS_DIR, shotName, type Frozen } fro
 import Explorer from './apps/Explorer';
 import Notepad from './apps/Notepad';
 import SevenZip, { archiveItems } from './apps/SevenZip';
+import Assistant from './Assistant';
 
 const Xampp = lazy(() => import('./apps/Xampp'));
 const Browser = lazy(() => import('./apps/Browser'));
@@ -247,7 +248,8 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
       if (e.key === 'Meta' || e.key === 'OS') { winKey.current = true; return; }
       if (e.metaKey) winKey.current = false;
       const aw = wins.find((w) => w.id === active);
-      if (e.metaKey && e.key.toLowerCase() === 'e') { e.preventDefault(); open('explorer'); }
+      if (e.metaKey && e.key.toLowerCase() === 'c') { e.preventDefault(); setAsst((v) => !v); }
+      else if (e.metaKey && e.key.toLowerCase() === 'e') { e.preventDefault(); open('explorer'); }
       else if (e.metaKey && e.key.toLowerCase() === 'd') { e.preventDefault(); setWins((ws) => ws.map((w) => ({ ...w, min: true }))); setActive(null); }
       else if (e.metaKey && aw && e.key === 'ArrowUp') { e.preventDefault(); patch(aw.id, { max: true }); }
       else if (e.metaKey && aw && e.key === 'ArrowDown') { e.preventDefault(); patch(aw.id, aw.max ? { max: false } : { min: true }); }
@@ -263,6 +265,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
   });
   /** Pelny ekran z blokada klawiatury (Chrome/Edge): Ctrl+W, Ctrl+N, Win itp. trafiaja do maszyny, nie do przegladarki. */
+  const [asst, setAsst] = useState(false);
   const [full, setFull] = useState(false);
   const [fullTip, setFullTip] = useState(false);
   useEffect(() => {
@@ -361,6 +364,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
         {snapHint && <div className="pointer-events-none absolute z-[130] rounded-[8px] border border-white/60 bg-white/25 backdrop-blur-sm transition-all" style={snapHint === 'max' ? { left: 6, top: 6, right: 6, bottom: 54 } : snapHint === 'left' ? { left: 6, top: 6, width: 'calc(50% - 9px)', bottom: 54 } : { right: 6, top: 6, width: 'calc(50% - 9px)', bottom: 54 }} />}
 
         {fullTip && <div data-noshot="1" className="pointer-events-none absolute left-1/2 top-4 z-[300] -translate-x-1/2 rounded-[8px] bg-black/75 px-4 py-2 text-[13px] text-white shadow-lg">Pełny ekran: skróty klawiszowe działają w maszynie. Aby wyjść, przytrzymaj Esc.</div>}
+        {asst && <Assistant attempt={attempt} onClose={() => setAsst(false)} />}
         {/* menu Start */}
         {start && (
           <div onPointerDown={(e) => e.stopPropagation()} className="p03-start absolute bottom-[56px] left-1/2 z-[150] w-[640px] -translate-x-1/2 overflow-hidden rounded-[8px] border border-black/10 bg-[#f3f3f3]/95 shadow-[0_16px_48px_rgba(0,0,0,.35)] backdrop-blur-xl">
@@ -441,6 +445,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
             })}
           </div>
           <div className="ml-auto flex items-center gap-1 text-[12px] text-[#1a1a1a]">
+            <button data-noshot="1" onClick={() => setAsst((v) => !v)} title="Asystent egzaminacyjny (Win+C)" className={`flex items-center gap-1.5 rounded-[4px] border border-black/10 px-2.5 py-1.5 font-semibold hover:bg-white ${asst ? 'bg-white' : 'bg-white/80'}`}><Lightbulb size={15} className="text-[#d39d00]" />Asystent</button>
             <button data-noshot="1" onClick={() => void toggleFull()} title={full ? 'Wyjdź z pełnego ekranu (przytrzymaj Esc albo F11)' : 'Pełny ekran: skróty (Ctrl+W, Win, Alt+Tab) działają w maszynie, a nie w przeglądarce'} className="flex items-center gap-1.5 rounded-[4px] border border-black/10 bg-white/80 px-2 py-1.5 hover:bg-white">{full ? <Minimize size={15} /> : <Maximize size={15} />}</button>
             <button data-noshot="1" onClick={() => void screenshot()} title="Zrzut ekranu (PrtSc / Win+Shift+S)" className="flex items-center gap-1.5 rounded-[4px] border border-black/10 bg-white/80 px-2.5 py-1.5 font-semibold hover:bg-white"><Camera size={15} className="text-[#0067c0]" />Zrzut ekranu</button>
             <ChevronUp size={14} className="mx-1" /><span className="px-1">POL</span><Wifi size={15} className="mx-1" /><Volume2 size={15} className="mx-1" />

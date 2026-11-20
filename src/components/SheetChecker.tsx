@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { hintCount } from '../lib/assistant';
 import { Check, X, Play, Download, Loader2 } from 'lucide-react';
 import { Link } from 'react-router';
 import type { Sheet } from '../lib/types';
@@ -85,7 +86,7 @@ export default function SheetChecker({ sheet, onScore, autoRun, storageKey, desk
           <button className="btn btn-ghost" disabled={!files || (!!desktop && !deskInfo?.folder)} onClick={() => files && zipFolder(deskInfo?.folder || number, desktop ? deskFiles.current : files, images, desktop ? undefined : sheet.assets)}><Download size={16} />Pobierz folder {deskInfo?.folder || number}.zip</button>
         </div>
         <p className="mt-3 text-sm text-muted">{desktop
-          ? (deskInfo ? (deskInfo.folder ? <>Oceniam folder <b className="mono">Pulpit\{deskInfo.folder}</b> ({deskInfo.n} plików), tak jak egzaminator. Pliki poza nim (np. tylko w htdocs) się nie liczą.</> : <span className="text-danger">Na pulpicie nie ma folderu z numerem zdającego ({desktop.candidate}). Egzaminator nie znalazłby Twojej pracy. Na pulpicie są: {deskInfo.desktop.join(', ') || 'brak plików'}.</span>) : <>Oceniam folder z numerem zdającego na pulpicie egzaminacyjnym.</>)
+          ? (deskInfo ? (deskInfo.folder ? <>Oceniam folder <b className="mono">Pulpit\{deskInfo.folder}</b> ({deskInfo.n} plików), tak jak egzaminator. Pliki poza nim (np. tylko w htdocs) się nie liczą.{hintCount(desktop.attempt) > 0 && <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-[#fff4ce] px-2 py-0.5 text-xs font-bold text-[#8a6100]">💡 Asystent: {hintCount(desktop.attempt)} {hintCount(desktop.attempt) === 1 ? 'podpowiedź' : 'podpowiedzi'}</span>}</> : <span className="text-danger">Na pulpicie nie ma folderu z numerem zdającego ({desktop.candidate}). Egzaminator nie znalazłby Twojej pracy. Na pulpicie są: {deskInfo.desktop.join(', ') || 'brak plików'}.</span>) : <>Oceniam folder z numerem zdającego na pulpicie egzaminacyjnym.</>)
           : files
           ? <>Sprawdzam wszystko z warsztatu tego arkusza: pliki ({Object.keys(files).length}), grafiki z edytora i zrzuty ekranu (robią się same z kwerend). Nic nie trzeba wgrywać.</>
           : <>Ten arkusz nie ma jeszcze plików w warsztacie. <Link className="text-accent underline" to={`/warsztat/${encodeURIComponent(sheet.code)}`}>Otwórz warsztat</Link> i rozwiąż zadanie, potem kliknij „Sprawdź”.</>}</p>

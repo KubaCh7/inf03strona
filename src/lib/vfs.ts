@@ -126,4 +126,7 @@ export async function readCandidateFolder(attempt: string, candidate: string) {
   }
   return { folder: folder ? base(folder) : null, files, images, desktop: v.list(DESKTOP).map(base).filter((n) => !n.startsWith('.')) };
 }
-export async function dropAttempt(attempt: string) { await kvSet(`vfs:${attempt}`, undefined); await kvSet(`mysql:${attempt}`, undefined); }
+export async function dropAttempt(attempt: string) {
+  await kvSet(`vfs:${attempt}`, undefined); await kvSet(`mysql:${attempt}`, undefined);
+  try { for (const k of [`p03:hints:${attempt}`, `p03:asst:${attempt}`, `p03:wins:${attempt}`]) localStorage.removeItem(k); } catch { /* */ }
+}
