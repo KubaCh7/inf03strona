@@ -1,24 +1,39 @@
-import { snippetCompletion as s, type Completion, type CompletionContext } from '@codemirror/autocomplete';
+import { snippetCompletion as s, insertBracket, type Completion, type CompletionContext } from '@codemirror/autocomplete';
+import type { EditorView } from '@codemirror/view';
 
-const fn = (label: string, detail: string, apply?: string): Completion => ({ label, detail, type: 'function', apply });
+/** Funkcja jak w VS Code: wstawia `nazwa()` z kursorem w nawiasie (albo sama nazwe, gdy za kursorem juz jest nawias). */
+const fn = (label: string, detail: string, type = 'function'): Completion => ({
+  label, detail, type,
+  apply: (view: EditorView, _c: Completion, from: number, to: number) => {
+    const paren = view.state.sliceDoc(to, to + 1) === '(';
+    view.dispatch({ changes: { from, to, insert: label }, selection: { anchor: from + label.length + (paren ? 1 : 0) }, userEvent: 'input.complete' });
+    if (paren) return;
+    // nawias jak przy zwyklym pisaniu: wpisany pozniej `)` nadpisuje ten wstawiony, a nie dokleja drugi
+    const tr = insertBracket(view.state, '(');
+    if (tr) view.dispatch(tr); else view.dispatch({ changes: { from: from + label.length, insert: '()' }, selection: { anchor: from + label.length + 1 } });
+  },
+});
+/** Zwykle slowo (zmienna, slowo kluczowe): wstawia tylko je, bez dodatkowych znakow. */
+const word = (label: string, type: string, detail?: string): Completion => ({ label, type, detail });
 
 // ---------- JavaScript: DOM i typowe API z arkuszy ----------
 export const JS_COMPLETIONS: Completion[] = [
-  s('document.getElementById("${id}")', { label: 'document.getElementById', detail: 'element po id', type: 'function' }),
-  s('document.querySelector("${selektor}")', { label: 'document.querySelector', detail: 'pierwszy pasujący element', type: 'function' }),
-  s('document.querySelectorAll("${selektor}")', { label: 'document.querySelectorAll', detail: 'wszystkie pasujące', type: 'function' }),
-  s('document.getElementsByClassName("${klasa}")', { label: 'document.getElementsByClassName', type: 'function' }),
-  s('document.createElement("${div}")', { label: 'document.createElement', detail: 'nowy element', type: 'function' }),
-  s('addEventListener("${click}", function () {\n\t${}\n});', { label: 'addEventListener', detail: 'podpięcie zdarzenia', type: 'method' }),
-  s('function ${nazwa}() {\n\t${}\n}', { label: 'function', detail: 'funkcja', type: 'keyword' }),
-  s('for (let ${i} = 0; ${i} < ${n}; ${i}++) {\n\t${}\n}', { label: 'for', detail: 'pętla for', type: 'keyword' }),
-  s('if (${warunek}) {\n\t${}\n}', { label: 'if', detail: 'warunek', type: 'keyword' }),
-  s('if (${warunek}) {\n\t${}\n} else {\n\t\n}', { label: 'ifelse', detail: 'if … else', type: 'keyword' }),
-  s('console.log(${});', { label: 'console.log', detail: 'wypisz w konsoli', type: 'function' }),
-  s('alert("${}");', { label: 'alert', type: 'function' }),
-  s('Math.floor(Math.random() * ${n})', { label: 'Math.random', detail: 'losowa liczba 0..n-1', type: 'function' }),
-  s('localStorage.setItem("${klucz}", ${wartosc});', { label: 'localStorage.setItem', type: 'function' }),
-  s('localStorage.getItem("${klucz}")', { label: 'localStorage.getItem', type: 'function' }),
+  fn('document.getElementById', 'element po id'),
+  fn('document.querySelector', 'pierwszy pasujący element'),
+  fn('document.querySelectorAll', 'wszystkie pasujące'),
+  fn('document.getElementsByClassName', ''),
+  fn('document.createElement', 'nowy element'),
+  fn('addEventListener', 'podpięcie zdarzenia'),
+  s('function ${}() {\n\t${}\n}', { label: 'function', detail: 'funkcja', type: 'keyword' }),
+  s('for (let i = 0; i < ${}; i++) {\n\t${}\n}', { label: 'for', detail: 'pętla for', type: 'keyword' }),
+  s('if (${}) {\n\t${}\n}', { label: 'if', detail: 'warunek', type: 'keyword' }),
+  s('if (${}) {\n\t${}\n} else {\n\t${}\n}', { label: 'ifelse', detail: 'if … else', type: 'keyword' }),
+  fn('console.log', 'wypisz w konsoli'),
+  fn('alert', ''),
+  fn('Math.random', 'liczba 0..1'),
+  fn('Math.floor', 'zaokrąglenie w dół'),
+  fn('localStorage.setItem', ''),
+  fn('localStorage.getItem', ''),
   ...['innerHTML', 'textContent', 'innerText', 'value', 'style', 'src', 'href', 'className', 'classList', 'checked', 'length', 'appendChild', 'append', 'remove', 'setAttribute', 'getAttribute', 'parentElement', 'children', 'focus', 'push', 'pop', 'join', 'split', 'toUpperCase', 'toLowerCase', 'toFixed', 'includes', 'indexOf', 'forEach', 'map', 'filter']
     .map((p) => ({ label: p, type: 'property', boost: -1 })),
   ...['backgroundColor', 'color', 'display', 'fontSize', 'width', 'height', 'border', 'opacity', 'visibility', 'filter', 'transform'].map((p) => ({ label: `style.${p}`, type: 'property', detail: 'styl CSS', boost: -2 })),
@@ -26,32 +41,20 @@ export const JS_COMPLETIONS: Completion[] = [
 ];
 
 // ---------- PHP ----------
+// Jak w VS Code: funkcje wstawiaja `nazwa()`, zmienne i slowa kluczowe tylko siebie. Gotowe bloki maja osobne nazwy.
 export const PHP_COMPLETIONS: Completion[] = [
-  s('$polaczenie = mysqli_connect("localhost", "root", "", "${baza}");', { label: 'mysqli_connect', detail: 'połącz z bazą', type: 'function' }),
-  s('$wynik = mysqli_query($polaczenie, "${SELECT * FROM tabela}");', { label: 'mysqli_query', detail: 'wyślij zapytanie', type: 'function' }),
-  s('while ($wiersz = mysqli_fetch_assoc($wynik)) {\n\techo $wiersz["${kolumna}"];\n}', { label: 'whilefetch', detail: 'pętla po wynikach', type: 'keyword' }),
-  s('mysqli_fetch_assoc($wynik)', { label: 'mysqli_fetch_assoc', detail: 'wiersz jako tablica asocjacyjna', type: 'function' }),
-  s('mysqli_fetch_row($wynik)', { label: 'mysqli_fetch_row', detail: 'wiersz jako tablica numeryczna', type: 'function' }),
-  s('mysqli_fetch_array($wynik)', { label: 'mysqli_fetch_array', type: 'function' }),
-  s('mysqli_num_rows($wynik)', { label: 'mysqli_num_rows', detail: 'liczba wierszy', type: 'function' }),
-  s('mysqli_close($polaczenie);', { label: 'mysqli_close', detail: 'zamknij połączenie', type: 'function' }),
-  s('mysqli_real_escape_string($polaczenie, ${tekst})', { label: 'mysqli_real_escape_string', type: 'function' }),
-  s('$_POST["${pole}"]', { label: '$_POST', detail: 'dane z formularza POST', type: 'variable' }),
-  s('$_GET["${pole}"]', { label: '$_GET', detail: 'dane z adresu', type: 'variable' }),
-  s('$_COOKIE["${nazwa}"]', { label: '$_COOKIE', type: 'variable' }),
-  s('$_SESSION["${klucz}"]', { label: '$_SESSION', type: 'variable' }),
-  s('isset($_POST["${pole}"])', { label: 'isset', detail: 'czy zmienna istnieje', type: 'function' }),
-  s('if (!empty($_POST["${pole}"])) {\n\t${}\n}', { label: 'ifpost', detail: 'jeśli wysłano formularz', type: 'keyword' }),
-  s('if (${warunek}) {\n\t${}\n}', { label: 'if', type: 'keyword' }),
-  s('foreach ($${tablica} as $${element}) {\n\t${}\n}', { label: 'foreach', type: 'keyword' }),
-  s('for ($i = 0; $i < ${n}; $i++) {\n\t${}\n}', { label: 'for', type: 'keyword' }),
-  s('echo "${}";', { label: 'echo', detail: 'wypisz', type: 'keyword' }),
-  s('setcookie("${nazwa}", "${wartosc}", time() + ${3600});', { label: 'setcookie', type: 'function' }),
-  s('session_start();', { label: 'session_start', type: 'function' }),
-  s('date("Y-m-d")', { label: 'date', detail: 'bieżąca data', type: 'function' }),
-  s('header("Location: ${strona.php}");', { label: 'header', type: 'function' }),
   s('<?php\n${}\n?>', { label: '<?php', detail: 'blok PHP', type: 'keyword' }),
-  ...['empty', 'count', 'strlen', 'strtolower', 'strtoupper', 'trim', 'explode', 'implode', 'sha1', 'md5', 'rand', 'round', 'number_format', 'is_numeric', 'intval', 'htmlspecialchars', 'time', 'file_put_contents', 'file_get_contents', 'json_encode', 'json_decode', 'array_push', 'in_array', 'sort', 'print_r', 'var_dump', 'include', 'require'].map((f) => fn(f, 'funkcja PHP')),
+  ...['$_POST', '$_GET', '$_SESSION', '$_COOKIE', '$_SERVER', '$_FILES'].map((v) => word(v, 'variable', 'tablica superglobalna')),
+  ...['echo', 'if', 'else', 'elseif', 'while', 'for', 'foreach', 'as', 'return', 'exit', 'function', 'null', 'true', 'false', 'print'].map((k) => word(k, 'keyword')),
+  fn('isset', 'czy zmienna istnieje'), fn('empty', 'czy pusta'), fn('unset', 'usuń zmienną'),
+  fn('session_start', 'start sesji'), fn('session_destroy', 'koniec sesji'), fn('header', 'nagłówek, np. przekierowanie'), fn('setcookie', 'ciasteczko'), fn('date', 'data'),
+  fn('mysqli_connect', 'połącz z bazą'), fn('mysqli_query', 'wyślij zapytanie'), fn('mysqli_fetch_assoc', 'wiersz jako tablica asocjacyjna'), fn('mysqli_fetch_row', 'wiersz jako tablica numeryczna'),
+  fn('mysqli_fetch_array', 'wiersz jako tablica'), fn('mysqli_num_rows', 'liczba wierszy'), fn('mysqli_close', 'zamknij połączenie'), fn('mysqli_real_escape_string', 'zabezpiecz tekst'), fn('mysqli_set_charset', 'kodowanie znaków'),
+  ...['count', 'strlen', 'strtolower', 'strtoupper', 'trim', 'explode', 'implode', 'sha1', 'md5', 'rand', 'round', 'number_format', 'is_numeric', 'intval', 'htmlspecialchars', 'time', 'file_put_contents', 'file_get_contents', 'json_encode', 'json_decode', 'array_push', 'in_array', 'sort', 'print_r', 'var_dump', 'password_hash', 'password_verify', 'str_replace', 'substr'].map((f) => fn(f, 'funkcja PHP')),
+  // gotowe bloki (fragmenty): tylko gdy wybierzesz je z listy, nie koliduja z pisaniem
+  { ...s('$polaczenie = mysqli_connect("localhost", "root", "", "${}");', { label: 'polaczenie', detail: 'fragment: połączenie z bazą', type: 'text' }), boost: -5 },
+  { ...s('while ($wiersz = mysqli_fetch_assoc($wynik)) {\n\t${}\n}', { label: 'whilefetch', detail: 'fragment: pętla po wynikach', type: 'text' }), boost: -5 },
+  { ...s('if (isset($_POST["${}"])) {\n\t${}\n}', { label: 'ifpost', detail: 'fragment: jeśli wysłano formularz', type: 'text' }), boost: -5 },
 ];
 
 // ---------- SQL ----------
