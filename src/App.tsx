@@ -25,6 +25,7 @@ const router = createBrowserRouter([
       { path: 'arkusze/:code', element: L(() => import('./pages/SheetDetail')) },
       { path: 'arkusze/:code/rozwiazanie', element: L(() => import('./pages/Walkthrough')) },
       { path: 'poradnik', element: L(() => import('./pages/Guide')) },
+      { path: 'samouczek', element: L(() => import('./pages/Tutorial')) },
       { path: 'arkusze/:code/przebieg', element: L(() => import('./pages/ExamFlow')) },
       { path: 'warsztat', element: L(() => import('./pages/WorkshopPage')) },
       { path: 'warsztat/:code', element: L(() => import('./pages/WorkshopPage')) },

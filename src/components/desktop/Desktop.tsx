@@ -12,6 +12,7 @@ import Explorer from './apps/Explorer';
 import Notepad from './apps/Notepad';
 import SevenZip, { archiveItems } from './apps/SevenZip';
 import Assistant from './Assistant';
+import Coach from './Coach';
 
 const Xampp = lazy(() => import('./apps/Xampp'));
 const Browser = lazy(() => import('./apps/Browser'));
@@ -25,9 +26,9 @@ const DARK: AppId[] = ['vscode', 'gimp', 'photoshop'];
 const PINNED: AppId[] = ['explorer', 'browser', 'xampp', 'notepadpp', 'vscode', 'gimp', 'photoshop', 'paint', 'notepad', 'snip'];
 const SHORTCUTS: AppId[] = ['xampp', 'notepadpp', 'vscode', 'gimp', 'photoshop', 'browser'];
 
-export type DesktopProps = { sheet: Sheet; attempt: string; candidate: string; endsAt: number; onFinish: () => void; onAbort: () => void };
+export type DesktopProps = { sheet: Sheet; attempt: string; candidate: string; endsAt: number; onFinish: () => void; onAbort: () => void; coach?: boolean };
 
-export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, onAbort }: DesktopProps) {
+export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, onAbort, coach }: DesktopProps) {
   const vfs = useMemo(() => new Vfs(`vfs:${attempt}`), [attempt]);
   const server = useMemo(() => new MysqlServer(`mysql:${attempt}`), [attempt]);
   const [ready, setReady] = useState(false);
@@ -337,7 +338,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
         }}>
         {/* ikony pulpitu */}
         {ready && icons.map((ic) => { const [c, r] = placed[ic.key]; const cut = clip.files?.mode === 'cut' && ic.path && clip.files.paths.includes(ic.path); const on = sel.includes(ic.key); return (
-          <div key={ic.key} style={{ left: 4 + c * CW, top: 4 + r * CH, width: CW - 6 }}
+          <div key={ic.key} data-icon={ic.key} style={{ left: 4 + c * CW, top: 4 + r * CH, width: CW - 6 }}
             draggable={ren !== ic.path} onDragStart={(e) => { const ks = on ? sel : [ic.key]; if (!on) setSel([ic.key]); dragStart(e, ks.filter((k) => k.startsWith('C:/')).length ? ks.filter((k) => k.startsWith('C:/')) : [ic.key]); }}
             onDragOver={(e) => { if (ic.dropDir && isFileDrag(e)) { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('bg-white/30'); } }}
             onDragLeave={(e) => e.currentTarget.classList.remove('bg-white/30')}
@@ -364,6 +365,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
         {snapHint && <div className="pointer-events-none absolute z-[130] rounded-[8px] border border-white/60 bg-white/25 backdrop-blur-sm transition-all" style={snapHint === 'max' ? { left: 6, top: 6, right: 6, bottom: 54 } : snapHint === 'left' ? { left: 6, top: 6, width: 'calc(50% - 9px)', bottom: 54 } : { right: 6, top: 6, width: 'calc(50% - 9px)', bottom: 54 }} />}
 
         {fullTip && <div data-noshot="1" className="pointer-events-none absolute left-1/2 top-4 z-[300] -translate-x-1/2 rounded-[8px] bg-black/75 px-4 py-2 text-[13px] text-white shadow-lg">Pełny ekran: skróty klawiszowe działają w maszynie. Aby wyjść, przytrzymaj Esc.</div>}
+        {coach && ready && <Coach attempt={attempt} apps={wins.filter((w) => !w.min).map((w) => w.app)} root={root} onFinish={finish} />}
         {asst && <Assistant attempt={attempt} onClose={() => setAsst(false)} />}
         {/* menu Start */}
         {start && (
@@ -426,7 +428,7 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
         <div onPointerDown={(e) => e.stopPropagation()} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }} className="absolute inset-x-0 bottom-0 z-[140] flex h-12 items-center border-t border-black/10 bg-[#eef1f5]/90 px-2 backdrop-blur-xl">
           <div data-noshot="1" className="flex items-center gap-2">
             <span className="rounded-[6px] bg-[#1a1a1a]/85 px-2 py-1 text-[12px] font-semibold text-white" title="Czas do końca egzaminu">⏱ {hms}</span>
-            <button onClick={finish} className="rounded-[6px] bg-[#0067c0] px-2.5 py-1 text-[12px] font-semibold text-white hover:bg-[#1975c5]">Zakończ egzamin</button>
+            <button data-coach="finish" onClick={finish} className="rounded-[6px] bg-[#0067c0] px-2.5 py-1 text-[12px] font-semibold text-white hover:bg-[#1975c5]">Zakończ egzamin</button>
             <button onClick={() => void os.confirm('Przerwij', 'Przerwać próbę bez oceny?').then((ok) => ok && onAbort())} className="rounded-[6px] px-2 py-1 text-[12px] text-[#c42b1c] hover:bg-black/[.05]">Przerwij</button>
           </div>
           <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1">
@@ -445,9 +447,9 @@ export default function Desktop({ sheet, attempt, candidate, endsAt, onFinish, o
             })}
           </div>
           <div className="ml-auto flex items-center gap-1 text-[12px] text-[#1a1a1a]">
-            <button data-noshot="1" onClick={() => setAsst((v) => !v)} title="Asystent egzaminacyjny (Win+C)" className={`flex items-center gap-1.5 rounded-[4px] border border-black/10 px-2.5 py-1.5 font-semibold hover:bg-white ${asst ? 'bg-white' : 'bg-white/80'}`}><Lightbulb size={15} className="text-[#d39d00]" />Asystent</button>
+            <button data-noshot="1" data-coach="asst" onClick={() => setAsst((v) => !v)} title="Asystent egzaminacyjny (Win+C)" className={`flex items-center gap-1.5 rounded-[4px] border border-black/10 px-2.5 py-1.5 font-semibold hover:bg-white ${asst ? 'bg-white' : 'bg-white/80'}`}><Lightbulb size={15} className="text-[#d39d00]" />Asystent</button>
             <button data-noshot="1" onClick={() => void toggleFull()} title={full ? 'Wyjdź z pełnego ekranu (przytrzymaj Esc albo F11)' : 'Pełny ekran: skróty (Ctrl+W, Win, Alt+Tab) działają w maszynie, a nie w przeglądarce'} className="flex items-center gap-1.5 rounded-[4px] border border-black/10 bg-white/80 px-2 py-1.5 hover:bg-white">{full ? <Minimize size={15} /> : <Maximize size={15} />}</button>
-            <button data-noshot="1" onClick={() => void screenshot()} title="Zrzut ekranu (PrtSc / Win+Shift+S)" className="flex items-center gap-1.5 rounded-[4px] border border-black/10 bg-white/80 px-2.5 py-1.5 font-semibold hover:bg-white"><Camera size={15} className="text-[#0067c0]" />Zrzut ekranu</button>
+            <button data-noshot="1" data-coach="shot" onClick={() => void screenshot()} title="Zrzut ekranu (PrtSc / Win+Shift+S)" className="flex items-center gap-1.5 rounded-[4px] border border-black/10 bg-white/80 px-2.5 py-1.5 font-semibold hover:bg-white"><Camera size={15} className="text-[#0067c0]" />Zrzut ekranu</button>
             <ChevronUp size={14} className="mx-1" /><span className="px-1">POL</span><Wifi size={15} className="mx-1" /><Volume2 size={15} className="mx-1" />
             <button onClick={() => setCal((v) => !v)} className="ml-1 rounded-[4px] px-2 py-0.5 text-right leading-tight hover:bg-white/70">{d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}<br />{d.toLocaleDateString('pl-PL')}</button>
             <button title="Pokaż pulpit" onClick={() => { setWins((ws) => ws.map((w) => ({ ...w, min: true }))); setActive(null); }} className="ml-1 h-10 w-1.5 border-l border-black/20 hover:bg-white/70" />

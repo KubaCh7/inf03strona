@@ -248,7 +248,7 @@ export default function VSCode({ win }: { win: Win }) {
               {section('NO FOLDER OPENED', true)}
               <div className="space-y-3 px-5 py-2 text-[13px] leading-snug">
                 <p>You have not yet opened a folder.</p>
-                <button onClick={() => void openFolder()} className="w-full rounded-[2px] border border-white/10 bg-[#0078d4] py-1 text-white hover:bg-[#026ec1]">Open Folder</button>
+                <button data-coach="vsc-open-folder" onClick={() => void openFolder()} className="w-full rounded-[2px] border border-white/10 bg-[#0078d4] py-1 text-white hover:bg-[#026ec1]">Open Folder</button>
                 {D.docs.some((d) => d.path || d.text) && <p>Opening a folder will close all currently open editors. To keep them open, add a folder instead.</p>}
                 <p>You can clone a repository locally.</p>
                 <button className="w-full rounded-[2px] border border-white/10 bg-[#0078d4] py-1 text-white hover:bg-[#026ec1]">Clone Repository</button>

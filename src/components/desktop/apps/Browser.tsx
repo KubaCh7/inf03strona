@@ -81,6 +81,7 @@ export default function Browser({ win }: { win: Win }) {
 
   async function navigate(url: string, opts: { push?: boolean; post?: Tab['post'] } = {}) {
     const u = url.trim();
+    window.dispatchEvent(new CustomEvent('p03-nav', { detail: u }));
     setBusy(true); setAddr(u);
     const page = await load(u, opts.post).catch((e) => ({ kind: 'error', title: 'Błąd', err: { head: 'Wystąpił błąd', text: String((e as Error).message), code: 'ERR_FAILED' } }) as Page);
     setTabs((ts) => ts.map((x, i) => (i !== cur ? x : opts.push === false ? { ...x, url: u, page } : { ...x, url: u, page, hist: [...x.hist.slice(0, x.idx + 1), u], idx: x.idx + 1, post: opts.post })));
@@ -132,7 +133,7 @@ export default function Browser({ win }: { win: Win }) {
         <button onClick={() => void navigate('')} className="rounded p-1.5 hover:bg-black/[.06]"><Home size={15} /></button>
         <div className="flex flex-1 items-center gap-2 rounded-full border border-transparent bg-white px-3 py-1.5 focus-within:border-[#0067c0]">
           {secure ? <Info size={13} className="text-[#666]" /> : <Lock size={13} className="text-[#666]" />}
-          <input value={addr} onChange={(e) => setAddr(e.target.value)} onFocus={(e) => e.target.select()} onKeyDown={(e) => e.key === 'Enter' && void navigate(addr)} placeholder="Wyszukaj lub wprowadź adres internetowy" className="flex-1 bg-transparent outline-none" spellCheck={false} />
+          <input data-coach="edge-addr" value={addr} onChange={(e) => setAddr(e.target.value)} onFocus={(e) => e.target.select()} onKeyDown={(e) => e.key === 'Enter' && void navigate(addr)} placeholder="Wyszukaj lub wprowadź adres internetowy" className="flex-1 bg-transparent outline-none" spellCheck={false} />
           <Star size={14} className="text-[#666]" />
         </div>
         <button className="rounded p-1.5 hover:bg-black/[.06]"><MoreHorizontal size={16} /></button>

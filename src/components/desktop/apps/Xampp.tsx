@@ -54,8 +54,8 @@ export default function Xampp({ win }: { win: Win }) {
                   <td className={on ? 'bg-[#c8ffc8]' : ''}>{on ? pidOf(m) + (m === 'Apache' ? `\n${pidOf(m) + 412}` : '') : ''}</td>
                   <td className={on ? 'bg-[#c8ffc8]' : ''}>{on ? ports : ''}</td>
                   <td className="space-x-1 whitespace-nowrap pl-2">
-                    <button disabled={busy === m} onClick={() => toggle(m)} className={btn}>{on ? 'Stop' : 'Start'}</button>
-                    <button disabled={!on} onClick={() => os.open('browser', { url: m === 'MySQL' ? 'localhost/phpmyadmin/' : 'localhost/' })} className={btn}>Admin</button>
+                    <button data-coach={`xampp-${on ? 'stop' : 'start'}-${m}`} disabled={busy === m} onClick={() => toggle(m)} className={btn}>{on ? 'Stop' : 'Start'}</button>
+                    <button data-coach={`xampp-admin-${m}`} disabled={!on} onClick={() => os.open('browser', { url: m === 'MySQL' ? 'localhost/phpmyadmin/' : 'localhost/' })} className={btn}>Admin</button>
                     <button className={btn}>Config</button><button className={btn}>Logs</button>
                   </td>
                 </tr>

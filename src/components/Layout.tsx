@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import {
   BookOpen, CalendarCheck, Coins, ShoppingBag, Database, GraduationCap, ChartLine, Code2, FileText, Flame, Gamepad2, Layers, Map, MoreHorizontal, Settings, ShieldCheck, Timer, Zap, X, Info, UserRound, Trophy, Crown,
-  Compass,
+  Compass, Footprints,
 } from 'lucide-react';
 import { levelInfo, liveStreak, useStore, weekMinutes } from '../lib/store';
 import { isDue } from '../lib/fsrs';
@@ -33,6 +33,7 @@ const NAV = [
     { to: '/minigry', label: 'Minigry', icon: Gamepad2 },
   ] },
   { group: 'Egzamin', items: [
+    { to: '/samouczek', label: 'Samouczek egzaminu', icon: Footprints },
     { to: '/proba', label: 'Próba egzaminu', icon: Timer, gold: true },
     { to: '/warsztat', label: 'Warsztat', icon: Code2 },
     { to: '/sprawdzarka', label: 'Sprawdzarka', icon: ShieldCheck },

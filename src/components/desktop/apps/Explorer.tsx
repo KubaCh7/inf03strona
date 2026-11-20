@@ -32,7 +32,7 @@ export default function Explorer({ win }: { win: Win }) {
   const goBack = () => { if (!back.length) return; setFwd((f) => [dir, ...f]); setDir(back[back.length - 1]); setBack(back.slice(0, -1)); setSel([]); };
   useVmBack(box, goBack);
   const go = (p: string) => { if (p === dir) return; setBack((b) => [...b, dir]); setFwd([]); setDir(p); setSel([]); setQ(''); };
-  const items = (['HOME', 'PC', 'NET'].includes(dir) ? [] : vfs.list(dir)).filter((p) => base(p).toLowerCase().includes(q.toLowerCase())).sort((a, b) => {
+  const items = (['HOME', 'PC', 'NET'].includes(dir) ? [] : vfs.list(dir)).filter((p) => !base(p).startsWith('.')).filter((p) => base(p).toLowerCase().includes(q.toLowerCase())).sort((a, b) => {
     const da = vfs.isDir(a), db = vfs.isDir(b);
     if (da !== db) return da ? -1 : 1;
     const v = sort.by === 'name' ? base(a).localeCompare(base(b), 'pl', { numeric: true }) : sort.by === 'date' ? vfs.get(a)!.mtime - vfs.get(b)!.mtime : sort.by === 'size' ? vfs.size(a) - vfs.size(b) : typeName(a, da).localeCompare(typeName(b, db), 'pl');

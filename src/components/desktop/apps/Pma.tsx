@@ -113,7 +113,7 @@ export default function Pma({ setAddr }: { setAddr: (a: string) => void }) {
       <fieldset className="mb-4 border border-[#aaa] bg-[#eee] p-3"><legend className="px-1 font-bold">Utwórz bazę danych</legend>
         <div className="flex gap-2"><input value={newDb} onChange={(e) => setNewDb(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void createDb()} placeholder="Nazwa bazy danych" className="w-60 border border-[#aaa] bg-white px-2 py-1" />
           <select value={coll} onChange={(e) => setColl(e.target.value)} className="border border-[#aaa] bg-white px-1">{COLLS.map((c) => <option key={c}>{c}</option>)}</select>
-          <button onClick={() => void createDb()} className="border border-[#aaa] bg-gradient-to-b from-white to-[#ddd] px-3 py-1 hover:from-[#ddd]">Utwórz</button></div>
+          <button data-coach="pma-create" onClick={() => void createDb()} className="border border-[#aaa] bg-gradient-to-b from-white to-[#ddd] px-3 py-1 hover:from-[#ddd]">Utwórz</button></div>
       </fieldset>
       <table className="border-collapse text-[12.5px]"><thead><tr><th className="bg-[#d3dce3] px-2 py-1" /><th className="bg-[#d3dce3] px-3 py-1 text-left text-[#235a81]">Baza danych ▲</th><th className="bg-[#d3dce3] px-3 py-1 text-left text-[#235a81]">Metoda porównywania napisów</th><th className="bg-[#d3dce3] px-3 py-1 text-left text-[#235a81]">Akcja</th></tr></thead>
         <tbody>{[...SYS.map((n) => ({ n, sys: true })), ...srv.names().map((n) => ({ n, sys: false }))].sort((a, b) => a.n.localeCompare(b.n)).map(({ n, sys }, i) => <tr key={n} className={i % 2 ? 'bg-[#dfdfdf]' : 'bg-white'}>
@@ -122,21 +122,21 @@ export default function Pma({ setAddr }: { setAddr: (a: string) => void }) {
     </>);
     if (tab === 'sql') return (<>
       <p className="mb-2">Uruchom zapytanie/zapytania SQL na {db ? <>bazie danych <b>{db}</b></> : <>serwerze „127.0.0.1”</>}: <span className="text-[#235a81]">ⓘ</span></p>
-      <textarea value={sql} onChange={(e) => setSql(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && e.ctrlKey) execute(sql, db); }} spellCheck={false} className="h-[180px] w-full border border-[#aaa] bg-white p-2 font-[monospace] text-[13px] outline-none" />
+      <textarea data-coach="pma-sql" value={sql} onChange={(e) => setSql(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && e.ctrlKey) execute(sql, db); }} spellCheck={false} className="h-[180px] w-full border border-[#aaa] bg-white p-2 font-[monospace] text-[13px] outline-none" />
       <div className="my-2 flex flex-wrap gap-1">{(db ? (table ? [`SELECT * FROM \`${table}\` WHERE 1`, 'SELECT', 'INSERT', 'UPDATE', 'DELETE'] : ['SELECT *', 'SELECT', 'INSERT', 'UPDATE', 'DELETE']) : []).map((b) => <button key={b} onClick={() => setSql(b === 'SELECT *' ? 'SELECT * FROM `' + (tables(db!)[0] ?? 'tabela') + '` WHERE 1' : b)} className="border border-[#aaa] bg-gradient-to-b from-white to-[#ddd] px-2 py-0.5 text-[12px]">{b}</button>)}
         <button onClick={() => setSql('')} className="border border-[#aaa] bg-gradient-to-b from-white to-[#ddd] px-2 py-0.5 text-[12px]">Wyczyść</button><button className="border border-[#aaa] bg-gradient-to-b from-white to-[#ddd] px-2 py-0.5 text-[12px]">Formatuj</button></div>
-      <div className="flex items-center justify-between border border-[#aaa] bg-[#eee] px-3 py-2"><span className="text-[12px]">Ogranicznik <input defaultValue=";" className="w-8 border border-[#aaa] bg-white px-1" /> <label className="ml-3"><input type="checkbox" defaultChecked /> Zachowaj okno zapytania SQL</label></span><button onClick={() => execute(sql, db)} className="border border-[#aaa] bg-gradient-to-b from-white to-[#ddd] px-4 py-1 font-bold">Wykonaj</button></div>
+      <div className="flex items-center justify-between border border-[#aaa] bg-[#eee] px-3 py-2"><span className="text-[12px]">Ogranicznik <input defaultValue=";" className="w-8 border border-[#aaa] bg-white px-1" /> <label className="ml-3"><input type="checkbox" defaultChecked /> Zachowaj okno zapytania SQL</label></span><button data-coach="pma-run" onClick={() => execute(sql, db)} className="border border-[#aaa] bg-gradient-to-b from-white to-[#ddd] px-4 py-1 font-bold">Wykonaj</button></div>
       {out && <div className="mt-4">{out.map((o, i) => <div key={i} className="mb-4">{o.ok ? <Msg ok text={o.msg} /> : <div className="mb-3 border border-[#c00] bg-[#ffc] px-3 py-2 text-[#c00]"><b>Błąd</b><p className="mt-1 text-black">Zapytanie SQL: <span className="text-[#235a81]">Kopiuj</span></p><pre className="my-1 whitespace-pre-wrap bg-white px-2 py-1 font-[monospace] text-[#235a81]">{o.sql}</pre><p>MySQL zwrócił komunikat: <b>{o.msg}</b></p></div>}{o.ok && <SqlBox q={o.sql} />}{o.res && <Grid r={o.res} />}</div>)}</div>}
     </>);
     if (tab === 'import') return (<>
       <h2 className="mb-3 text-[22px] text-[#444]">Importowanie do {db ? <>bazy danych „{db}”</> : 'aktualnego serwera'}</h2>
       <fieldset className="mb-3 border border-[#aaa] bg-[#eee] p-3"><legend className="px-1 font-bold">Plik do zaimportowania:</legend>
         <p className="mb-2 text-[12px]">Plik może być skompresowany (gzip, bzip2, zip) lub nieskompresowany. Nazwa skompresowanego pliku musi się kończyć na <b>.[format].[kompresja]</b>. Przykład: <b>.sql.zip</b></p>
-        <p className="flex items-center gap-2">Przeglądaj komputer: <button onClick={async () => { const p = await os.pick({ mode: 'open', title: 'Wybierz plik do przesłania przez localhost', filters: [{ label: 'Wszystkie pliki (*.*)', exts: ['*'] }, { label: 'Pliki SQL (*.sql)', exts: ['sql'] }] }); if (p) setImpFile(p); }} className="border border-[#aaa] bg-gradient-to-b from-white to-[#ddd] px-2 py-0.5">Wybierz plik</button><span>{impFile ? base(impFile) : 'Nie wybrano pliku'}</span> <span className="text-[12px] text-[#666]">(Maksymalny rozmiar: 40MiB)</span></p>
+        <p className="flex items-center gap-2">Przeglądaj komputer: <button onClick={async () => { const p = await os.pick({ mode: 'open', title: 'Wybierz plik do przesłania przez localhost', filters: [{ label: 'Wszystkie pliki (*.*)', exts: ['*'] }, { label: 'Pliki SQL (*.sql)', exts: ['sql'] }] }); if (p) setImpFile(p); }} data-coach="pma-pick" className="border border-[#aaa] bg-gradient-to-b from-white to-[#ddd] px-2 py-0.5">Wybierz plik</button><span>{impFile ? base(impFile) : 'Nie wybrano pliku'}</span> <span className="text-[12px] text-[#666]">(Maksymalny rozmiar: 40MiB)</span></p>
         <p className="mt-2">Zestaw znaków pliku: <select className="border border-[#aaa] bg-white"><option>utf-8</option></select></p>
       </fieldset>
       <fieldset className="mb-3 border border-[#aaa] bg-[#eee] p-3"><legend className="px-1 font-bold">Format:</legend><select className="border border-[#aaa] bg-white"><option>SQL</option></select></fieldset>
-      <div className="flex justify-end border border-[#aaa] bg-[#eee] px-3 py-2"><button onClick={() => void doImport()} className="border border-[#aaa] bg-gradient-to-b from-white to-[#ddd] px-4 py-1 font-bold">Importuj</button></div>
+      <div className="flex justify-end border border-[#aaa] bg-[#eee] px-3 py-2"><button data-coach="pma-import" onClick={() => void doImport()} className="border border-[#aaa] bg-gradient-to-b from-white to-[#ddd] px-4 py-1 font-bold">Importuj</button></div>
     </>);
     if (tab === 'structure' && db && !table) {
       const ts = tables(db);
@@ -173,7 +173,7 @@ export default function Pma({ setAddr }: { setAddr: (a: string) => void }) {
         <div className="flex gap-2 px-3 py-2 text-[#235a81]"><Home size={14} onClick={() => go(null)} className="cursor-pointer" /><LogOut size={14} /><FileCode size={14} onClick={() => setTab('sql')} className="cursor-pointer" /><BookOpen size={14} /><Settings size={14} /><RefreshCw size={14} onClick={() => srv.bump(false)} className="cursor-pointer" /></div>
         <div className="flex gap-3 border-b border-[#ccc] px-3 pb-1 text-[12px]"><span className="font-bold">Ostatnie</span><span>Ulubione</span></div>
         <div className="min-h-0 flex-1 overflow-auto px-1 py-1 text-[12.5px]">
-          <button onClick={() => go(null, null, 'databases')} className="flex items-center gap-1 px-1 py-0.5 text-[#235a81] hover:underline"><Database size={13} className="text-[#2a9d2a]" />Nowa</button>
+          <button data-coach="pma-new" onClick={() => go(null, null, 'databases')} className="flex items-center gap-1 px-1 py-0.5 text-[#235a81] hover:underline"><Database size={13} className="text-[#2a9d2a]" />Nowa</button>
           {[...SYS, ...srv.names()].sort().map((n) => { const sys = SYS.includes(n); const ex = open[n]; return (
             <div key={n}>
               <div className={`flex items-center gap-1 px-1 py-0.5 ${db === n && !table ? 'bg-[#ddd]' : ''}`}>
@@ -190,7 +190,7 @@ export default function Pma({ setAddr }: { setAddr: (a: string) => void }) {
           {db && <> » <Database size={13} /><button onClick={() => go(db)} className="text-[#235a81] hover:underline">Baza danych: {db}</button></>}
           {table && <> » <Table2 size={13} /><span className="text-[#235a81]">Tabela: {table}</span></>}
         </div>
-        <div className="flex flex-wrap border-b border-[#aaa] bg-[#eee] px-2 pt-1">{TABS.map(([k, l, I]) => <button key={k} onClick={() => { setTab(k); setOut(null); setMsg(null); if (k === 'sql' && table && !sql) setSql(`SELECT * FROM \`${table}\` WHERE 1`); }} className={`flex items-center gap-1 rounded-t border border-b-0 px-3 py-1.5 text-[12.5px] ${tab === k ? 'border-[#aaa] bg-white font-bold' : 'border-transparent text-[#235a81] hover:bg-white/70'}`}><I size={13} />{l}</button>)}</div>
+        <div className="flex flex-wrap border-b border-[#aaa] bg-[#eee] px-2 pt-1">{TABS.map(([k, l, I]) => <button key={k} data-coach={`pma-tab-${k}`} onClick={() => { setTab(k); setOut(null); setMsg(null); if (k === 'sql' && table && !sql) setSql(`SELECT * FROM \`${table}\` WHERE 1`); }} className={`flex items-center gap-1 rounded-t border border-b-0 px-3 py-1.5 text-[12.5px] ${tab === k ? 'border-[#aaa] bg-white font-bold' : 'border-transparent text-[#235a81] hover:bg-white/70'}`}><I size={13} />{l}</button>)}</div>
         <div className="min-h-0 flex-1 overflow-auto p-4">{msg && <Msg {...msg} />}{content()}</div>
       </div>
     </div>

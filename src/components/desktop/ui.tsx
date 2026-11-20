@@ -41,7 +41,7 @@ function MenuList({ items, top, onClose, keepOpen, sub, flip }: { items: CItem[]
         className="flex min-w-[64px] flex-1 flex-col items-center gap-1 rounded-[4px] px-1 pb-1.5 pt-2 text-[12px] text-[#1a1a1a] hover:bg-black/[.04] [&>svg]:text-[#2e5f9e] active:bg-black/[.03] disabled:opacity-40">{t.icon}<span className="whitespace-nowrap">{t.label}</span></button>)}</div>}
       {items.map((it, i) => it === '-' ? <div key={i} className="-mx-[4px] my-[4px] h-px bg-black/[.08]" /> : (
         <div key={i} className="group/m relative">
-          <button disabled={it.off} onClick={() => { if (!it.sub && it.run) { if (!keepOpen?.(it)) onClose(); it.run(); } }} className="flex h-[36px] w-full items-center gap-3 rounded-[4px] px-3 text-left hover:bg-black/[.04] active:bg-black/[.03] disabled:opacity-40 group-hover/m:bg-black/[.04]">
+          <button data-label={it.label} disabled={it.off} onClick={() => { if (!it.sub && it.run) { if (!keepOpen?.(it)) onClose(); it.run(); } }} className="flex h-[36px] w-full items-center gap-3 rounded-[4px] px-3 text-left hover:bg-black/[.04] active:bg-black/[.03] disabled:opacity-40 group-hover/m:bg-black/[.04]">
             <span className="grid w-5 shrink-0 place-items-center text-[#2e5f9e]">{it.icon}</span><span className="flex-1 whitespace-nowrap pr-4">{it.label}</span>
             {it.key && <span className="whitespace-nowrap pl-6 text-[12px] text-[#5d5d5d]">{it.key}</span>}{it.sub && <ChevronRight size={16} strokeWidth={1.5} className="text-[#5d5d5d]" />}
           </button>
@@ -109,7 +109,7 @@ export function FileDialog({ o, onDone }: { o: PickOpts; onDone: (p: string | nu
   const [q, setQ] = useState('');
   const flt = o.filters?.[filter];
   const go = (p: string) => { setHist((h) => [...h, dir]); setDir(p); };
-  const items = vfs.list(dir).filter((p) => base(p).toLowerCase().includes(q.toLowerCase())).filter((p) => vfs.isDir(p) || o.dirOnly ? vfs.isDir(p) : !flt || flt.exts.includes('*') || flt.exts.includes(ext(p)));
+  const items = vfs.list(dir).filter((p) => !base(p).startsWith(".")).filter((p) => base(p).toLowerCase().includes(q.toLowerCase())).filter((p) => vfs.isDir(p) || o.dirOnly ? vfs.isDir(p) : !flt || flt.exts.includes('*') || flt.exts.includes(ext(p)));
   const finish = () => {
     if (o.dirOnly) return onDone(dir);
     let n = name.trim(); if (!n) return;
@@ -140,7 +140,7 @@ export function FileDialog({ o, onDone }: { o: PickOpts; onDone: (p: string | nu
           <div className="min-w-0 flex-1 overflow-auto bg-white">
             <div className="sticky top-0 grid grid-cols-[1fr_140px_130px_70px] border-b border-black/10 bg-white px-3 py-1 text-[#555]"><span>Nazwa</span><span>Data modyfikacji</span><span>Typ</span><span className="text-right">Rozmiar</span></div>
             {items.map((p) => { const n = vfs.get(p)!; return (
-              <button key={p} onClick={() => !n.dir && setName(base(p))} onDoubleClick={() => (n.dir ? go(p) : o.mode === 'open' ? onDone(p) : (setName(base(p)), finish()))}
+              <button key={p} data-fd={base(p)} onClick={() => !n.dir && setName(base(p))} onDoubleClick={() => (n.dir ? go(p) : o.mode === 'open' ? onDone(p) : (setName(base(p)), finish()))}
                 className={`grid w-full grid-cols-[1fr_140px_130px_70px] items-center px-3 py-[3px] text-left hover:bg-[#e5f3ff] ${name === base(p) ? 'bg-[#cce8ff]' : ''}`}>
                 <span className="flex items-center gap-2 truncate"><FileIcon path={p} dir={n.dir} size={16} />{base(p)}</span><span className="text-[#666]">{fmtDate(n.mtime)}</span><span className="truncate text-[#666]">{typeName(p, n.dir)}</span><span className="text-right text-[#666]">{n.dir ? '' : fmtSize(vfs.size(p))}</span>
               </button>); })}
@@ -148,11 +148,11 @@ export function FileDialog({ o, onDone }: { o: PickOpts; onDone: (p: string | nu
           </div>
         </div>
         <div className="space-y-2 border-t border-black/10 px-4 py-3">
-          {!o.dirOnly && <div className="flex items-center gap-2"><span className="w-[110px] text-right">Nazwa pliku:</span><input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && finish()} className="h-7 flex-1 rounded-[4px] border border-black/15 border-b-[#0067c0] bg-white px-2 outline-none" />
+          {!o.dirOnly && <div className="flex items-center gap-2"><span className="w-[110px] text-right">Nazwa pliku:</span><input data-coach="fd-name" autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && finish()} className="h-7 flex-1 rounded-[4px] border border-black/15 border-b-[#0067c0] bg-white px-2 outline-none" />
             {o.mode === 'open' && o.filters && <select value={filter} onChange={(e) => setFilter(+e.target.value)} className="h-7 w-[220px] rounded-[4px] border border-black/15 bg-white px-1">{o.filters.map((f, i) => <option key={i} value={i}>{f.label}</option>)}</select>}</div>}
-          {o.mode === 'save' && o.filters && <div className="flex items-center gap-2"><span className="w-[110px] text-right">Zapisz jako typ:</span><select value={filter} onChange={(e) => { setFilter(+e.target.value); const nx = o.filters![+e.target.value].exts[0]; if (nx !== '*') setName((n) => n.replace(/\.[^.]*$/, '') + '.' + nx); }} className="h-7 flex-1 rounded-[4px] border border-black/15 bg-white px-1">{o.filters.map((f, i) => <option key={i} value={i}>{f.label}</option>)}</select></div>}
+          {o.mode === 'save' && o.filters && <div className="flex items-center gap-2"><span className="w-[110px] text-right">Zapisz jako typ:</span><select data-coach="fd-type" value={filter} onChange={(e) => { setFilter(+e.target.value); const nx = o.filters![+e.target.value].exts[0]; if (nx !== '*') setName((n) => n.replace(/\.[^.]*$/, '') + '.' + nx); }} className="h-7 flex-1 rounded-[4px] border border-black/15 bg-white px-1">{o.filters.map((f, i) => <option key={i} value={i}>{f.label}</option>)}</select></div>}
           <div className="flex justify-end gap-2 pt-1">
-            <button onClick={finish} className="h-8 min-w-[100px] rounded-[4px] bg-[#0067c0] px-4 text-white hover:bg-[#1975c5]">{o.dirOnly ? 'Wybierz folder' : o.mode === 'save' ? 'Zapisz' : 'Otwórz'}</button>
+            <button data-coach="fd-ok" onClick={finish} className="h-8 min-w-[100px] rounded-[4px] bg-[#0067c0] px-4 text-white hover:bg-[#1975c5]">{o.dirOnly ? 'Wybierz folder' : o.mode === 'save' ? 'Zapisz' : 'Otwórz'}</button>
             <button onClick={() => onDone(null)} className="h-8 min-w-[100px] rounded-[4px] border border-black/15 bg-white px-4 hover:bg-[#f5f5f5]">Anuluj</button>
           </div>
         </div>

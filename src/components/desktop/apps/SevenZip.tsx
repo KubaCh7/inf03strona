@@ -190,7 +190,7 @@ export default function SevenZip({ win }: { win: Win }) {
         {title('Wprowadź hasło', abort)}
         <div className="space-y-2 p-3">
           <p className="flex items-center gap-2"><KeyRound size={16} className="text-[#c9a400]" />Wprowadź hasło:</p>
-          <input ref={pwRef} type={showPw ? 'text' : 'password'} value={pw} onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void run(pw); } }} className="w-full border border-[#7a7a7a] bg-white px-1.5 py-0.5" />
+          <input data-coach="7z-pass" ref={pwRef} type={showPw ? 'text' : 'password'} value={pw} onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void run(pw); } }} className="w-full border border-[#7a7a7a] bg-white px-1.5 py-0.5" />
           <label className="flex items-center gap-1"><input type="checkbox" checked={showPw} onChange={(e) => setShowPw(e.target.checked)} />Pokaż hasło</label>
         </div>
         <div className="flex justify-end gap-2 px-3 pb-3"><button onClick={() => void run(pw)} className={`${winBtn} !border-[#0078d7]`}>OK</button><button onClick={abort} className={winBtn}>Anuluj</button></div>
@@ -227,7 +227,7 @@ export default function SevenZip({ win }: { win: Win }) {
       {dlg === 'winpass' && <div className={box}><div style={drag.style} className="w-[440px] overflow-hidden rounded-[8px] border border-black/15 bg-white text-[13px] text-black shadow-[0_16px_48px_rgba(0,0,0,.35)]">
         {title('Hasło wymagane', abort)}
         <div className="flex gap-4 px-5 py-4"><Lock size={34} className="shrink-0 text-[#d39d00]" /><div className="flex-1 space-y-2"><p>Plik „{entries[0]?.name}” jest chroniony hasłem.</p><p>Wprowadź hasło, aby wyodrębnić pliki z „{base(arch)}”.</p>
-          <input ref={pwRef} type="password" value={pw} onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void run(pw); } }} placeholder="Hasło" className="h-[28px] w-full border border-[#7a7a7a] border-b-[#0078d7] px-2 outline-none" /></div></div>
+          <input data-coach="7z-pass" ref={pwRef} type="password" value={pw} onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void run(pw); } }} placeholder="Hasło" className="h-[28px] w-full border border-[#7a7a7a] border-b-[#0078d7] px-2 outline-none" /></div></div>
         <div className="flex justify-end gap-2 bg-[#f0f0f0] px-4 py-3"><button onClick={() => void run(pw)} className={`${winBtn} !border-[#0078d7]`}>OK</button><button onClick={abort} className={winBtn}>Anuluj</button></div>
       </div></div>}
 

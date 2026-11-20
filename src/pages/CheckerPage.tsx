@@ -26,7 +26,7 @@ export default function CheckerPage() {
         </select>
         {sheet && <p className="mt-2 text-sm"><Link className="text-accent underline" to={`/arkusze/${encodeURIComponent(sheet.code)}`}>Otwórz arkusz</Link> · <Link className="text-accent underline" to={`/warsztat/${encodeURIComponent(sheet.code)}`}>Warsztat</Link></p>}
       </div>
-      {sheet && <SheetChecker sheet={sheet} autoRun={!!sp.get('pulpit')} desktop={sp.get('pulpit') ? { attempt: `pulpit:${sheet.code}`, candidate: (() => { try { return localStorage.getItem('p03:candidate') || '00000000000'; } catch { return '00000000000'; } })() } : undefined} onScore={(pct) => { setSheet(sheet.code, { status: 'done', score: pct }); if (pct >= 75) addXp(50); alert(`Zapisano wynik ${pct}%.`); }} />}
+      {sheet && <SheetChecker sheet={sheet} autoRun={!!sp.get('pulpit')} desktop={sp.get('pulpit') ? { attempt: sp.get('attempt') ?? `pulpit:${sheet.code}`, candidate: (() => { try { return localStorage.getItem('p03:candidate') || '00000000000'; } catch { return '00000000000'; } })() } : undefined} onScore={(pct) => { setSheet(sheet.code, { status: 'done', score: pct }); if (pct >= 75) addXp(50); alert(`Zapisano wynik ${pct}%.`); }} />}
     </div>
   );
 }
