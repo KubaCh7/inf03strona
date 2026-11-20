@@ -19,7 +19,7 @@ export type ActiveExam = {
   /** XP zdobyte w tej probie (pokazywane w podsumowaniu) */
   xp?: number;
 };
-export type Settings = { theme: 'system' | 'light' | 'dark'; editorFont: number; unlockAll: boolean; dailyGoalMin: number; newCardsPerDay: number; pdfSide?: 'left' | 'right'; sheetSide?: 'left' | 'right'; sheetPos?: 'left' | 'right'; pdfWidth?: number; tourDone?: boolean; flashIntroSeen?: boolean; vim?: boolean; vimrc?: string; hideNav?: boolean; imageEditor?: 'gimp' | 'photoshop'; examEnv?: 'desktop' | 'workshop' };
+export type Settings = { theme: 'system' | 'light' | 'dark'; editorFont: number; unlockAll: boolean; dailyGoalMin: number; newCardsPerDay: number; pdfSide?: 'left' | 'right'; sheetSide?: 'left' | 'right'; sheetPos?: 'left' | 'right'; pdfWidth?: number; tourDone?: boolean; flashIntroSeen?: boolean; vim?: boolean; vimrc?: string; hideNav?: boolean; imageEditor?: 'gimp' | 'photoshop'; examEnv?: 'desktop' | 'workshop'; phpTipHidden?: boolean };
 
 type State = {
   xp: number;

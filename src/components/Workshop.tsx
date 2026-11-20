@@ -69,6 +69,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   const setSettings = useStore((s) => s.setSettings);
   const [showPdf, setShowPdf] = useState(true);
   const hideNav = useStore((s) => !!s.settings.hideNav);
+  const phpTipHidden = useStore((s) => !!s.settings.phpTipHidden);
   const [files, setFiles] = useState<Record<string, string>>(() => startFiles(saved, initial));
   const [active, setActive] = useState<string>(() => Object.keys(startFiles(saved, initial))[0] ?? '');
   const [page, setPage] = useState<string | null>(null);
@@ -334,7 +335,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
         <button className="rounded p-1 hover:bg-surface-2" title="Większa czcionka" onClick={() => setSettings({ editorFont: Math.min(28, fontSize + 1) })}><AArrowUp size={15} /></button>
         <button className="ml-1 inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs font-bold hover:bg-surface-2" title={edMax ? 'Zmniejsz edytor' : 'Powiększ edytor na cały ekran'} onClick={() => setEdMax((x) => !x)}>{edMax ? <Shrink size={14} /> : <Expand size={14} />}{edMax ? 'Zmniejsz' : 'Powiększ'}</button>
       </div>
-      {isPhp && <p className="border-b border-line bg-info-soft px-3 py-1.5 text-xs">PHP 8.2 działa w przeglądarce: podgląd wykonuje skrypt, formularze i linki z ?parametrami też. <code>mysqli_*</code> łączy się z bazą arkusza (ta sama co w phpMyAdmin). Błędy PHP lądują w Konsoli.{phpBusy ? ' Uruchamiam…' : ''}</p>}
+      {isPhp && !phpTipHidden && <div className="flex items-start gap-2 border-b border-line bg-info-soft px-3 py-1.5 text-xs"><p className="flex-1">PHP 8.2 działa w przeglądarce: podgląd wykonuje skrypt, formularze i linki z ?parametrami też. <code>mysqli_*</code> łączy się z bazą arkusza (ta sama co w phpMyAdmin). Błędy PHP lądują w Konsoli.{phpBusy ? ' Uruchamiam…' : ''}</p><button className="shrink-0 rounded p-0.5 hover:bg-surface-2" title="Zamknij (nie pokazuj więcej)" aria-label="Zamknij informację" onClick={() => setSettings({ phpTipHidden: true })}><X size={14} /></button></div>}
       <div className="min-h-0 flex-1">
         {active && files[active] !== undefined ? (
           <Suspense fallback={<Loading label="Ładuję edytor…" />}>

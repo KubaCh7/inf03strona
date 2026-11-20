@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { BookOpen, MonitorSmartphone, Trophy, ArrowRight, RotateCcw, OctagonX } from 'lucide-react';
 import { useContent } from '../lib/data';
 import { useStore, type ActiveExam } from '../lib/store';
@@ -18,18 +18,21 @@ import WrongAnswers from '../components/WrongAnswers';
 
 const uid = () => crypto.randomUUID?.() ?? String(Date.now());
 
-function Practice({ exam, onDone, onRestart, onAbort, onAbortNow, onLogin }: { exam: ActiveExam; onDone: (pct: number) => void; onRestart: () => void; onAbort: () => void; onAbortNow: () => void; onLogin: (candidate: string) => void }) {
+function Practice({ exam, onDone, onRestart, onAbort, onAbortNow, onLogin, initialView }: { exam: ActiveExam; onDone: (pct: number) => void; onRestart: () => void; onAbort: () => void; onAbortNow: () => void; onLogin: (candidate: string) => void; initialView?: 'kod' | 'ocena' }) {
   const c = useContent();
   const p = exam.practice!;
   const left = useCountdown(p.startedAt, p.durationMs, !!p.finishedAt);
-  const [view, setView] = useState<'kod' | 'ocena'>('kod');
+  const [view, setView] = useState<'kod' | 'ocena'>(initialView ?? 'kod');
+  const setSettings = useStore((s) => s.setSettings);
+  // po oddaniu pracy (np. „Zakoncz egzamin” na pulpicie) od razu wraca boczne menu
+  useEffect(() => { if (view === 'ocena') setSettings({ hideNav: false }); }, [view, setSettings]);
   if (!c) return <Loading />;
   const sheet = c.sheets.find((s) => s.code === p.sheetCode);
   if (!sheet) return <div className="card p-6">Nie znaleziono arkusza {p.sheetCode}.</div>;
   const timeUp = left === 0;
   const wsKey = `exam:${exam.id}:${sheet.code}`;
   // pulpit jak na egzaminie: logowanie, Windows + XAMPP, oddanie folderu z numerem
-  if (p.desktop && !p.candidate) return <Suspense fallback={<Loading />}><Login onLogin={onLogin} /></Suspense>;
+  if (p.desktop && !p.candidate && view === 'kod') return <Suspense fallback={<Loading />}><Login onLogin={onLogin} /></Suspense>;
   if (p.desktop && view === 'kod') return <Suspense fallback={<Loading />}><Desktop sheet={sheet} attempt={`exam:${exam.id}`} candidate={p.candidate!} endsAt={p.startedAt + p.durationMs} onFinish={() => setView('ocena')} onAbort={onAbortNow} /></Suspense>;
   if (p.desktop) return (
     <div>
@@ -38,7 +41,7 @@ function Practice({ exam, onDone, onRestart, onAbort, onAbortNow, onLogin }: { e
         <TimerBadge left={left} total={p.durationMs} />
         {!timeUp && <button className="chip" onClick={() => setView('kod')}>Wróć do pulpitu</button>}
       </div>
-      <SheetChecker sheet={sheet} desktop={{ attempt: `exam:${exam.id}`, candidate: p.candidate! }} autoRun onScore={onDone} />
+      <SheetChecker sheet={sheet} desktop={{ attempt: `exam:${exam.id}`, candidate: p.candidate ?? "" }} autoRun onScore={onDone} />
     </div>
   );
   return (
@@ -69,6 +72,19 @@ export default function Exam() {
   const env = useStore((s) => s.settings.examEnv ?? 'desktop');
   const setSettings = useStore((s) => s.setSettings);
   const byId = useMemo(() => new Map((c?.questions ?? []).map((q) => [q.id, q])), [c]);
+  const [sp, setSp] = useSearchParams();
+  const oddaj = sp.get('oddaj') === '1';
+  const finishRef = useRef<((t: TheoryState) => void) | null>(null);
+  // „Oddaj prace do oceny” z paska „Trwa egzamin”: teoria konczy sie od razu, praktyka otwiera ocene
+  useEffect(() => {
+    if (!oddaj) return;
+    const t = setTimeout(() => {
+      const ex = useStore.getState().activeExam;
+      if (ex?.stage === 'theory' && ex.theory && !ex.theory.finishedAt) finishRef.current?.(ex.theory);
+      setSp({}, { replace: true });
+    }, 50);
+    return () => clearTimeout(t);
+  }, [oddaj]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!c) return <Loading />;
 
   // na razie egzamin tylko z arkuszy INF.03
@@ -96,7 +112,7 @@ export default function Exam() {
   const abortNow = () => {
     useStore.getState().dropWorkspaces('exam:');
     if (exam) void dropAttempt(`exam:${exam.id}`);
-    setActiveExam(null);
+    setActiveExam(null); setSettings({ hideNav: false });
   };
   const abort = () => {
     if (!confirm('Przerwać egzamin?\n\nNie dostaniesz wyniku ani XP, a Twoja praca z tej próby zostanie usunięta. Jeśli chcesz ocenę, wybierz „Oddaję pracę”.')) return;
@@ -113,7 +129,7 @@ export default function Exam() {
     if (gained) addXp(gained);
     const xp = (exam!.xp ?? 0) + gained;
     if (exam!.mode === 'full') setActiveExam({ ...exam!, theory, stage: 'theory', xp });
-    else setActiveExam({ ...exam!, theory, stage: 'done', xp });
+    else { setActiveExam({ ...exam!, theory, stage: 'done', xp }); setSettings({ hideNav: false }); }
   };
   const finishPractice = (pct: number) => {
     const p = exam!.practice!;
@@ -121,6 +137,7 @@ export default function Exam() {
     // XP za zdany arkusz praktyczny INF.03: 100 za zdanie (75%+), +1 za kazdy punkt procentowy ponad prog, +25 za 100%
     let gained = pct >= 75 ? 100 + (pct - 75) + (pct >= 100 ? 25 : 0) : 0;
     const practice = { ...p, finishedAt: Date.now(), score: pct };
+    setSettings({ hideNav: false });
     if (exam!.mode === 'full') {
       const t = exam!.theory!;
       const passed = (t.score ?? 0) / t.questionIds.length >= THEORY_PASS && pct / 100 >= PRACTICE_PASS;
@@ -195,6 +212,7 @@ export default function Exam() {
   }
 
   // ---- Teoria ----
+  finishRef.current = finishTheory;
   if (exam.stage === 'theory' && exam.theory) {
     const t = exam.theory;
     const done = !!t.finishedAt;
@@ -213,7 +231,7 @@ export default function Exam() {
   }
 
   // ---- Praktyka ----
-  if (exam.stage === 'practice' && exam.practice) return <Practice key={exam.id} exam={exam} onDone={finishPractice} onRestart={restartSame} onAbort={abort} onAbortNow={abortNow} onLogin={(cand) => setActiveExam({ ...exam, practice: { ...exam.practice!, candidate: cand, startedAt: Date.now() } })} />;
+  if (exam.stage === 'practice' && exam.practice) return <Practice key={exam.id} initialView={oddaj ? 'ocena' : undefined} exam={exam} onDone={finishPractice} onRestart={restartSame} onAbort={abort} onAbortNow={abortNow} onLogin={(cand) => setActiveExam({ ...exam, practice: { ...exam.practice!, candidate: cand, startedAt: Date.now() } })} />;
 
   // ---- Podsumowanie ----
   const t = exam.theory;

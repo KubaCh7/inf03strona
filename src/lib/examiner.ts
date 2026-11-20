@@ -245,7 +245,7 @@ export async function examine({ sheet, files, images: imgs0, candidate, folder, 
   const digits = (x: string) => /^\d+$/.test(x.trim());
   const folderOk = folder != null ? digits(folder) || (!!cand && folder === cand) : !!cand;
   items.push({ group: 'Pliki i folder', label: 'Folder nazwany numerem zdającego', points: 1, ok: folderOk,
-    note: folderOk ? undefined : folder != null ? `Folder nazywa się „${folder}”. Nazwij go samymi cyframi (numer PESEL albo numer zdającego).` : 'Wpisz numer zdającego (PESEL) powyżej: pod tą nazwą pobierzesz folder ZIP.' });
+    note: folderOk ? undefined : folder === '' ? 'Na pulpicie nie ma folderu z numerem. Utwórz folder nazwany samymi cyframi (numer PESEL) i włóż do niego pliki.' : folder != null ? `Folder nazywa się „${folder}”. Nazwij go samymi cyframi (numer PESEL albo numer zdającego).` : 'Wpisz numer zdającego (PESEL) powyżej: pod tą nazwą pobierzesz folder ZIP.' });
 
   // --- KWERENDY ---
   step('Kwerendy');
