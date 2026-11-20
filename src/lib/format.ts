@@ -1,7 +1,7 @@
 // Formatowanie pliku przy zapisie (Ctrl+S / :w), jak „Format on Save” w VS Code.
 // Biblioteki ladowane dopiero przy pierwszym zapisie, zeby nie spowalniac strony.
 
-export type FormatResult = { text: string } | { error: string };
+export type FormatResult = { text: string } | { error: string; line?: number };
 
 const lang = (file: string) => {
   const f = file.toLowerCase();
@@ -39,7 +39,17 @@ export async function formatCode(file: string, code: string, tabWidth = 2): Prom
     return { text: await prettier.format(code, { ...base, parser: 'php', phpVersion: '8.2', plugins: [php.default ?? php, html, postcss, babel, estree] } as Parameters<typeof prettier.format>[1]) };
   } catch (e) {
     // blad skladni: pliku nie ruszamy, tylko informujemy (jak VS Code)
-    const m = String((e as Error).message ?? e).split('\n')[0];
-    return { error: m.length > 160 ? m.slice(0, 160) + '…' : m };
+    const err = e as Error & { loc?: { start?: { line?: number } } };
+    const m = String(err.message ?? e).split('\n')[0].replace(/\s*\(\d+:\d+\)\s*$/, '');
+    const line = err.loc?.start?.line ?? (Number(/\((\d+):\d+\)/.exec(String(err.message))?.[1] ?? /line (\d+)/i.exec(String(err.message))?.[1] ?? 0) || undefined);
+    // najczestsze bledy po polsku, z miejscem, gdzie zwykle naprawde jest problem
+    const pl = /expecting ['"]?;/i.test(m) ? `Brakuje średnika ; na końcu poprzedniej instrukcji${line && line > 1 ? ` (zwykle linia ${line - 1})` : ''}.`
+      : /unexpected end of (file|input)/i.test(m) ? 'Plik kończy się za wcześnie: brakuje zamykającego } ) albo cudzysłowu.'
+      : /unexpected ['"]?\}/i.test(m) ? 'Nadmiarowy albo źle postawiony nawias }.'
+      : /Unexpected closing tag/i.test(m) ? 'Zamykasz znacznik HTML, który nie był otwarty (albo był już zamknięty).'
+      : /Unclosed|unterminated/i.test(m) ? 'Niezamknięty cudzysłów, komentarz albo znacznik.'
+      : /CssSyntaxError|Unknown word/i.test(m) ? 'Błąd w CSS: sprawdź średniki, dwukropki i nawiasy { }.' : '';
+    const full = (pl ? pl + ' ' : '') + m;
+    return { error: full.length > 220 ? full.slice(0, 220) + '…' : full, line };
   }
 }

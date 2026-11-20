@@ -1,8 +1,9 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Brush, Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Expand, Shrink, AArrowDown, AArrowUp, Copy, Check, X } from 'lucide-react';
+import { WandSparkles, Brush, Plus, Trash2, Upload, Database, Terminal, Eye, Code2, ImagePlus, RotateCcw, ArrowLeftRight, FileText, PanelLeftClose, PanelLeftOpen, ExternalLink, Maximize2, Minimize2, Server, Image as ImageIcon, Expand, Shrink, AArrowDown, AArrowUp, Copy, Check, X } from 'lucide-react';
 import type { Sheet } from '../lib/types';
 import PdfViewer, { preloadPdf } from './PdfViewer';
 import type { Database as Db } from 'sql.js';
+import { canFormat } from '../lib/format';
 import { useStore } from '../lib/store';
 import { buildSrcDoc } from '../lib/preview';
 import { freshDb, getSql, run, withMissingTables, type QueryResult } from '../lib/sql';
@@ -70,6 +71,7 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
   const [showPdf, setShowPdf] = useState(true);
   const hideNav = useStore((s) => !!s.settings.hideNav);
   const phpTipHidden = useStore((s) => !!s.settings.phpTipHidden);
+  const edBox = useRef<HTMLDivElement>(null);
   const [files, setFiles] = useState<Record<string, string>>(() => startFiles(saved, initial));
   const [active, setActive] = useState<string>(() => Object.keys(startFiles(saved, initial))[0] ?? '');
   const [page, setPage] = useState<string | null>(null);
@@ -330,13 +332,14 @@ export default function Workshop({ storageKey, initial, sheet }: { storageKey: s
     <div className="card flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex items-center gap-1 border-b border-line bg-surface px-2 py-1">
         <span className="mono min-w-0 flex-1 truncate text-xs text-muted">{active || 'brak pliku'}</span>
+        {active && canFormat(active) && <button className="mr-1 inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs font-bold hover:bg-surface-2" title="Formatuj kod (Shift+Alt+F albo Ctrl+S)" onClick={() => edBox.current?.querySelector('.cm-editor')?.dispatchEvent(new CustomEvent('p03-save', { bubbles: true }))}><WandSparkles size={14} />Formatuj</button>}
         <button className="rounded p-1 hover:bg-surface-2" title="Mniejsza czcionka" onClick={() => setSettings({ editorFont: Math.max(10, fontSize - 1) })}><AArrowDown size={15} /></button>
         <span className="mono w-7 text-center text-[11px] tabular text-muted">{fontSize}</span>
         <button className="rounded p-1 hover:bg-surface-2" title="Większa czcionka" onClick={() => setSettings({ editorFont: Math.min(28, fontSize + 1) })}><AArrowUp size={15} /></button>
         <button className="ml-1 inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs font-bold hover:bg-surface-2" title={edMax ? 'Zmniejsz edytor' : 'Powiększ edytor na cały ekran'} onClick={() => setEdMax((x) => !x)}>{edMax ? <Shrink size={14} /> : <Expand size={14} />}{edMax ? 'Zmniejsz' : 'Powiększ'}</button>
       </div>
       {isPhp && !phpTipHidden && <div className="flex items-start gap-2 border-b border-line bg-info-soft px-3 py-1.5 text-xs"><p className="flex-1">PHP 8.2 działa w przeglądarce: podgląd wykonuje skrypt, formularze i linki z ?parametrami też. <code>mysqli_*</code> łączy się z bazą arkusza (ta sama co w phpMyAdmin). Błędy PHP lądują w Konsoli.{phpBusy ? ' Uruchamiam…' : ''}</p><button className="shrink-0 rounded p-0.5 hover:bg-surface-2" title="Zamknij (nie pokazuj więcej)" aria-label="Zamknij informację" onClick={() => setSettings({ phpTipHidden: true })}><X size={14} /></button></div>}
-      <div className="min-h-0 flex-1">
+      <div ref={edBox} className="min-h-0 flex-1">
         {active && files[active] !== undefined ? (
           <Suspense fallback={<Loading label="Ładuję edytor…" />}>
             <Editor key={active} file={active} value={files[active] ?? ''} onChange={setFile} fontSize={fontSize} schema={/\.(sql|txt)$/i.test(active) ? dbSchema : undefined} onRun={isSql ? (q) => void execSql(q) : undefined} />

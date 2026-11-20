@@ -17,6 +17,8 @@ import { emmetSource } from '../lib/emmet';
 import { editorTheme } from '../lib/themes';
 import { useStore } from '../lib/store';
 import type { Extension } from '@codemirror/state';
+import { RangeSetBuilder } from '@codemirror/state';
+import { Decoration, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { JS_COMPLETIONS, listSource, PHP_COMPLETIONS, SQL_COMPLETIONS } from '../lib/completions';
 
@@ -86,6 +88,25 @@ function statementAt(view: EditorView): string {
   return stmt.replace(/^\s*(--[^\n]*\n|#[^\n]*\n|\s)+/, '').trim() ? stmt : text;
 }
 
+/** Zawiniete linie zachowuja wciecie (bez tego przy waskim edytorze dalszy ciag linii zaczyna sie od lewej krawedzi). */
+const hangingIndent = ViewPlugin.fromClass(class {
+  decorations: DecorationSet;
+  constructor(v: EditorView) { this.decorations = this.build(v); }
+  update(u: ViewUpdate) { if (u.docChanged || u.viewportChanged) this.decorations = this.build(u.view); }
+  build(v: EditorView) {
+    const b = new RangeSetBuilder<Decoration>(); const tab = v.state.tabSize;
+    for (const { from, to } of v.visibleRanges) {
+      for (let pos = from; pos <= to;) {
+        const line = v.state.doc.lineAt(pos);
+        const ws = /^[ \t]*/.exec(line.text)![0]; const cols = [...ws].reduce((n, ch) => n + (ch === '\t' ? tab : 1), 0) + 2;
+        if (line.length) b.add(line.from, line.from, Decoration.line({ attributes: { style: `padding-left: calc(${cols}ch + 6px); text-indent: -${cols}ch` } }));
+        pos = line.to + 1;
+      }
+    }
+    return b.finish();
+  }
+}, { decorations: (p) => p.decorations });
+
 export default function Editor({ file, value, onChange, fontSize = 14, schema, onRun, theme, bare, onCursor, autoFocus }: { file: string; value: string; onChange: (v: string) => void; fontSize?: number; schema?: Record<string, string[]>; onRun?: (sql: string, all: boolean) => void; theme?: string; bare?: boolean; onCursor?: (ln: number, col: number, sel: number) => void; autoFocus?: boolean }) {
   const viewRef = useRef<EditorView | null>(null);
   const runRef = useRef(onRun);
@@ -103,7 +124,11 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema, o
     if (!canFormat(f)) { say(true, 'Zapisano'); return; }
     const before = v.state.doc.toString();
     const r = await formatCode(f, before);
-    if ('error' in r) { say(false, `Zapisano, ale nie sformatowano (błąd składni): ${r.error}`); return; }
+    if ('error' in r) {
+      // blad skladni: pokaz linie i przenies tam kursor (jak w VS Code)
+      if (r.line && r.line <= v.state.doc.lines) v.dispatch({ selection: { anchor: v.state.doc.line(r.line).from }, scrollIntoView: true });
+      say(false, `Nie sformatowano: błąd składni${r.line ? ` w linii ${r.line}` : ''}. ${r.error}`); return;
+    }
     if (v.state.doc.toString() !== before) return; // ktos pisal w trakcie: nie nadpisuj
     if (r.text === before) { say(true, 'Zapisano (już sformatowane)'); return; }
     // kursor w tej samej linii co przed formatowaniem
@@ -143,10 +168,11 @@ export default function Editor({ file, value, onChange, fontSize = 14, schema, o
     // w Vimie lista podpowiedzi nie wyskakuje sama (Ctrl+Spacja ja otwiera)
     autocompletion({ activateOnTyping: !vimOn, icons: true, defaultKeymap: true, closeOnBlur: true, maxRenderedOptions: 80, selectOnOpen: true, aboveCursor: false }),
     ...tabKeys,
-    ...(vimOn || bare ? [] : [EditorView.lineWrapping]),
+    ...(vimOn || bare ? [] : [EditorView.lineWrapping, hangingIndent]),
     EditorView.updateListener.of((u) => { if (!cursorRef.current || !(u.selectionSet || u.docChanged)) return; const m = u.state.selection.main; const l = u.state.doc.lineAt(m.head); cursorRef.current(l.number, m.head - l.from + 1, Math.abs(m.to - m.from)); }),
     // Ctrl+Enter: wykonaj kwerende pod kursorem (pliki .sql/.txt)
     Prec.highest(keymap.of([
+      { key: 'Shift-Alt-f', preventDefault: true, run: (v) => { v.dom.dispatchEvent(new CustomEvent('p03-save', { bubbles: true })); return true; } },
       { key: 'Mod-s', preventDefault: true, run: (v) => { v.dom.dispatchEvent(new CustomEvent('p03-save', { bubbles: true })); return true; } },
       { key: 'Mod-Enter', run: (v) => { if (!runRef.current) return false; runRef.current(statementAt(v), false); return true; } },
       { key: 'Mod-Shift-Enter', run: (v) => { if (!runRef.current) return false; runRef.current(v.state.doc.toString(), true); return true; } },
